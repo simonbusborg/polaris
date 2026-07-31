@@ -17,10 +17,6 @@
     --line:rgba(20,20,20,.14);
     --panel:#F6F5F3;
     --accent:#FF4D00;
-    --menu-bg:#FBFAF9;
-    --menu-ink:#1A1A1A;
-    --menu-dim:rgba(26,26,26,.55);
-    --menu-line:rgba(26,26,26,.09);
     --r:2px;
     --sans:'Figtree',system-ui,sans-serif;
   }
@@ -30,10 +26,6 @@
     --dim:rgba(245,242,236,.55);
     --line:rgba(245,242,236,.16);
     --panel:#161616;
-    --menu-bg:#1E1E20;
-    --menu-ink:#F2F0EC;
-    --menu-dim:rgba(242,240,236,.55);
-    --menu-line:rgba(242,240,236,.09);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   /* iOS Safari ignores overflow-x on body alone — set it on both. */
@@ -70,6 +62,12 @@
 
   /* hero */
   .hero{padding:clamp(4rem,12vh,8rem) 0 1rem;max-width:800px}
+  /* The icns artwork already carries the squircle + margins — no extra
+     rounding, just a soft shadow on the shape itself. */
+  .appicon{
+    width:96px;height:96px;margin:-8px 0 .6rem -8px;
+    filter:drop-shadow(0 8px 22px rgba(0,0,0,.28));
+  }
   h1{
     font-weight:600;font-size:clamp(2.8rem,7vw,5.5rem);
     line-height:.98;letter-spacing:-.03em;text-wrap:balance;margin-top:.9rem;
@@ -107,21 +105,22 @@
   .real .side p{color:var(--dim);margin-top:1.2rem;max-width:42ch}
   .real .side p b{color:var(--ink);font-weight:500}
 
-  .mock{width:min(360px,100%);margin:0 auto}
-  .menubar{
-    display:flex;justify-content:flex-end;align-items:center;gap:1rem;
-    background:var(--panel);border:1px solid var(--line);border-bottom:none;
-    border-radius:6px 6px 0 0;
-    padding:.4rem .8rem;font-size:.78rem;color:var(--dim);
-  }
-  .menubar .live{
-    display:flex;align-items:center;gap:.3rem;color:var(--ink);font-weight:500;
-    font-variant-numeric:tabular-nums;
+  .mock{width:min(420px,100%);margin:0 auto}
+  /* The menu is always shown as the real thing: a dark, translucent
+     macOS menu floating over a wallpaper. */
+  .wallpaper{
+    border-radius:18px;padding:clamp(1rem,4vw,1.8rem);
+    border:1px solid var(--accent);
+    background:linear-gradient(160deg,#38383d,#1e1e22);
   }
   .panel{
-    background:var(--menu-bg);border:1px solid var(--line);
-    border-radius:0 0 10px 10px;box-shadow:0 18px 50px rgba(0,0,0,.14);
-    padding:.5rem .6rem;font-size:.86rem;color:var(--menu-ink);
+    background:rgba(30,30,32,.72);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid var(--accent);
+    border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.5);
+    padding:.5rem .6rem;font-size:.86rem;color:#f5f5f7;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
   }
   .panel .greet{font-weight:600;font-size:.95rem;padding:.4rem .6rem .1rem}
   .panel img.car{display:block;width:100%;height:auto;padding:.2rem .5rem;box-sizing:border-box}
@@ -137,12 +136,12 @@
     display:flex;justify-content:space-between;gap:1rem;
     padding:.22rem .6rem;font-variant-numeric:tabular-nums;
   }
-  .panel .row .k{color:var(--menu-dim)}
-  .panel hr{border:none;border-top:1px solid var(--menu-line);margin:.35rem .3rem}
+  .panel .row .k{color:rgba(255,255,255,.55)}
+  .panel hr{border:none;border-top:1px solid rgba(255,255,255,.14);margin:.35rem .3rem}
   .panel .action{display:flex;justify-content:space-between;padding:.22rem .6rem;border-radius:5px}
   .panel .action:hover{background:var(--accent);color:#fff}
   .panel .action:hover .kbd{color:#fff}
-  .panel .kbd{color:var(--menu-dim);font-size:.8rem}
+  .panel .kbd{color:rgba(255,255,255,.45);font-size:.8rem}
   .charging{color:var(--accent);display:inline-flex;align-items:center;gap:.4rem;font-weight:500}
   .charging::before{
     content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);
@@ -154,11 +153,37 @@
   .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
   .grid{
     margin-top:3rem;display:grid;grid-template-columns:repeat(3,1fr);
-    gap:1px;background:var(--line);border:1px solid var(--line);
+    gap:1rem;
   }
-  .cell{background:var(--paper);padding:1.8rem 1.6rem 2rem;transition:background .3s}
-  .cell:hover{background:var(--panel)}
-  .cell svg{width:22px;height:22px;color:var(--accent)}
+  .cell{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    aspect-ratio:4/5;padding:1.6rem;
+    display:flex;flex-direction:column;
+    position:relative;overflow:hidden;
+    transition:transform .3s ease;
+  }
+  .cell:hover{transform:translateY(-4px)}
+  /* A soft accent glow drifting inside each card. */
+  .cell::before{
+    content:"";position:absolute;top:-25%;right:-25%;width:75%;aspect-ratio:1;
+    border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(255,77,0,.16),transparent 70%);
+    animation:drift 9s ease-in-out infinite alternate;
+  }
+  .cell:nth-child(2n)::before{animation-delay:-3s}
+  .cell:nth-child(3n)::before{animation-delay:-6s}
+  .cell svg{
+    width:26px;height:26px;color:var(--accent);
+    margin-bottom:auto;   /* pins the text block to the bottom */
+    animation:floaty 5s ease-in-out infinite;
+  }
+  .cell:nth-child(2n) svg{animation-delay:-1.6s}
+  .cell:nth-child(3n) svg{animation-delay:-3.2s}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes drift{
+    from{transform:translate(0,0) scale(1)}
+    to{transform:translate(-35%,30%) scale(1.3)}
+  }
   .cell h3{font-weight:500;font-size:1.05rem;margin:1rem 0 .4rem;letter-spacing:-.01em}
   .cell p{color:var(--dim);font-size:.9rem;line-height:1.4}
   .cell p code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
@@ -174,18 +199,20 @@
      longest code line — kill their min-width:auto. */
   .get > *{min-width:0}
   .get .side p{color:var(--dim);max-width:36ch;margin-top:1.2rem}
-  .get ol{margin:1.4rem 0 0 1.1rem;color:var(--dim);font-size:.95rem}
-  .get ol li{margin-bottom:.5rem}
-  .get ol b{color:var(--ink);font-weight:500}
-  pre{
-    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    padding:1.5rem;overflow-x:auto;font-size:.88rem;line-height:1.55;
-    font-family:ui-monospace,'SF Mono',Menlo,monospace;
-    /* Grid items default to min-width:auto, which lets the longest code
-       line stretch the page instead of scrolling inside the block. */
-    min-width:0;max-width:100%;
+  .buildnote{font-size:.85rem}
+  .buildnote a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+  .steps{list-style:none;counter-reset:step;margin-top:.3rem}
+  .steps li{
+    counter-increment:step;position:relative;padding-left:2.7rem;
+    margin-bottom:1.3rem;color:var(--dim);font-size:1rem;
   }
-  pre .c{color:var(--dim)}
+  .steps li::before{
+    content:counter(step);position:absolute;left:0;top:-.15rem;
+    width:1.8rem;height:1.8rem;border:1px solid var(--line);border-radius:50%;
+    display:grid;place-items:center;font-size:.85rem;color:var(--ink);
+  }
+  .steps b{color:var(--ink);font-weight:500}
+  .steps .note{display:block;font-size:.85rem;margin-top:.3rem}
 
   footer{
     border-top:1px solid var(--line);padding:2.6rem 0 3.4rem;
@@ -200,11 +227,15 @@
   @media (prefers-reduced-motion:reduce){
     .rv{opacity:1;transform:none;transition:none}
     .charging::before{animation:none}
+    .cell::before,.cell svg{animation:none}
   }
   @media (max-width:860px){
     .real{grid-template-columns:1fr}
     .get{grid-template-columns:1fr}
     .grid{grid-template-columns:1fr}
+    /* Full-width portrait cards would tower on phones. */
+    .cell{aspect-ratio:auto}
+    .cell svg{margin-bottom:1rem}
     .stats{grid-template-columns:repeat(2,1fr);row-gap:1.6rem}
   }
 </style>
@@ -225,6 +256,7 @@
   </header>
 
   <section class="hero">
+    <img class="appicon" src="assets/app-icon.png" alt="Polaris app icon" width="1024" height="1024">
     <div class="kicker">A native macOS app · for your Polestar</div>
     <h1>Your Polestar.<br><em>In the menu bar.</em></h1>
     <p class="lede">Battery, range and charging status — always one glance away.
@@ -259,14 +291,10 @@
       moment the battery is full.</p>
     </div>
     <div class="mock rv">
-      <div class="menubar">
-        <span>Wed 14:32</span>
-        <span class="live">⚡︎ 82%</span>
-      </div>
+      <div class="wallpaper">
       <div class="panel">
         <div class="greet">Hi, Simon</div>
-        <img class="car car-light" src="assets/polestar-4-magnesium.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
-        <img class="car car-dark" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+        <img class="car" id="panelCar" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
         <div class="model">Polestar 4 · 2025</div>
         <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
@@ -285,6 +313,7 @@
         <div class="action"><span>Settings…</span><span class="kbd">⌘,</span></div>
         <hr>
         <div class="action"><span>Quit Polaris</span><span class="kbd">⌘Q</span></div>
+      </div>
       </div>
     </div>
   </section>
@@ -343,26 +372,22 @@
     <div class="side rv">
       <div class="kicker">Get started</div>
       <h2>Running in a minute.</h2>
-      <p>Download, drag to Applications, sign in with your Polestar account.
-      Your VIN is in the Polestar app if it's not on hand.</p>
-      <ol>
-        <li><b>Download</b> Polaris.zip and unzip it</li>
-        <li><b>Drag</b> Polaris.app to Applications</li>
-        <li><b>Sign in</b> — email, password, VIN</li>
-      </ol>
+      <p>No terminal, no Xcode — every release is a ready-built app.
+      Download, drag to Applications and sign in with your Polestar
+      account. Your VIN is in the Polestar app if it's not on hand.</p>
+      <p class="buildnote">Prefer to compile it yourself?
+      <a href="https://github.com/simonbusborg/polaris#build-from-source">Build from source</a>
+      is one command.</p>
     </div>
     <div class="rv">
-      <pre><span class="c"># …or build it from source</span>
-git clone https://github.com/simonbusborg/polaris
-cd polaris
-make app
-open Polaris.app
-
-<span class="c"># quick iteration without a bundle</span>
-make run
-
-<span class="c"># run the tests</span>
-make test</pre>
+      <ol class="steps">
+        <li><b>Download</b> Polaris.zip and unzip it</li>
+        <li><b>Drag</b> Polaris.app to Applications</li>
+        <li><b>Open it</b> — the first launch is right-click → Open → Open
+          <span class="note">macOS asks once because the app isn't notarized yet.
+          After that it opens like any other app.</span></li>
+        <li><b>Sign in</b> — email, password, VIN</li>
+      </ol>
     </div>
   </section>
 
@@ -383,6 +408,8 @@ make test</pre>
   const car = cars[Math.floor(Math.random() * cars.length)];
   document.querySelectorAll('img.car-light').forEach(img => img.src = car.light);
   document.querySelectorAll('img.car-dark').forEach(img => img.src = car.dark);
+  // The mock menu is always dark, so it always gets the light-paint render.
+  document.getElementById('panelCar').src = car.dark;
   document.querySelector('.panel .model').textContent = car.model;
 
   // Theme: light by default; dark only when chosen via the toggle.
