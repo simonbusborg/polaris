@@ -46,10 +46,7 @@
   ::selection{background:var(--accent);color:#fff}
   .wrap{max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
 
-  .kicker{
-    font-size:.72rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--dim);
-  }
+  .kicker{font-size:.95rem;color:var(--dim)}
 
   /* header */
   header{display:flex;justify-content:space-between;align-items:center;padding-top:1.6rem}
@@ -73,7 +70,7 @@
   .hero{padding:clamp(4rem,12vh,8rem) 0 1rem;max-width:800px}
   h1{
     font-weight:600;font-size:clamp(2.8rem,7vw,5.5rem);
-    line-height:1.02;letter-spacing:-.03em;text-wrap:balance;margin-top:1.2rem;
+    line-height:.98;letter-spacing:-.03em;text-wrap:balance;margin-top:.9rem;
   }
   h1 em{font-style:normal;color:var(--dim)}
   .hero p.lede{margin-top:1.6rem;max-width:46ch;color:var(--dim);font-size:1.05rem}
@@ -90,21 +87,20 @@
   .cta-note{color:var(--dim);font-size:.82rem;max-width:28ch;line-height:1.5}
   .cta-note a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
 
-  /* car band */
-  .car-band{padding:clamp(2rem,6vh,4rem) 0 0}
-  .car-band svg{width:100%;height:auto;display:block;color:var(--ink)}
+  /* stats band */
+  .stats-band{padding:clamp(3rem,8vh,5rem) 0 0}
   .stats{
     display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;
-    border-top:1px solid var(--line);margin-top:-1px;padding:1.6rem 0 0;
+    border-top:1px solid var(--line);padding:1.6rem 0 0;
   }
-  .stat b{font-weight:600;font-size:1.6rem;letter-spacing:-.02em;display:block}
-  .stat span{color:var(--dim);font-size:.82rem}
+  .stat span{display:block;color:var(--dim);font-size:.88rem}
+  .stat b{font-weight:600;font-size:1.7rem;letter-spacing:-.02em;line-height:1.3}
 
   /* real menu section */
   .real{padding:clamp(5rem,12vh,8rem) 0;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
   .real h2,.features h2,.get h2{
     font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
-    letter-spacing:-.02em;max-width:18ch;margin-top:1rem;
+    line-height:1.1;letter-spacing:-.02em;max-width:18ch;margin-top:.8rem;
   }
   .real .side p{color:var(--dim);margin-top:1.2rem;max-width:42ch}
   .real .side p b{color:var(--ink);font-weight:500}
@@ -125,9 +121,7 @@
     border-radius:0 0 10px 10px;box-shadow:0 18px 50px rgba(0,0,0,.14);
     padding:.5rem .6rem;font-size:.86rem;color:var(--menu-ink);
   }
-  .panel .carimg{padding:.4rem .6rem 0}
-  .panel .carimg svg{width:100%;height:auto;color:var(--menu-ink)}
-  .panel .model{font-weight:600;font-size:.95rem;padding:.15rem .6rem}
+  .panel .model{font-weight:600;font-size:.95rem;padding:.3rem .6rem .15rem}
   .panel .row{
     display:flex;justify-content:space-between;gap:1rem;
     padding:.22rem .6rem;font-variant-numeric:tabular-nums;
@@ -195,45 +189,6 @@
 </head>
 <body>
 
-<!-- Side-profile car, drawn once, used in the hero and the menu mock -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <symbol id="car-side" viewBox="0 0 760 232">
-      <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <!-- body -->
-        <path d="M70 180
-                 C62 170 60 154 66 142
-                 C74 130 96 125 124 121
-                 C168 82 224 66 306 64
-                 C368 62 424 66 470 80
-                 C500 90 524 102 548 112
-                 C592 118 634 126 656 134
-                 C670 140 676 150 674 158
-                 C672 168 664 176 650 179
-                 L618 180
-                 A48 48 0 0 0 522 180
-                 L258 180
-                 A48 48 0 0 0 162 180
-                 L70 180"/>
-        <!-- glasshouse -->
-        <path d="M240 106 C246 94 272 82 302 78 C364 74 420 78 464 92 L496 108 C420 100 330 100 240 106 Z" stroke-width="2"/>
-        <!-- door seam -->
-        <path d="M400 106 L396 176" stroke-width="1.5" opacity=".4"/>
-        <!-- wheels -->
-        <circle cx="570" cy="180" r="33"/>
-        <circle cx="570" cy="180" r="13" stroke-width="2"/>
-        <circle cx="210" cy="180" r="33"/>
-        <circle cx="210" cy="180" r="13" stroke-width="2"/>
-      </g>
-      <!-- headlight + charge port -->
-      <path d="M640 133 L668 141" stroke="#FF4D00" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="100" cy="130" r="3.5" fill="#FF4D00"/>
-      <!-- ground -->
-      <path d="M40 218 L720 218" stroke="currentColor" stroke-width="1" opacity=".25"/>
-    </symbol>
-  </defs>
-</svg>
-
 <div class="wrap">
   <header>
     <div class="mark">Polaris<span>.</span></div>
@@ -262,13 +217,12 @@
     </div>
   </section>
 
-  <section class="car-band rv">
-    <svg role="img" aria-label="Side profile of a Polestar"><use href="#car-side"/></svg>
+  <section class="stats-band rv">
     <div class="stats">
-      <div class="stat"><b>5 min</b><span>refresh while idle</span></div>
-      <div class="stat"><b>60 s</b><span>refresh while charging</span></div>
-      <div class="stat"><b>0</b><span>trackers, analytics, third parties</span></div>
-      <div class="stat"><b>1</b><span>small native binary</span></div>
+      <div class="stat"><span>Refresh while idle</span><b>5 min</b></div>
+      <div class="stat"><span>Refresh while charging</span><b>60 s</b></div>
+      <div class="stat"><span>Trackers and third parties</span><b>0</b></div>
+      <div class="stat"><span>Small native binary</span><b>1</b></div>
     </div>
   </section>
 
@@ -277,8 +231,8 @@
       <div class="kicker">The real thing</div>
       <h2>No concept shots. This is the menu.</h2>
       <p>Every row below is rendered by the app from the live Polestar API —
-      the studio image of <b>your exact car</b>, battery, range, charging state,
-      odometer and service data. Click the plate or VIN to copy them.</p>
+      battery, range, charging state, odometer and service data, topped by a
+      studio image of <b>your exact car</b>. Click the plate or VIN to copy them.</p>
       <p>While charging, Polaris polls every minute and can notify you the
       moment the battery is full.</p>
     </div>
@@ -288,7 +242,6 @@
         <span class="live">⚡︎ 82%</span>
       </div>
       <div class="panel">
-        <div class="carimg"><svg role="img" aria-label="Your car, seen from the side"><use href="#car-side"/></svg></div>
         <div class="model">Polestar 2 · 2024</div>
         <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
@@ -389,11 +342,10 @@ make test</pre>
 </div>
 
 <script>
-  // Theme: manual toggle wins, otherwise follow the system.
+  // Theme: light by default; dark only when chosen via the toggle.
   const root = document.documentElement;
   const saved = localStorage.getItem('theme');
   if (saved) root.dataset.theme = saved;
-  else if (matchMedia('(prefers-color-scheme: dark)').matches) root.dataset.theme = 'dark';
   document.getElementById('themeToggle').addEventListener('click', () => {
     const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
     root.dataset.theme = next;
