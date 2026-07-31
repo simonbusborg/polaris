@@ -36,11 +36,13 @@
     --menu-line:rgba(242,240,236,.09);
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  /* iOS Safari ignores overflow-x on body alone — set it on both. */
+  html,body{overflow-x:hidden}
   html{scroll-behavior:smooth}
   body{
     background:var(--paper);color:var(--ink);
     font-family:var(--sans);font-size:17px;line-height:1.45;
-    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
     transition:background .3s ease,color .3s ease;
   }
   ::selection{background:var(--accent);color:#fff}
@@ -165,6 +167,9 @@
 
   /* get it */
   .get{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
+  /* The grid items (not the pre) are what refuse to shrink below the
+     longest code line — kill their min-width:auto. */
+  .get > *{min-width:0}
   .get .side p{color:var(--dim);max-width:36ch;margin-top:1.2rem}
   .get ol{margin:1.4rem 0 0 1.1rem;color:var(--dim);font-size:.95rem}
   .get ol li{margin-bottom:.5rem}
