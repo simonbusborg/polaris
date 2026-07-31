@@ -123,9 +123,10 @@
   }
   .panel .greet{font-weight:600;font-size:.95rem;padding:.4rem .6rem .1rem}
   .panel img.car{display:block;width:100%;height:auto;padding:.2rem .5rem;box-sizing:border-box}
-  .car-dark{display:none}
-  [data-theme="dark"] .car-dark{display:block}
-  [data-theme="dark"] .car-light{display:none}
+  /* !important so these beat .panel img.car / .car-band img display rules */
+  .car-dark{display:none !important}
+  [data-theme="dark"] .car-dark{display:block !important}
+  [data-theme="dark"] .car-light{display:none !important}
   .panel .model{font-weight:600;font-size:.95rem;padding:.3rem .6rem .15rem}
   .panel .row{
     display:flex;justify-content:space-between;gap:1rem;
@@ -256,9 +257,9 @@
       </div>
       <div class="panel">
         <div class="greet">Hi, Simon</div>
-        <img class="car car-light" src="assets/polestar-thunder.png" alt="Studio side profile of a Polestar 2" width="1400" height="787" loading="lazy">
-        <img class="car car-dark" src="assets/polestar-snow.png" alt="Studio side profile of a Polestar 2" width="1400" height="787" loading="lazy">
-        <div class="model">Polestar 2 · 2024</div>
+        <img class="car car-light" src="assets/polestar-4-magnesium.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+        <img class="car car-dark" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+        <div class="model">Polestar 4 · 2025</div>
         <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
         <hr>
@@ -324,8 +325,8 @@
   </section>
 
   <section class="car-band rv">
-    <img class="car-light" src="assets/polestar-thunder.png" alt="Studio side profile of a Polestar 2 in Thunder" width="1400" height="787" loading="lazy">
-    <img class="car-dark" src="assets/polestar-snow.png" alt="Studio side profile of a Polestar 2 in Snow" width="1400" height="787" loading="lazy">
+    <img class="car-light" src="assets/polestar-4-magnesium.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+    <img class="car-dark" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
     <p>The studio render of your exact configuration — paint, wheels and all —<br>
     fetched straight from Polestar and shown at the top of the menu.</p>
   </section>
@@ -365,6 +366,17 @@ make test</pre>
 </div>
 
 <script>
+  // A different Polestar each visit. Polestar 3 joins when a valid
+  // configuration for the image API turns up.
+  const cars = [
+    {model: 'Polestar 2 · 2024', light: 'assets/polestar-2-thunder.png', dark: 'assets/polestar-2-snow.png'},
+    {model: 'Polestar 4 · 2025', light: 'assets/polestar-4-magnesium.png', dark: 'assets/polestar-4-snow.png'},
+  ];
+  const car = cars[Math.floor(Math.random() * cars.length)];
+  document.querySelectorAll('img.car-light').forEach(img => img.src = car.light);
+  document.querySelectorAll('img.car-dark').forEach(img => img.src = car.dark);
+  document.querySelector('.panel .model').textContent = car.model;
+
   // Theme: light by default; dark only when chosen via the toggle.
   const root = document.documentElement;
   const saved = localStorage.getItem('theme');
