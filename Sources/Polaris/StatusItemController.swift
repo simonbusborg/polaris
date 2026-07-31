@@ -17,6 +17,11 @@ final class StatusItemController {
     /// Set when a newer release exists; renders as a menu item.
     var updateVersion: String?
 
+    /// Cars on the account; more than one adds a Switch Car submenu.
+    var cars: [CarSummary] = []
+    var activeVin: String?
+    var onSelectCar: ((String) -> Void)?
+
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .none
@@ -87,6 +92,20 @@ final class StatusItemController {
             if let vin = data.vin, !vin.isEmpty {
                 menu.addItem(kvItem("VIN", vin, copyable: true))
             }
+            if cars.count > 1 {
+                let switcher = NSMenuItem(title: "Switch Car", action: nil, keyEquivalent: "")
+                let submenu = NSMenu()
+                for car in cars {
+                    let item = NSMenuItem(title: car.title, action: #selector(selectCarAction(_:)),
+                                          keyEquivalent: "")
+                    item.target = self
+                    item.representedObject = car.vin
+                    item.state = (car.vin == activeVin) ? .on : .off
+                    submenu.addItem(item)
+                }
+                switcher.submenu = submenu
+                menu.addItem(switcher)
+            }
 
             menu.addItem(.separator())
 
@@ -156,6 +175,10 @@ final class StatusItemController {
 
     @objc private func refreshAction() { onRefresh() }
     @objc private func settingsAction() { onSettings() }
+    @objc private func selectCarAction(_ sender: NSMenuItem) {
+        guard let vin = sender.representedObject as? String, vin != activeVin else { return }
+        onSelectCar?(vin)
+    }
     @objc private func updateAction() { NSWorkspace.shared.open(UpdateChecker.releasesPage) }
 
     // MARK: - Key/value rows (custom views: exact colors, exact width,

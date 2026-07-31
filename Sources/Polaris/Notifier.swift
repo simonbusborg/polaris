@@ -31,15 +31,18 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         let trouble = new.statusKey == "ERROR" || new.statusKey == "FAULT"
 
         if !old.isCharging && new.isCharging {
+            guard Preferences.notifyChargingStarted else { return }
             var body = String(format: "%.0f%%", new.batteryPercentage)
             if let minutes = new.estimatedChargingTimeToFullMinutes, minutes > 0 {
                 body += " · full in \(StatusItemController.shortDuration(minutes: minutes))"
             }
             post(title: "Charging started", body: body)
         } else if old.isCharging && !new.isCharging && done {
+            guard Preferences.notifyChargingComplete else { return }
             post(title: "Charging complete",
                  body: String(format: "%.0f%% · %d km range", new.batteryPercentage, new.rangeKm))
         } else if old.isCharging && trouble {
+            guard Preferences.notifyChargingProblem else { return }
             post(title: "Charging problem",
                  body: String(format: "Charger reported an error at %.0f%%", new.batteryPercentage))
         }

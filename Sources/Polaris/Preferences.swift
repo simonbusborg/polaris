@@ -40,6 +40,27 @@ enum Preferences {
         set { d.set(newValue, forKey: "launch_at_login") }
     }
 
+    // Notification preferences default to on; only an explicit opt-out
+    // (stored false) disables them.
+    private static func boolDefaultTrue(_ key: String) -> Bool {
+        d.object(forKey: key) == nil ? true : d.bool(forKey: key)
+    }
+
+    static var notifyChargingStarted: Bool {
+        get { boolDefaultTrue("notify_charging_started") }
+        set { d.set(newValue, forKey: "notify_charging_started") }
+    }
+
+    static var notifyChargingComplete: Bool {
+        get { boolDefaultTrue("notify_charging_complete") }
+        set { d.set(newValue, forKey: "notify_charging_complete") }
+    }
+
+    static var notifyChargingProblem: Bool {
+        get { boolDefaultTrue("notify_charging_problem") }
+        set { d.set(newValue, forKey: "notify_charging_problem") }
+    }
+
     /// One-time migration from the original Polaris, which kept the
     /// password in UserDefaults. If found, move it into the Keychain
     /// and delete the plaintext copy.

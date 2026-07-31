@@ -24,6 +24,11 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: nil), "Hi, Simon")
     }
 
+    func testDemoVinAliasesRealVin() {
+        XCTAssertEqual(PolestarAPI.apiVin("DEMO-YSM4ZPAA9TF452140"), "YSM4ZPAA9TF452140")
+        XCTAssertEqual(PolestarAPI.apiVin("YSM4ZPAA9TF452140"), "YSM4ZPAA9TF452140")
+    }
+
     func testStatusKeyStripsPrefixes() {
         XCTAssertEqual(car(status: "CHARGING_STATUS_CHARGING").statusKey, "CHARGING")
         XCTAssertEqual(car(status: "CHARGING_STATUS_V2_SMART_CHARGING").statusKey, "SMART_CHARGING")

@@ -58,7 +58,30 @@ enum PolestarError: Error, LocalizedError {
     }
 }
 
+/// One car on the account, for the menu's car switcher.
+struct CarSummary: Equatable {
+    let vin: String
+    let title: String   // e.g. "Polestar 4 · 2026"
+}
+
 final class PolestarAPI {
+
+    /// Cars on the account (populated by fetchCarInfo). More than one
+    /// makes the menu show a switcher.
+    private(set) var cars: [CarSummary] = []
+
+    /// Developer aid: `defaults write com.weareheavy.polaris debug_demo_car -bool YES`
+    /// adds a pretend second car that mirrors the real car's data, so the
+    /// multi-car UI can be exercised with a single-car account.
+    private var demoCarEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "debug_demo_car")
+    }
+    static let demoVinPrefix = "DEMO-"
+
+    /// Demo VINs are aliases for the real car — resolve before hitting the API.
+    static func apiVin(_ vin: String) -> String {
+        vin.hasPrefix(demoVinPrefix) ? String(vin.dropFirst(demoVinPrefix.count)) : vin
+    }
 
     // Official Polestar endpoints only.
     private let apiBaseURL = URL(string: "https://pc-api.polestar.com/eu-north-1/mystar-v2/")!
@@ -88,6 +111,7 @@ final class PolestarAPI {
     private var pno34: String?
     private var structureWeek: String?
     private var carImageData: Data?
+    private var lastInfoVin: String?
 
     init() {
         // .ephemeral ships with its own in-memory cookie storage — do NOT
@@ -141,7 +165,14 @@ final class PolestarAPI {
         await fetchOwnerInfo()
     }
 
-    func fetchCarData(vin: String) async throws -> CarData {
+    /// Point the identity/image state at another of the account's cars.
+    func selectCar(vin: String) async {
+        try? await fetchCarInfo(vin: vin)
+        await fetchCarImage()
+    }
+
+    func fetchCarData(vin rawVin: String) async throws -> CarData {
+        let vin = Self.apiVin(rawVin)
         try await refreshTokenIfNeeded()
         guard let token = accessToken else { throw PolestarError.notConfigured }
 
@@ -465,9 +496,34 @@ final class PolestarAPI {
         """
         let json = try await graphQL(query: query, variables: nil, token: token)
         guard let data = json["data"] as? [String: Any],
-              let cars = data["getConsumerCarsV2"] as? [[String: Any]],
-              let car = cars.first(where: { ($0["vin"] as? String) == vin })
+              let accountCars = data["getConsumerCarsV2"] as? [[String: Any]],
+              !accountCars.isEmpty
         else { return }
+
+        cars = accountCars.compactMap { car in
+            guard let carVin = car["vin"] as? String else { return nil }
+            let name = car["modelName"] as? String
+            let year = (car["modelYear"] as? String) ?? (car["modelYear"] as? Int).map(String.init)
+            let title = [name, year].compactMap { $0 }.joined(separator: " · ")
+            return CarSummary(vin: carVin, title: title.isEmpty ? carVin : title)
+        }
+        if demoCarEnabled, let real = cars.first {
+            cars.append(CarSummary(vin: Self.demoVinPrefix + real.vin,
+                                   title: real.title + " (demo)"))
+        }
+
+        // The selected car, or the first one when the VIN doesn't match
+        // (e.g. a typo in Settings, or a demo VIN aliasing the real car).
+        let wanted = Self.apiVin(vin)
+        guard let car = accountCars.first(where: { ($0["vin"] as? String) == wanted })
+            ?? accountCars.first else { return }
+
+        // Switching cars invalidates the cached studio render.
+        if (car["vin"] as? String) != lastInfoVin {
+            carImageData = nil
+            lastInfoVin = car["vin"] as? String
+        }
+
         modelName = car["modelName"] as? String
         modelYear = (car["modelYear"] as? String) ?? (car["modelYear"] as? Int).map(String.init)
         registrationNo = car["registrationNo"] as? String

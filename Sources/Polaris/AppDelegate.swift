@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onRefresh: { [weak self] in self?.refreshNow() },
             onSettings: { [weak self] in self?.showSettings() }
         )
+        statusController.onSelectCar = { [weak self] vin in self?.switchCar(to: vin) }
         statusController.render(data: nil, error: nil, authenticated: false)
         notifier.requestAuthorizationIfNeeded()
         updateChecker.checkIfDue { [weak self] version in
@@ -129,8 +130,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notifier.carDataDidUpdate(old: latest, new: data)
         latest = data
         lastError = nil
+        statusController.cars = api.cars
+        statusController.activeVin = Preferences.vin
         statusController.render(data: data, error: nil, authenticated: true)
         scheduleRefresh()
+    }
+
+    /// Point the app at another of the account's cars: persist the VIN,
+    /// refetch identity + image, then reload live data.
+    private func switchCar(to vin: String) {
+        Preferences.vin = vin
+        latest = nil   // old car's data must not seed notifications
+        statusController.showLoading()
+        Task {
+            await api.selectCar(vin: vin)
+            await MainActor.run { self.refreshNow() }
+        }
     }
 
     /// Poll every minute while charging (the numbers actually move),

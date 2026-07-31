@@ -15,6 +15,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let vinField = NSTextField()
     private let displayPopup = NSPopUpButton()
     private let launchCheckbox = NSButton(checkboxWithTitle: "Launch at login", target: nil, action: nil)
+    private let notifyStartCheckbox = NSButton(checkboxWithTitle: "Charging started", target: nil, action: nil)
+    private let notifyDoneCheckbox = NSButton(checkboxWithTitle: "Charging complete", target: nil, action: nil)
+    private let notifyProblemCheckbox = NSButton(checkboxWithTitle: "Charging problems", target: nil, action: nil)
 
     private let onSave: () -> Void
 
@@ -62,18 +65,27 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             [label("Password:"), passwordField],
             [label("VIN:"), vinField],
             [label("Show in bar:"), displayPopup],
-            [NSGridCell.emptyContentView, launchCheckbox]
+            [NSGridCell.emptyContentView, launchCheckbox],
+            [label("Notify about:"), notifyStartCheckbox],
+            [NSGridCell.emptyContentView, notifyDoneCheckbox],
+            [NSGridCell.emptyContentView, notifyProblemCheckbox]
         ])
         grid.rowSpacing = 12
         grid.columnSpacing = 10
         grid.rowAlignment = .firstBaseline
         grid.column(at: 0).xPlacement = .trailing
-        // Text fields stretch with the window; the popup and checkbox keep
+        // Text fields stretch with the window; popups and checkboxes keep
         // their natural width.
-        grid.cell(for: displayPopup)?.xPlacement = .leading
-        grid.cell(for: launchCheckbox)?.xPlacement = .leading
-        // Extra air between the account fields and the app options.
+        for control in [displayPopup, launchCheckbox, notifyStartCheckbox,
+                        notifyDoneCheckbox, notifyProblemCheckbox] {
+            grid.cell(for: control)?.xPlacement = .leading
+        }
+        // Extra air between the account fields and the app options, and
+        // before the notification group. Tighter rows inside that group.
         grid.row(at: 3).topPadding = 10
+        grid.row(at: 5).topPadding = 10
+        grid.row(at: 6).topPadding = -6
+        grid.row(at: 7).topPadding = -6
         grid.translatesAutoresizingMaskIntoConstraints = false
 
         let saveButton = NSButton(title: "Save", target: self, action: #selector(saveAction))
@@ -112,6 +124,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         vinField.stringValue = Preferences.vin
         displayPopup.selectItem(withTitle: Preferences.displayOption.rawValue)
         launchCheckbox.state = Preferences.launchAtLogin ? .on : .off
+        notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
+        notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
+        notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
     }
 
     // MARK: - Actions
@@ -124,6 +139,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             Preferences.displayOption = option
         }
         Preferences.launchAtLogin = (launchCheckbox.state == .on)
+        Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
+        Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
+        Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
 
         let password = passwordField.stringValue
         if password.isEmpty {
