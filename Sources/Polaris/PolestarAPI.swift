@@ -14,7 +14,6 @@ import CryptoKit
 struct CarData {
     let batteryPercentage: Double
     let rangeKm: Int
-    let rangeMiles: Int?
     let chargingStatus: String
     let estimatedChargingTimeToFullMinutes: Int?
     let modelName: String?
@@ -208,11 +207,9 @@ final class PolestarAPI {
             fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
         }
 
-        let rangeKm = battery["estimatedDistanceToEmptyKm"] as? Int ?? 0
         return CarData(
             batteryPercentage: battery["batteryChargeLevelPercentage"] as? Double ?? 0,
-            rangeKm: rangeKm,
-            rangeMiles: Int((Double(rangeKm) * 0.621371).rounded()),
+            rangeKm: battery["estimatedDistanceToEmptyKm"] as? Int ?? 0,
             chargingStatus: battery["chargingStatusV2"] as? String ?? "Unknown",
             estimatedChargingTimeToFullMinutes: battery["estimatedChargingTimeToFullMinutes"] as? Int,
             modelName: modelName,
@@ -483,10 +480,11 @@ final class PolestarAPI {
 
         let transparent = images["transparent"] as? [[String: Any]] ?? []
         let opaque = images["opaque"] as? [[String: Any]] ?? []
-        // Prefer a transparent render; pick the side profile (angle 2) when
-        // available, falling back to the three-quarter view (angle 1).
+        // Prefer a transparent render; pick the side profile (angle 0) when
+        // available, falling back to the front three-quarter view (angle 1).
+        // CAS angle order: 0 side, 1 front 3/4, 2 front, 3 rear 3/4, 4 rear, 5 top.
         let pool = transparent.isEmpty ? opaque : transparent
-        let pick = pool.first(where: { ($0["angle"] as? Int) == 2 })
+        let pick = pool.first(where: { ($0["angle"] as? Int) == 0 })
             ?? pool.first(where: { ($0["angle"] as? Int) == 1 })
             ?? pool.first
         guard let urlString = pick?["url"] as? String, let url = URL(string: urlString) else { return }

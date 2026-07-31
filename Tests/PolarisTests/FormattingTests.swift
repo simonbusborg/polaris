@@ -31,7 +31,7 @@ final class FormattingTests: XCTestCase {
     }
 
     private func car(status: String) -> CarData {
-        CarData(batteryPercentage: 50, rangeKm: 200, rangeMiles: 124,
+        CarData(batteryPercentage: 50, rangeKm: 200,
                 chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                 modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,

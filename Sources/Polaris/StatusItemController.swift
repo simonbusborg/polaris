@@ -54,8 +54,6 @@ final class StatusItemController {
             return String(format: "%.0f%%", data.batteryPercentage)
         case .rangeKm:
             return "\(data.rangeKm)km"
-        case .rangeMiles:
-            return "\(data.rangeMiles ?? 0)mi"
         case .chargeTime:
             guard data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 else {
                 return "0min"
@@ -89,9 +87,7 @@ final class StatusItemController {
 
             // Live data
             menu.addItem(kvItem("Battery", String(format: "%.0f%%", data.batteryPercentage)))
-            var range = "\(data.rangeKm) km"
-            if let miles = data.rangeMiles { range += " / \(miles) mi" }
-            menu.addItem(kvItem("Range", range))
+            menu.addItem(kvItem("Range", "\(data.rangeKm) km"))
             menu.addItem(kvItem("Status", Self.humanStatus(data.statusKey)))
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
                 menu.addItem(kvItem("Full in", Self.shortDuration(minutes: minutes)))

@@ -11,7 +11,6 @@ import Foundation
 enum DisplayOption: String, CaseIterable {
     case batteryPercentage = "Battery Percentage"
     case rangeKm = "Range (km)"
-    case rangeMiles = "Range (miles)"
     case chargeTime = "Charge Time"
 }
 
