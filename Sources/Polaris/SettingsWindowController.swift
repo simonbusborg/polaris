@@ -22,7 +22,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         self.onSave = onSave
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 240),
+            contentRect: NSRect(x: 0, y: 0, width: 420, height: 260),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -58,38 +58,46 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
 
         let grid = NSGridView(views: [
-            [label("Email"), emailField],
-            [label("Password"), passwordField],
-            [label("VIN"), vinField],
-            [label("Show in bar"), displayPopup],
+            [label("Email:"), emailField],
+            [label("Password:"), passwordField],
+            [label("VIN:"), vinField],
+            [label("Show in bar:"), displayPopup],
             [NSGridCell.emptyContentView, launchCheckbox]
         ])
-        grid.rowSpacing = 10
+        grid.rowSpacing = 12
+        grid.columnSpacing = 10
+        grid.rowAlignment = .firstBaseline
         grid.column(at: 0).xPlacement = .trailing
-        grid.column(at: 1).width = 230
+        // Text fields stretch with the window; the popup and checkbox keep
+        // their natural width.
+        grid.cell(for: displayPopup)?.xPlacement = .leading
+        grid.cell(for: launchCheckbox)?.xPlacement = .leading
+        // Extra air between the account fields and the app options.
+        grid.row(at: 3).topPadding = 10
+        grid.translatesAutoresizingMaskIntoConstraints = false
 
         let saveButton = NSButton(title: "Save", target: self, action: #selector(saveAction))
         saveButton.keyEquivalent = "\r"
         let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelAction))
+        cancelButton.keyEquivalent = "\u{1b}"
 
         let buttons = NSStackView(views: [cancelButton, saveButton])
         buttons.orientation = .horizontal
-        buttons.spacing = 8
+        buttons.spacing = 12
+        buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let root = NSStackView(views: [grid, buttons])
-        root.orientation = .vertical
-        root.alignment = .trailing
-        root.spacing = 16
-        root.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-        root.translatesAutoresizingMaskIntoConstraints = false
-
-        content.addSubview(root)
+        content.addSubview(grid)
+        content.addSubview(buttons)
         NSLayoutConstraint.activate([
-            root.topAnchor.constraint(equalTo: content.topAnchor),
-            root.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            root.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            root.bottomAnchor.constraint(equalTo: content.bottomAnchor)
+            grid.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            grid.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            grid.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            buttons.topAnchor.constraint(equalTo: grid.bottomAnchor, constant: 20),
+            buttons.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20)
         ])
+
+        window?.setContentSize(NSSize(width: 420, height: content.fittingSize.height))
     }
 
     private func label(_ text: String) -> NSTextField {
