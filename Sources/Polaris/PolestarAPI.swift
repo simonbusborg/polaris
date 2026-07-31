@@ -28,6 +28,9 @@ struct CarData {
     let fluidWarnings: [String]
     let imageData: Data?
     let lastUpdated: Date
+    /// When the car itself last reported battery data (API event timestamp).
+    /// `lastUpdated` is merely when we fetched; a garaged car can be hours older.
+    let carReportedAt: Date?
 
     /// Status with the CHARGING_STATUS_ / CHARGING_STATUS_V2_ prefix stripped,
     /// e.g. "CHARGING", "IDLE", "DONE".
@@ -221,6 +224,19 @@ final class PolestarAPI {
         var odometerKm: Int?
         if let meters = odometer?["odometerMeters"] as? Int { odometerKm = meters / 1000 }
 
+        // AppSync serializes the protobuf timestamp's int64 seconds as either
+        // a number or a string depending on magnitude — accept both.
+        var carReportedAt: Date?
+        if let ts = battery["timestamp"] as? [String: Any] {
+            let seconds: TimeInterval?
+            if let n = ts["seconds"] as? Int { seconds = TimeInterval(n) }
+            else if let s = ts["seconds"] as? String { seconds = TimeInterval(s) }
+            else { seconds = nil }
+            if let seconds, seconds > 0 {
+                carReportedAt = Date(timeIntervalSince1970: seconds)
+            }
+        }
+
         let warning: Bool
         if let sw = health?["serviceWarning"] as? String {
             warning = !sw.contains("NO_WARNING") && !sw.contains("UNSPECIFIED")
@@ -259,7 +275,8 @@ final class PolestarAPI {
             serviceWarning: warning,
             fluidWarnings: fluids,
             imageData: carImageData,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            carReportedAt: carReportedAt
         )
     }
 

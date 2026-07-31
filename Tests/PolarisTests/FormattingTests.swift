@@ -9,6 +9,20 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(StatusItemController.shortDuration(minutes: 135), "2h15m")
     }
 
+    func testRelativeAge() {
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 30), "1min ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 45 * 60), "45min ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 200 * 60), "3h20m ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 47 * 3600), "47h ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 3 * 86400), "3d ago")
+    }
+
+    func testBatteryColor() {
+        XCTAssertEqual(StatusItemController.batteryColor(percentage: 15, charging: true), .systemGreen)
+        XCTAssertEqual(StatusItemController.batteryColor(percentage: 15, charging: false), .systemOrange)
+        XCTAssertEqual(StatusItemController.batteryColor(percentage: 80, charging: false), .controlAccentColor)
+    }
+
     func testVersionComparison() {
         XCTAssertTrue(UpdateChecker.isVersion("2.0.0", newerThan: "1.9.9"))
         XCTAssertTrue(UpdateChecker.isVersion("1.10.0", newerThan: "1.9.1"))
@@ -49,6 +63,6 @@ final class FormattingTests: XCTestCase {
                 ownerFirstName: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,
-                lastUpdated: Date())
+                lastUpdated: Date(), carReportedAt: nil)
     }
 }

@@ -48,6 +48,8 @@ final class StatusItemController {
     }
 
     func render(data: CarData?, error: String?, authenticated: Bool) {
+        let symbol = (data?.isCharging == true) ? "bolt.car.fill" : "bolt.car"
+        statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Polaris")
         statusItem.button?.title = " " + barTitle(for: data)
         statusItem.menu = buildMenu(data: data, error: error)
     }
@@ -111,10 +113,18 @@ final class StatusItemController {
 
             // Live data
             menu.addItem(kvItem("Battery", String(format: "%.0f%%", data.batteryPercentage)))
+            let barItem = NSMenuItem()
+            barItem.view = BatteryBarView(
+                fraction: data.batteryPercentage / 100,
+                color: Self.batteryColor(percentage: data.batteryPercentage, charging: data.isCharging)
+            )
+            menu.addItem(barItem)
             menu.addItem(kvItem("Range", "\(data.rangeKm) km"))
             menu.addItem(kvItem("Status", Self.humanStatus(data.statusKey)))
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
-                menu.addItem(kvItem("Full in", Self.shortDuration(minutes: minutes)))
+                let fullAt = data.lastUpdated.addingTimeInterval(TimeInterval(minutes * 60))
+                menu.addItem(kvItem("Full in",
+                                    "\(Self.shortDuration(minutes: minutes)) · \(timeFormatter.string(from: fullAt))"))
             }
 
             // Car stats
@@ -123,14 +133,18 @@ final class StatusItemController {
                 let f = NumberFormatter(); f.numberStyle = .decimal
                 stats.append(("Odometer", "\(f.string(from: NSNumber(value: km)) ?? "\(km)") km"))
             }
+            var serviceSoon = false
             if let days = data.daysToService {
                 var service = "in \(days) days"
                 if let km = data.distanceToServiceKm { service += " / \(km) km" }
+                serviceSoon = days < 30
                 stats.append(("Service", service))
             }
             if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty {
                 menu.addItem(.separator())
-                stats.forEach { menu.addItem(kvItem($0.0, $0.1)) }
+                stats.forEach {
+                    menu.addItem(kvItem($0.0, $0.1, valueWarning: $0.0 == "Service" && serviceSoon))
+                }
                 if data.serviceWarning {
                     menu.addItem(rowItem("⚠︎ Service warning", warning: true))
                 }
@@ -139,6 +153,15 @@ final class StatusItemController {
 
             menu.addItem(.separator())
             menu.addItem(kvItem("Updated", timeFormatter.string(from: data.lastUpdated)))
+            // "Updated" is when we fetched; the car itself may not have phoned
+            // home for hours. Only call that out when it's meaningfully stale.
+            if let reported = data.carReportedAt {
+                let age = data.lastUpdated.timeIntervalSince(reported)
+                if age > 30 * 60 {
+                    menu.addItem(kvItem("Car reported", Self.relativeAge(seconds: age),
+                                        valueWarning: age > 6 * 3600))
+                }
+            }
         } else {
             menu.addItem(Self.infoItem("No data yet"))
         }
@@ -187,9 +210,11 @@ final class StatusItemController {
     /// Total row width — matches the car image container (14 + 280 + 14).
     static let rowWidth: CGFloat = 308
 
-    private func kvItem(_ key: String, _ value: String, copyable: Bool = false) -> NSMenuItem {
+    private func kvItem(_ key: String, _ value: String, copyable: Bool = false,
+                        valueWarning: Bool = false) -> NSMenuItem {
         let item = NSMenuItem()
-        item.view = KVRowView(key: key, value: value, copyText: copyable ? value : nil)
+        item.view = KVRowView(key: key, value: value, valueWarning: valueWarning,
+                              copyText: copyable ? value : nil)
         if copyable { item.toolTip = "Click to copy" }
         return item
     }
@@ -252,6 +277,19 @@ final class StatusItemController {
         return m == 0 ? "\(h)h" : "\(h)h\(m)m"
     }
 
+    /// Coarse age for the "Car reported" row, e.g. "45min ago", "3h20m ago", "2d ago".
+    static func relativeAge(seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes >= 48 * 60 { return "\(minutes / (24 * 60))d ago" }
+        return "\(shortDuration(minutes: max(minutes, 1))) ago"
+    }
+
+    static func batteryColor(percentage: Double, charging: Bool) -> NSColor {
+        if charging { return .systemGreen }
+        if percentage <= 20 { return .systemOrange }
+        return .controlAccentColor
+    }
+
     /// "Hi"/"Hello" in the system language, covering Polestar's markets.
     static func greeting(_ name: String,
                          languageCode: String? = Locale.preferredLanguages.first) -> String {
@@ -274,7 +312,8 @@ final class KVRowView: NSView {
     private let copyText: String?
     private static let sidePad: CGFloat = 14
 
-    init(key: String, value: String?, bold: Bool = false, warning: Bool = false, copyText: String? = nil) {
+    init(key: String, value: String?, bold: Bool = false, warning: Bool = false,
+         valueWarning: Bool = false, copyText: String? = nil) {
         self.copyText = copyText
         let height: CGFloat = bold ? 26 : 24
         super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
@@ -292,7 +331,7 @@ final class KVRowView: NSView {
         if let value {
             let valueLabel = NSTextField(labelWithString: value)
             valueLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
-            valueLabel.textColor = .labelColor
+            valueLabel.textColor = valueWarning ? .systemOrange : .labelColor
             valueLabel.alignment = .right
             valueLabel.sizeToFit()
             // Long values (upholstery names etc.) must not run into the key.
@@ -338,5 +377,50 @@ final class KVRowView: NSView {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(copyText, forType: .string)
         enclosingMenuItem?.menu?.cancelTracking()
+    }
+}
+
+/// Slim battery-level bar shown under the Battery row, aligned with the
+/// KV rows' side padding. Green while charging, orange when low.
+/// Layer-backed like KVRowView; colors resolve via effectiveAppearance so
+/// dark mode and the vibrant menu background are handled correctly.
+final class BatteryBarView: NSView {
+
+    private let color: NSColor
+    private let trackLayer = CALayer()
+    private let fillLayer = CALayer()
+
+    init(fraction: Double, color: NSColor) {
+        self.color = color
+        let height: CGFloat = 13
+        let sidePad: CGFloat = 14
+        let barHeight: CGFloat = 5
+        super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
+        wantsLayer = true
+
+        let track = CGRect(x: sidePad, y: (height - barHeight) / 2,
+                           width: StatusItemController.rowWidth - sidePad * 2, height: barHeight)
+        trackLayer.frame = track
+        trackLayer.cornerRadius = barHeight / 2
+        layer?.addSublayer(trackLayer)
+
+        let clamped = CGFloat(min(max(fraction, 0), 1))
+        var fill = track
+        // Never narrower than the endcap radius, or the rounding inverts.
+        fill.size.width = clamped > 0 ? max(track.width * clamped, barHeight) : 0
+        fillLayer.frame = fill
+        fillLayer.cornerRadius = barHeight / 2
+        layer?.addSublayer(fillLayer)
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func updateLayer() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            trackLayer.backgroundColor = NSColor.labelColor.withAlphaComponent(0.12).cgColor
+            fillLayer.backgroundColor = color.cgColor
+        }
     }
 }
