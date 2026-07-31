@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Polaris.app
+        run: make app
+
+      - name: Zip the app
+        run: ditto -c -k --keepParent Polaris.app Polaris.zip
+
+      - name: Create GitHub release with asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Polaris.zip
+          generate_release_notes: true
