@@ -41,8 +41,7 @@ final class FormattingTests: XCTestCase {
         CarData(batteryPercentage: 50, rangeKm: 200,
                 chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                 modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
-                exteriorName: nil, interiorName: nil, motorName: nil,
-                features: [], ownerFirstName: nil,
+                ownerFirstName: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,
                 lastUpdated: Date())

@@ -87,23 +87,6 @@ final class StatusItemController {
             if let vin = data.vin, !vin.isEmpty {
                 menu.addItem(kvItem("VIN", vin, copyable: true))
             }
-            if let exterior = data.exteriorName, !exterior.isEmpty {
-                menu.addItem(kvItem("Exterior", exterior))
-            }
-            if let interior = data.interiorName, !interior.isEmpty {
-                menu.addItem(kvItem("Interior", interior))
-            }
-            if let motor = data.motorName, !motor.isEmpty {
-                menu.addItem(kvItem("Motor", motor))
-            }
-            if !data.features.isEmpty {
-                let item = NSMenuItem(title: "Options (\(data.features.count))",
-                                      action: nil, keyEquivalent: "")
-                let submenu = NSMenu()
-                data.features.sorted().forEach { submenu.addItem(rowItem($0)) }
-                item.submenu = submenu
-                menu.addItem(item)
-            }
 
             menu.addItem(.separator())
 

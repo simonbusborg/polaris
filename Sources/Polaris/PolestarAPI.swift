@@ -20,10 +20,6 @@ struct CarData {
     let modelYear: String?
     let registrationNo: String?
     let vin: String?
-    let exteriorName: String?
-    let interiorName: String?
-    let motorName: String?
-    let features: [String]
     let ownerFirstName: String?
     let odometerKm: Int?
     let daysToService: Int?
@@ -89,10 +85,6 @@ final class PolestarAPI {
     private(set) var modelName: String?
     private(set) var modelYear: String?
     private(set) var registrationNo: String?
-    private var exteriorName: String?
-    private var interiorName: String?
-    private var motorName: String?
-    private var features: [String] = []
     private var pno34: String?
     private var structureWeek: String?
     private var carImageData: Data?
@@ -229,10 +221,6 @@ final class PolestarAPI {
             modelYear: modelYear,
             registrationNo: registrationNo,
             vin: vin,
-            exteriorName: exteriorName,
-            interiorName: interiorName,
-            motorName: motorName,
-            features: features,
             ownerFirstName: ownerFirstName,
             odometerKm: odometerKm,
             daysToService: health?["daysToService"] as? Int,
@@ -459,9 +447,10 @@ final class PolestarAPI {
     private func fetchCarInfo(vin: String) async throws {
         guard let token = accessToken else { return }
         // registrationNo is the license plate. Keep this query minimal and
-        // known-good: one rejected field would fail the whole request and
-        // take the plate, model title, and car image down with it. The
-        // decorative extras (colors, motor, options) are fetched separately.
+        // known-good: one rejected field fails the whole request and takes
+        // the plate, model title, and car image down with it. Polestar
+        // removed the configuration data (content{}, features) from this
+        // schema around April 2026 — don't re-add those fields.
         let query = """
         query GetConsumerCarsV2 {
           getConsumerCarsV2 {
@@ -484,64 +473,6 @@ final class PolestarAPI {
         registrationNo = car["registrationNo"] as? String
         pno34 = car["pno34"] as? String
         structureWeek = (car["structureWeek"] as? String) ?? (car["structureWeek"] as? Int).map(String.init)
-
-        await fetchCarExtras(vin: vin, token: token)
-    }
-
-    /// Best-effort configuration details (exterior/interior/motor names and
-    /// the options list). The schema for these has shifted between model
-    /// years, so each query fails independently and logs why.
-    private func fetchCarExtras(vin: String, token: String) async {
-        do {
-            let query = """
-            query GetConsumerCarsV2 {
-              getConsumerCarsV2 {
-                vin
-                content {
-                  exterior { name }
-                  interior { name }
-                  motor { name description }
-                }
-              }
-            }
-            """
-            let json = try await graphQL(query: query, variables: nil, token: token)
-            if let data = json["data"] as? [String: Any],
-               let cars = data["getConsumerCarsV2"] as? [[String: Any]],
-               let car = cars.first(where: { ($0["vin"] as? String) == vin }),
-               let content = car["content"] as? [String: Any] {
-                exteriorName = (content["exterior"] as? [String: Any])?["name"] as? String
-                interiorName = (content["interior"] as? [String: Any])?["name"] as? String
-                let motor = content["motor"] as? [String: Any]
-                motorName = (motor?["name"] as? String) ?? (motor?["description"] as? String)
-            }
-        } catch {
-            debugLog("car content query failed: \(error.localizedDescription)")
-        }
-
-        do {
-            let query = """
-            query GetConsumerCarsV2 {
-              getConsumerCarsV2 {
-                vin
-                features { name excluded }
-              }
-            }
-            """
-            let json = try await graphQL(query: query, variables: nil, token: token)
-            if let data = json["data"] as? [String: Any],
-               let cars = data["getConsumerCarsV2"] as? [[String: Any]],
-               let car = cars.first(where: { ($0["vin"] as? String) == vin }),
-               let rawFeatures = car["features"] as? [[String: Any]] {
-                features = rawFeatures.compactMap { feature in
-                    guard (feature["excluded"] as? Bool) != true,
-                          let name = feature["name"] as? String, !name.isEmpty else { return nil }
-                    return name
-                }
-            }
-        } catch {
-            debugLog("car features query failed: \(error.localizedDescription)")
-        }
     }
 
     /// Fetches a studio render of the exact car (correct paint/wheels) from
