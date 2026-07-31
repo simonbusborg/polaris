@@ -66,6 +66,11 @@ final class StatusItemController {
         let menu = NSMenu()
 
         if let data {
+            // Greeting (owner's first name from the Polestar ID profile)
+            if let name = data.ownerFirstName, !name.isEmpty {
+                menu.addItem(rowItem(Self.greeting(name), bold: true))
+            }
+
             // Car image (studio render of the actual configuration)
             if let imageData = data.imageData, let image = NSImage(data: imageData) {
                 menu.addItem(Self.imageItem(image))
@@ -81,6 +86,23 @@ final class StatusItemController {
             }
             if let vin = data.vin, !vin.isEmpty {
                 menu.addItem(kvItem("VIN", vin, copyable: true))
+            }
+            if let exterior = data.exteriorName, !exterior.isEmpty {
+                menu.addItem(kvItem("Exterior", exterior))
+            }
+            if let interior = data.interiorName, !interior.isEmpty {
+                menu.addItem(kvItem("Interior", interior))
+            }
+            if let motor = data.motorName, !motor.isEmpty {
+                menu.addItem(kvItem("Motor", motor))
+            }
+            if !data.features.isEmpty {
+                let item = NSMenuItem(title: "Options (\(data.features.count))",
+                                      action: nil, keyEquivalent: "")
+                let submenu = NSMenu()
+                data.features.sorted().forEach { submenu.addItem(rowItem($0)) }
+                item.submenu = submenu
+                menu.addItem(item)
             }
 
             menu.addItem(.separator())
@@ -223,6 +245,19 @@ final class StatusItemController {
         let h = minutes / 60, m = minutes % 60
         return m == 0 ? "\(h)h" : "\(h)h\(m)m"
     }
+
+    /// "Hi"/"Hello" in the system language, covering Polestar's markets.
+    static func greeting(_ name: String,
+                         languageCode: String? = Locale.preferredLanguages.first) -> String {
+        let code = String(languageCode?.prefix(2) ?? "en")
+        let hello: [String: String] = [
+            "da": "Hej", "sv": "Hej", "nb": "Hei", "nn": "Hei", "no": "Hei",
+            "de": "Hallo", "nl": "Hallo", "fi": "Hei", "fr": "Bonjour",
+            "es": "Hola", "it": "Ciao", "pt": "Olá", "pl": "Cześć",
+            "zh": "你好", "ko": "안녕하세요", "en": "Hi"
+        ]
+        return "\(hello[code] ?? "Hi"), \(name)"
+    }
 }
 
 /// A menu row rendered as a custom view: key on the left, value right-aligned,
@@ -254,6 +289,14 @@ final class KVRowView: NSView {
             valueLabel.textColor = .labelColor
             valueLabel.alignment = .right
             valueLabel.sizeToFit()
+            // Long values (upholstery names etc.) must not run into the key.
+            let maxWidth = StatusItemController.rowWidth - Self.sidePad * 2
+                - keyLabel.frame.width - 12
+            if valueLabel.frame.width > maxWidth {
+                valueLabel.lineBreakMode = .byTruncatingTail
+                valueLabel.frame.size.width = maxWidth
+                toolTip = value
+            }
             valueLabel.frame.origin = NSPoint(
                 x: StatusItemController.rowWidth - Self.sidePad - valueLabel.frame.width,
                 y: (height - valueLabel.frame.height) / 2

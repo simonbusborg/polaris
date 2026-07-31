@@ -20,6 +20,11 @@ struct CarData {
     let modelYear: String?
     let registrationNo: String?
     let vin: String?
+    let exteriorName: String?
+    let interiorName: String?
+    let motorName: String?
+    let features: [String]
+    let ownerFirstName: String?
     let odometerKm: Int?
     let daysToService: Int?
     let distanceToServiceKm: Int?
@@ -76,12 +81,18 @@ final class PolestarAPI {
 
     private var tokenEndpoint: String?
     private var authorizationEndpoint: String?
+    private var userinfoEndpoint: String?
+    private var ownerFirstName: String?
 
     private var session: URLSession
 
     private(set) var modelName: String?
     private(set) var modelYear: String?
     private(set) var registrationNo: String?
+    private var exteriorName: String?
+    private var interiorName: String?
+    private var motorName: String?
+    private var features: [String] = []
     private var pno34: String?
     private var structureWeek: String?
     private var carImageData: Data?
@@ -109,9 +120,10 @@ final class PolestarAPI {
         try await discoverOidcConfiguration()
         let code = try await obtainAuthorizationCode(email: email, password: password)
         try await exchangeCodeForToken(code)
-        // Car identity + image are nice-to-have; ignore failures.
+        // Car identity, image, and owner name are nice-to-have; ignore failures.
         try? await fetchCarInfo(vin: vin)
         await fetchCarImage()
+        await fetchOwnerInfo()
     }
 
     /// Resume the previous session using the refresh token stored in the
@@ -134,6 +146,7 @@ final class PolestarAPI {
         debugLog("session restored from stored refresh token")
         try? await fetchCarInfo(vin: vin)
         await fetchCarImage()
+        await fetchOwnerInfo()
     }
 
     func fetchCarData(vin: String) async throws -> CarData {
@@ -216,6 +229,11 @@ final class PolestarAPI {
             modelYear: modelYear,
             registrationNo: registrationNo,
             vin: vin,
+            exteriorName: exteriorName,
+            interiorName: interiorName,
+            motorName: motorName,
+            features: features,
+            ownerFirstName: ownerFirstName,
             odometerKm: odometerKm,
             daysToService: health?["daysToService"] as? Int,
             distanceToServiceKm: health?["distanceToServiceKm"] as? Int,
@@ -241,6 +259,21 @@ final class PolestarAPI {
 
         tokenEndpoint = tokenEp
         authorizationEndpoint = authEp
+        userinfoEndpoint = json["userinfo_endpoint"] as? String
+    }
+
+    /// The OIDC userinfo endpoint returns profile claims (given_name etc.)
+    /// for the logged-in Polestar ID — used to greet the owner by name.
+    private func fetchOwnerInfo() async {
+        guard ownerFirstName == nil, let token = accessToken,
+              let endpoint = userinfoEndpoint, let url = URL(string: endpoint) else { return }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let (data, response) = try? await session.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { debugLog("userinfo: fetch failed"); return }
+        ownerFirstName = (json["given_name"] as? String) ?? (json["firstname"] as? String)
     }
 
     private var codeVerifier = ""
@@ -421,8 +454,7 @@ final class PolestarAPI {
 
     private func fetchCarInfo(vin: String) async throws {
         guard let token = accessToken else { return }
-        // Current schema: flat fields (the old content{...} structure no
-        // longer exists). registrationNo is the license plate.
+        // registrationNo is the license plate.
         let query = """
         query GetConsumerCarsV2 {
           getConsumerCarsV2 {
@@ -432,6 +464,12 @@ final class PolestarAPI {
             registrationNo
             pno34
             structureWeek
+            content {
+              exterior { name }
+              interior { name }
+              motor { name description }
+            }
+            features { name excluded }
           }
         }
         """
@@ -445,6 +483,20 @@ final class PolestarAPI {
         registrationNo = car["registrationNo"] as? String
         pno34 = car["pno34"] as? String
         structureWeek = (car["structureWeek"] as? String) ?? (car["structureWeek"] as? Int).map(String.init)
+
+        if let content = car["content"] as? [String: Any] {
+            exteriorName = (content["exterior"] as? [String: Any])?["name"] as? String
+            interiorName = (content["interior"] as? [String: Any])?["name"] as? String
+            let motor = content["motor"] as? [String: Any]
+            motorName = (motor?["name"] as? String) ?? (motor?["description"] as? String)
+        }
+        if let rawFeatures = car["features"] as? [[String: Any]] {
+            features = rawFeatures.compactMap { feature in
+                guard (feature["excluded"] as? Bool) != true,
+                      let name = feature["name"] as? String, !name.isEmpty else { return nil }
+                return name
+            }
+        }
     }
 
     /// Fetches a studio render of the exact car (correct paint/wheels) from

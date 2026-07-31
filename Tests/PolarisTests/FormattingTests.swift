@@ -17,6 +17,13 @@ final class FormattingTests: XCTestCase {
         XCTAssertFalse(UpdateChecker.isVersion("1.9.1", newerThan: "2.0.0"))
     }
 
+    func testGreetingUsesSystemLanguage() {
+        XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: "da-DK"), "Hej, Simon")
+        XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: "en-US"), "Hi, Simon")
+        XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: "xx"), "Hi, Simon")
+        XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: nil), "Hi, Simon")
+    }
+
     func testStatusKeyStripsPrefixes() {
         XCTAssertEqual(car(status: "CHARGING_STATUS_CHARGING").statusKey, "CHARGING")
         XCTAssertEqual(car(status: "CHARGING_STATUS_V2_SMART_CHARGING").statusKey, "SMART_CHARGING")
@@ -34,6 +41,8 @@ final class FormattingTests: XCTestCase {
         CarData(batteryPercentage: 50, rangeKm: 200,
                 chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                 modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
+                exteriorName: nil, interiorName: nil, motorName: nil,
+                features: [], ownerFirstName: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,
                 lastUpdated: Date())
