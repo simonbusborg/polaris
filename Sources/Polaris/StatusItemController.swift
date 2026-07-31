@@ -65,18 +65,57 @@ final class StatusItemController {
         let menu = NSMenu()
 
         if let data {
-            if let model = data.modelName {
-                menu.addItem(Self.infoItem(model, bold: true))
+            // Car image (studio render of the actual configuration)
+            if let imageData = data.imageData, let image = NSImage(data: imageData) {
+                menu.addItem(Self.imageItem(image))
             }
-            menu.addItem(Self.infoItem(String(format: "Battery  %.0f%%", data.batteryPercentage)))
-            var range = "Range  \(data.rangeKm) km"
+
+            // Identity
+            let title = [data.modelName, data.modelYear].compactMap { $0 }.joined(separator: " · ")
+            if !title.isEmpty {
+                menu.addItem(rowItem(title, bold: true))
+            }
+            if let plate = data.registrationNo, !plate.isEmpty {
+                menu.addItem(kvItem("Plate", plate, copyable: true))
+            }
+            if let vin = data.vin, !vin.isEmpty {
+                menu.addItem(kvItem("VIN", vin, copyable: true))
+            }
+
+            menu.addItem(.separator())
+
+            // Live data
+            menu.addItem(kvItem("Battery", String(format: "%.0f%%", data.batteryPercentage)))
+            var range = "\(data.rangeKm) km"
             if let miles = data.rangeMiles { range += " / \(miles) mi" }
-            menu.addItem(Self.infoItem(range))
-            menu.addItem(Self.infoItem("Status  \(Self.humanStatus(data.chargingStatus))"))
+            menu.addItem(kvItem("Range", range))
+            menu.addItem(kvItem("Status", Self.humanStatus(data.statusKey)))
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
-                menu.addItem(Self.infoItem("Full in  \(Self.shortDuration(minutes: minutes))"))
+                menu.addItem(kvItem("Full in", Self.shortDuration(minutes: minutes)))
             }
-            menu.addItem(Self.infoItem("Updated  \(timeFormatter.string(from: data.lastUpdated))"))
+
+            // Car stats
+            var stats: [(String, String)] = []
+            if let km = data.odometerKm {
+                let f = NumberFormatter(); f.numberStyle = .decimal
+                stats.append(("Odometer", "\(f.string(from: NSNumber(value: km)) ?? "\(km)") km"))
+            }
+            if let days = data.daysToService {
+                var service = "in \(days) days"
+                if let km = data.distanceToServiceKm { service += " / \(km) km" }
+                stats.append(("Service", service))
+            }
+            if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty {
+                menu.addItem(.separator())
+                stats.forEach { menu.addItem(kvItem($0.0, $0.1)) }
+                if data.serviceWarning {
+                    menu.addItem(rowItem("⚠︎ Service warning", warning: true))
+                }
+                data.fluidWarnings.forEach { menu.addItem(rowItem("⚠︎ \($0)", warning: true)) }
+            }
+
+            menu.addItem(.separator())
+            menu.addItem(kvItem("Updated", timeFormatter.string(from: data.lastUpdated)))
         } else {
             menu.addItem(Self.infoItem("No data yet"))
         }
@@ -107,7 +146,42 @@ final class StatusItemController {
     @objc private func refreshAction() { onRefresh() }
     @objc private func settingsAction() { onSettings() }
 
+    // MARK: - Key/value rows (custom views: exact colors, exact width,
+    // no system dimming, aligned with the car image)
+
+    /// Total row width — matches the car image container (14 + 280 + 14).
+    static let rowWidth: CGFloat = 308
+
+    private func kvItem(_ key: String, _ value: String, copyable: Bool = false) -> NSMenuItem {
+        let item = NSMenuItem()
+        item.view = KVRowView(key: key, value: value, copyText: copyable ? value : nil)
+        if copyable { item.toolTip = "Click to copy" }
+        return item
+    }
+
+    private func rowItem(_ text: String, bold: Bool = false, warning: Bool = false) -> NSMenuItem {
+        let item = NSMenuItem()
+        item.view = KVRowView(key: text, value: nil, bold: bold, warning: warning)
+        return item
+    }
+
     // MARK: - Helpers
+
+    private static func imageItem(_ image: NSImage) -> NSMenuItem {
+        let width: CGFloat = 280
+        let aspect = image.size.height / max(image.size.width, 1)
+        let height = min(width * aspect, 180)
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width + 28, height: height + 8))
+        let imageView = NSImageView(frame: NSRect(x: 14, y: 4, width: width, height: height))
+        imageView.image = image
+        imageView.imageScaling = .scaleProportionallyUpOrDown
+        container.addSubview(imageView)
+
+        let item = NSMenuItem()
+        item.view = container
+        return item
+    }
 
     private static func infoItem(_ title: String, bold: Bool = false) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
@@ -121,21 +195,19 @@ final class StatusItemController {
         return item
     }
 
-    private static func humanStatus(_ raw: String) -> String {
-        switch raw {
-        case "CHARGING_STATUS_CHARGING": return "Charging"
-        case "CHARGING_STATUS_IDLE": return "Idle"
-        case "CHARGING_STATUS_DONE": return "Done"
-        case "CHARGING_STATUS_DISCHARGING": return "Discharging"
-        case "CHARGING_STATUS_ERROR": return "Error"
-        case "CHARGING_STATUS_FAULT": return "Fault"
-        case "CHARGING_STATUS_SCHEDULED": return "Scheduled"
-        case "CHARGING_STATUS_SMART_CHARGING": return "Smart charging"
+    /// Takes the already-normalized status key (prefixes stripped), e.g. "IDLE".
+    private static func humanStatus(_ key: String) -> String {
+        switch key {
+        case "CHARGING": return "Charging"
+        case "IDLE": return "Idle"
+        case "DONE": return "Done"
+        case "DISCHARGING": return "Discharging"
+        case "ERROR": return "Error"
+        case "FAULT": return "Fault"
+        case "SCHEDULED": return "Scheduled"
+        case "SMART_CHARGING": return "Smart charging"
         default:
-            return raw
-                .replacingOccurrences(of: "CHARGING_STATUS_", with: "")
-                .replacingOccurrences(of: "_", with: " ")
-                .capitalized
+            return key.replacingOccurrences(of: "_", with: " ").capitalized
         }
     }
 
@@ -143,5 +215,72 @@ final class StatusItemController {
         if minutes < 60 { return "\(minutes)min" }
         let h = minutes / 60, m = minutes % 60
         return m == 0 ? "\(h)h" : "\(h)h\(m)m"
+    }
+}
+
+/// A menu row rendered as a custom view: key on the left, value right-aligned,
+/// consistent colors regardless of enabled state, fixed width matching the
+/// car image. Rows with `copyText` highlight on hover and copy on click.
+final class KVRowView: NSView {
+
+    private let copyText: String?
+    private static let sidePad: CGFloat = 14
+
+    init(key: String, value: String?, bold: Bool = false, warning: Bool = false, copyText: String? = nil) {
+        self.copyText = copyText
+        let height: CGFloat = bold ? 26 : 24
+        super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
+        wantsLayer = true
+        layer?.cornerRadius = 4
+
+        let keyLabel = NSTextField(labelWithString: key)
+        keyLabel.font = bold ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
+        keyLabel.textColor = warning ? .systemOrange : (value == nil ? .labelColor : .secondaryLabelColor)
+        keyLabel.sizeToFit()
+        keyLabel.frame.origin = NSPoint(x: Self.sidePad,
+                                        y: (height - keyLabel.frame.height) / 2)
+        addSubview(keyLabel)
+
+        if let value {
+            let valueLabel = NSTextField(labelWithString: value)
+            valueLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
+            valueLabel.textColor = .labelColor
+            valueLabel.alignment = .right
+            valueLabel.sizeToFit()
+            valueLabel.frame.origin = NSPoint(
+                x: StatusItemController.rowWidth - Self.sidePad - valueLabel.frame.width,
+                y: (height - valueLabel.frame.height) / 2
+            )
+            addSubview(valueLabel)
+        }
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    // Hover highlight + click-to-copy, only for copyable rows.
+
+    override func updateTrackingAreas() {
+        trackingAreas.forEach(removeTrackingArea)
+        if copyText != nil {
+            addTrackingArea(NSTrackingArea(rect: bounds,
+                                           options: [.mouseEnteredAndExited, .activeAlways],
+                                           owner: self, userInfo: nil))
+        }
+        super.updateTrackingAreas()
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        layer?.backgroundColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        layer?.backgroundColor = nil
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard let copyText else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(copyText, forType: .string)
+        enclosingMenuItem?.menu?.cancelTracking()
     }
 }

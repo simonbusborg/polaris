@@ -18,10 +18,27 @@ struct CarData {
     let chargingStatus: String
     let estimatedChargingTimeToFullMinutes: Int?
     let modelName: String?
+    let modelYear: String?
+    let registrationNo: String?
+    let vin: String?
+    let odometerKm: Int?
+    let daysToService: Int?
+    let distanceToServiceKm: Int?
+    let serviceWarning: Bool
+    let fluidWarnings: [String]
+    let imageData: Data?
     let lastUpdated: Date
 
+    /// Status with the CHARGING_STATUS_ / CHARGING_STATUS_V2_ prefix stripped,
+    /// e.g. "CHARGING", "IDLE", "DONE".
+    var statusKey: String {
+        chargingStatus
+            .replacingOccurrences(of: "CHARGING_STATUS_V2_", with: "")
+            .replacingOccurrences(of: "CHARGING_STATUS_", with: "")
+    }
+
     var isCharging: Bool {
-        chargingStatus == "CHARGING_STATUS_CHARGING"
+        statusKey == "CHARGING" || statusKey == "SMART_CHARGING"
     }
 }
 
@@ -45,6 +62,10 @@ final class PolestarAPI {
 
     // Official Polestar endpoints only.
     private let apiBaseURL = URL(string: "https://pc-api.polestar.com/eu-north-1/mystar-v2/")!
+    // Public (unauthenticated) API used by Polestar's own site for car images.
+    // The x-api-key is a public AppSync key shipped in their web app.
+    private let publicApiURL = URL(string: "https://pc-api.polestar.com/eu-north-1/mystar-public/")!
+    private let publicApiKey = "da2-js63uvc7c5hwpdudt657d5lyou"
     private let oidcProviderURL = "https://polestarid.eu.polestar.com"
     private let oidcClientId = "l3oopkc_10"
     private let oidcRedirectUri = "https://www.polestar.com/sign-in-callback"
@@ -60,6 +81,11 @@ final class PolestarAPI {
     private var session: URLSession
 
     private(set) var modelName: String?
+    private(set) var modelYear: String?
+    private(set) var registrationNo: String?
+    private var pno34: String?
+    private var structureWeek: String?
+    private var carImageData: Data?
 
     init() {
         // .ephemeral ships with its own in-memory cookie storage — do NOT
@@ -84,8 +110,9 @@ final class PolestarAPI {
         try await discoverOidcConfiguration()
         let code = try await obtainAuthorizationCode(email: email, password: password)
         try await exchangeCodeForToken(code)
-        // Model name is nice-to-have; ignore failures.
-        modelName = try? await fetchModelName(vin: vin)
+        // Car identity + image are nice-to-have; ignore failures.
+        try? await fetchCarInfo(vin: vin)
+        await fetchCarImage()
     }
 
     func fetchCarData(vin: String) async throws -> CarData {
@@ -105,6 +132,21 @@ final class PolestarAPI {
               estimatedChargingTimeToFullMinutes
               timestamp { seconds }
             }
+            odometer {
+              vin
+              odometerMeters
+              timestamp { seconds }
+            }
+            health {
+              vin
+              daysToService
+              distanceToServiceKm
+              serviceWarning
+              brakeFluidLevelWarning
+              engineCoolantLevelWarning
+              oilLevelWarning
+              timestamp { seconds }
+            }
           }
         }
         """
@@ -116,6 +158,34 @@ final class PolestarAPI {
               let battery = batteries.first
         else { throw PolestarError.parse("Unexpected telematics response") }
 
+        let odometer = (telematics["odometer"] as? [[String: Any]])?.first
+        let health = (telematics["health"] as? [[String: Any]])?.first
+
+        var odometerKm: Int?
+        if let meters = odometer?["odometerMeters"] as? Int { odometerKm = meters / 1000 }
+
+        let warning: Bool
+        if let sw = health?["serviceWarning"] as? String {
+            warning = !sw.contains("NO_WARNING") && !sw.contains("UNSPECIFIED")
+        } else {
+            warning = false
+        }
+
+        // Fluid warnings — only surfaced when the car actually complains.
+        var fluids: [String] = []
+        let fluidFields = [
+            ("brakeFluidLevelWarning", "BRAKE_FLUID_LEVEL_WARNING_", "Brake fluid"),
+            ("engineCoolantLevelWarning", "ENGINE_COOLANT_LEVEL_WARNING_", "Coolant"),
+            ("oilLevelWarning", "OIL_LEVEL_WARNING_", "Oil")
+        ]
+        for (field, prefix, label) in fluidFields {
+            guard let raw = health?[field] as? String,
+                  !raw.contains("NO_WARNING"), !raw.contains("UNSPECIFIED") else { continue }
+            let detail = raw.replacingOccurrences(of: prefix, with: "")
+                .replacingOccurrences(of: "_", with: " ").lowercased()
+            fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
+        }
+
         let rangeKm = battery["estimatedDistanceToEmptyKm"] as? Int ?? 0
         return CarData(
             batteryPercentage: battery["batteryChargeLevelPercentage"] as? Double ?? 0,
@@ -124,6 +194,15 @@ final class PolestarAPI {
             chargingStatus: battery["chargingStatusV2"] as? String ?? "Unknown",
             estimatedChargingTimeToFullMinutes: battery["estimatedChargingTimeToFullMinutes"] as? Int,
             modelName: modelName,
+            modelYear: modelYear,
+            registrationNo: registrationNo,
+            vin: vin,
+            odometerKm: odometerKm,
+            daysToService: health?["daysToService"] as? Int,
+            distanceToServiceKm: health?["distanceToServiceKm"] as? Int,
+            serviceWarning: warning,
+            fluidWarnings: fluids,
+            imageData: carImageData,
             lastUpdated: Date()
         )
     }
@@ -308,15 +387,19 @@ final class PolestarAPI {
 
     // MARK: - GraphQL
 
-    private func fetchModelName(vin: String) async throws -> String? {
-        guard let token = accessToken else { return nil }
-        // Current schema: modelName is a flat field (the old
-        // content{model{name}} structure no longer exists).
+    private func fetchCarInfo(vin: String) async throws {
+        guard let token = accessToken else { return }
+        // Current schema: flat fields (the old content{...} structure no
+        // longer exists). registrationNo is the license plate.
         let query = """
         query GetConsumerCarsV2 {
           getConsumerCarsV2 {
             vin
             modelName
+            modelYear
+            registrationNo
+            pno34
+            structureWeek
           }
         }
         """
@@ -324,8 +407,56 @@ final class PolestarAPI {
         guard let data = json["data"] as? [String: Any],
               let cars = data["getConsumerCarsV2"] as? [[String: Any]],
               let car = cars.first(where: { ($0["vin"] as? String) == vin })
-        else { return nil }
-        return car["modelName"] as? String
+        else { return }
+        modelName = car["modelName"] as? String
+        modelYear = (car["modelYear"] as? String) ?? (car["modelYear"] as? Int).map(String.init)
+        registrationNo = car["registrationNo"] as? String
+        pno34 = car["pno34"] as? String
+        structureWeek = (car["structureWeek"] as? String) ?? (car["structureWeek"] as? Int).map(String.init)
+    }
+
+    /// Fetches a studio render of the exact car (correct paint/wheels) from
+    /// Polestar's public image API, then downloads the image bytes once.
+    private func fetchCarImage() async {
+        guard carImageData == nil,
+              let pno34, let structureWeek, let modelYear else { return }
+
+        let query = """
+        query GetCarImages($pno34: String!, $structureWeek: String!, $modelYear: String!, $locale: String!) {
+          getCarImages(pno34: $pno34, structureWeek: $structureWeek, modelYear: $modelYear, locale: $locale) {
+            transparent { url angle }
+            opaque { url angle }
+          }
+        }
+        """
+        let body: [String: Any] = ["query": query, "variables": [
+            "pno34": pno34, "structureWeek": structureWeek,
+            "modelYear": modelYear, "locale": "en-GB"
+        ]]
+
+        var request = URLRequest(url: publicApiURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(publicApiKey, forHTTPHeaderField: "x-api-key")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, _) = try? await session.data(for: request),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let payload = json["data"] as? [String: Any],
+              let images = payload["getCarImages"] as? [String: Any]
+        else { debugLog("car image: query failed"); return }
+
+        let transparent = images["transparent"] as? [[String: Any]] ?? []
+        let opaque = images["opaque"] as? [[String: Any]] ?? []
+        // Prefer a transparent render; pick a three-quarter view if present.
+        let pool = transparent.isEmpty ? opaque : transparent
+        let pick = pool.first(where: { ($0["angle"] as? Int) == 1 }) ?? pool.first
+        guard let urlString = pick?["url"] as? String, let url = URL(string: urlString) else { return }
+
+        if let (imageBytes, _) = try? await session.data(from: url) {
+            carImageData = imageBytes
+            debugLog("car image: downloaded \(imageBytes.count) bytes (angle \(pick?["angle"] as? Int ?? -1))")
+        }
     }
 
     private func graphQL(query: String, variables: [String: Any]?, token: String) async throws -> [String: Any] {

@@ -36,16 +36,16 @@ enum Keychain {
     static func savePassword(_ password: String) throws {
         let data = Data(password.utf8)
 
-        // Try update first, add if the item doesn't exist yet.
-        let update: [String: Any] = [kSecValueData as String: data]
-        var status = SecItemUpdate(baseQuery as CFDictionary, update as CFDictionary)
+        // Delete-then-add rather than update: ad-hoc builds get a new code
+        // signature every rebuild, and an item created by an older build may
+        // refuse access to the new one. Recreating the item resets its access
+        // control to the currently-running app.
+        SecItemDelete(baseQuery as CFDictionary)
 
-        if status == errSecItemNotFound {
-            var add = baseQuery
-            add[kSecValueData as String] = data
-            add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-            status = SecItemAdd(add as CFDictionary, nil)
-        }
+        var add = baseQuery
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        let status = SecItemAdd(add as CFDictionary, nil)
         guard status == errSecSuccess else { throw KeychainError.status(status) }
     }
 

@@ -13,6 +13,7 @@ app: build
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp $(BINARY) $(APP)/Contents/MacOS/Polaris
 	cp Resources/Info.plist $(APP)/Contents/Info.plist
+	cp Resources/Polaris.icns $(APP)/Contents/Resources/Polaris.icns
 	codesign --force -s - $(APP)
 	@echo "Done → open $(APP)  (or move it to /Applications)"
 
