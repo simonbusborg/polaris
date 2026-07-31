@@ -125,6 +125,9 @@
   }
   .panel .greet{font-weight:600;font-size:.95rem;padding:.4rem .6rem .1rem}
   .panel img.car{display:block;width:100%;height:auto;padding:.2rem .5rem;box-sizing:border-box}
+  /* The Polestar 2 renders face right, the Polestar 4 faces left —
+     mirror the 2 so every car points the same way. */
+  img[src*="polestar-2-"]{transform:scaleX(-1)}
   /* !important so these beat .panel img.car / .car-band img display rules */
   .car-dark{display:none !important}
   [data-theme="dark"] .car-dark{display:block !important}
