@@ -162,6 +162,9 @@
     background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
     padding:1.5rem;overflow-x:auto;font-size:.88rem;line-height:1.55;
     font-family:ui-monospace,'SF Mono',Menlo,monospace;
+    /* Grid items default to min-width:auto, which lets the longest code
+       line stretch the page instead of scrolling inside the block. */
+    min-width:0;max-width:100%;
   }
   pre .c{color:var(--dim)}
 
