@@ -405,7 +405,11 @@ final class PolestarAPI {
               let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let access = json["access_token"] as? String,
               let expiresIn = json["expires_in"] as? Int
-        else { throw PolestarError.http("Token exchange failed") }
+        else {
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            debugLog("token exchange failed (status \(status)): \(String(decoding: data.prefix(300), as: UTF8.self))")
+            throw PolestarError.http("Token exchange failed")
+        }
 
         accessToken = access
         refreshToken = json["refresh_token"] as? String
@@ -454,7 +458,10 @@ final class PolestarAPI {
 
     private func fetchCarInfo(vin: String) async throws {
         guard let token = accessToken else { return }
-        // registrationNo is the license plate.
+        // registrationNo is the license plate. Keep this query minimal and
+        // known-good: one rejected field would fail the whole request and
+        // take the plate, model title, and car image down with it. The
+        // decorative extras (colors, motor, options) are fetched separately.
         let query = """
         query GetConsumerCarsV2 {
           getConsumerCarsV2 {
@@ -464,12 +471,6 @@ final class PolestarAPI {
             registrationNo
             pno34
             structureWeek
-            content {
-              exterior { name }
-              interior { name }
-              motor { name description }
-            }
-            features { name excluded }
           }
         }
         """
@@ -484,18 +485,62 @@ final class PolestarAPI {
         pno34 = car["pno34"] as? String
         structureWeek = (car["structureWeek"] as? String) ?? (car["structureWeek"] as? Int).map(String.init)
 
-        if let content = car["content"] as? [String: Any] {
-            exteriorName = (content["exterior"] as? [String: Any])?["name"] as? String
-            interiorName = (content["interior"] as? [String: Any])?["name"] as? String
-            let motor = content["motor"] as? [String: Any]
-            motorName = (motor?["name"] as? String) ?? (motor?["description"] as? String)
-        }
-        if let rawFeatures = car["features"] as? [[String: Any]] {
-            features = rawFeatures.compactMap { feature in
-                guard (feature["excluded"] as? Bool) != true,
-                      let name = feature["name"] as? String, !name.isEmpty else { return nil }
-                return name
+        await fetchCarExtras(vin: vin, token: token)
+    }
+
+    /// Best-effort configuration details (exterior/interior/motor names and
+    /// the options list). The schema for these has shifted between model
+    /// years, so each query fails independently and logs why.
+    private func fetchCarExtras(vin: String, token: String) async {
+        do {
+            let query = """
+            query GetConsumerCarsV2 {
+              getConsumerCarsV2 {
+                vin
+                content {
+                  exterior { name }
+                  interior { name }
+                  motor { name description }
+                }
+              }
             }
+            """
+            let json = try await graphQL(query: query, variables: nil, token: token)
+            if let data = json["data"] as? [String: Any],
+               let cars = data["getConsumerCarsV2"] as? [[String: Any]],
+               let car = cars.first(where: { ($0["vin"] as? String) == vin }),
+               let content = car["content"] as? [String: Any] {
+                exteriorName = (content["exterior"] as? [String: Any])?["name"] as? String
+                interiorName = (content["interior"] as? [String: Any])?["name"] as? String
+                let motor = content["motor"] as? [String: Any]
+                motorName = (motor?["name"] as? String) ?? (motor?["description"] as? String)
+            }
+        } catch {
+            debugLog("car content query failed: \(error.localizedDescription)")
+        }
+
+        do {
+            let query = """
+            query GetConsumerCarsV2 {
+              getConsumerCarsV2 {
+                vin
+                features { name excluded }
+              }
+            }
+            """
+            let json = try await graphQL(query: query, variables: nil, token: token)
+            if let data = json["data"] as? [String: Any],
+               let cars = data["getConsumerCarsV2"] as? [[String: Any]],
+               let car = cars.first(where: { ($0["vin"] as? String) == vin }),
+               let rawFeatures = car["features"] as? [[String: Any]] {
+                features = rawFeatures.compactMap { feature in
+                    guard (feature["excluded"] as? Bool) != true,
+                          let name = feature["name"] as? String, !name.isEmpty else { return nil }
+                    return name
+                }
+            }
+        } catch {
+            debugLog("car features query failed: \(error.localizedDescription)")
         }
     }
 
@@ -559,7 +604,14 @@ final class PolestarAPI {
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw PolestarError.http("GraphQL request failed (status \((response as? HTTPURLResponse)?.statusCode ?? -1))")
+            // Validation errors come back as non-200 with the details in the
+            // body — surface them instead of just the status code.
+            let detail = ((try? JSONSerialization.jsonObject(with: data) as? [String: Any])
+                .flatMap { $0["errors"] as? [[String: Any]] }?
+                .compactMap { $0["message"] as? String }
+                .joined(separator: ", ")) ?? ""
+            throw PolestarError.http("GraphQL request failed (status \((response as? HTTPURLResponse)?.statusCode ?? -1))"
+                + (detail.isEmpty ? "" : ": \(detail)"))
         }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw PolestarError.parse("Invalid JSON")
