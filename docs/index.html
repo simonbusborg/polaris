@@ -62,11 +62,11 @@
 
   /* hero */
   .hero{padding:clamp(4rem,12vh,8rem) 0 1rem;max-width:800px}
-  /* The icns artwork already carries the squircle + margins — no extra
-     rounding, just a soft shadow on the shape itself. */
+  /* The icns artwork already carries the squircle, margins and depth.
+     No filter here: drop-shadow() on an <img> makes iOS Safari paint the
+     element's whole backing store as an opaque grey plate. */
   .appicon{
     width:96px;height:96px;margin:-8px 0 .6rem -8px;
-    filter:drop-shadow(0 8px 22px rgba(0,0,0,.28));
   }
   h1{
     font-weight:600;font-size:clamp(2.8rem,7vw,5.5rem);
@@ -108,8 +108,13 @@
      macOS menu floating over a wallpaper. */
   .wallpaper{
     border-radius:18px;padding:clamp(1rem,4vw,1.8rem);
-    background:linear-gradient(180deg,
-      #E76427 0%, #A34418 30%, #4A2B26 60%, #4E4470 85%, #A9B4DC 100%);
+    /* Muted charcoal wallpaper with a faint warm glow (accent) up top and
+       a cooler falloff below — enough tint for the translucent menu to
+       read as real, without shouting over it. */
+    background:
+      radial-gradient(130% 90% at 15% 0%, rgba(231,100,39,.30), transparent 58%),
+      radial-gradient(120% 80% at 90% 105%, rgba(110,118,168,.22), transparent 55%),
+      linear-gradient(180deg, #232019 0%, #151517 100%);
   }
   .panel{
     background:rgba(30,30,32,.72);
@@ -203,7 +208,9 @@
     .real{grid-template-columns:1fr}
     .get{grid-template-columns:1fr}
     .grid{grid-template-columns:1fr}
-    .stats{grid-template-columns:repeat(2,1fr);row-gap:1.6rem}
+    /* Same 2px gap in both axes — a fat row gap next to hairline column
+       gaps reads as broken, not intentional. */
+    .stats{grid-template-columns:repeat(2,1fr)}
   }
 </style>
 </head>
