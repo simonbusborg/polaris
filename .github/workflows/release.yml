@@ -8,14 +8,55 @@ on:
 permissions:
   contents: write
 
+# Signing/notarization runs only when the secrets are configured; without
+# them the release falls back to the old ad-hoc-signed build.
+env:
+  HAS_SIGNING: ${{ secrets.MACOS_CERT_P12 != '' }}
+
 jobs:
   build-and-release:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
+      - name: Import Developer ID certificate
+        if: env.HAS_SIGNING == 'true'
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PASS=$(uuidgen)
+          echo "$CERT_P12" | base64 --decode > cert.p12
+          security create-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security set-keychain-settings -lut 1800 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASS" build.keychain
+          security list-keychains -d user -s build.keychain login.keychain
+          rm cert.p12
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | awk -F'"' '/Developer ID Application/ {print $2; exit}')
+          echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
       - name: Build Polaris.app
-        run: make app
+        run: |
+          if [ "$HAS_SIGNING" = "true" ]; then
+            make app IDENTITY="$IDENTITY"
+          else
+            make app
+          fi
+
+      - name: Notarize and staple
+        if: env.HAS_SIGNING == 'true'
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+        run: |
+          ditto -c -k --keepParent Polaris.app notarize.zip
+          xcrun notarytool submit notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait
+          xcrun stapler staple Polaris.app
 
       - name: Zip the app
         run: ditto -c -k --keepParent Polaris.app Polaris.zip
