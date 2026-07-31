@@ -14,6 +14,9 @@ final class StatusItemController {
     private let onRefresh: () -> Void
     private let onSettings: () -> Void
 
+    /// Set when a newer release exists; renders as a menu item.
+    var updateVersion: String?
+
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .none
@@ -127,6 +130,13 @@ final class StatusItemController {
 
         menu.addItem(.separator())
 
+        if let updateVersion {
+            let update = NSMenuItem(title: "Update Available (v\(updateVersion))…",
+                                    action: #selector(updateAction), keyEquivalent: "")
+            update.target = self
+            menu.addItem(update)
+        }
+
         let refresh = NSMenuItem(title: "Refresh Now", action: #selector(refreshAction), keyEquivalent: "r")
         refresh.target = self
         menu.addItem(refresh)
@@ -145,6 +155,7 @@ final class StatusItemController {
 
     @objc private func refreshAction() { onRefresh() }
     @objc private func settingsAction() { onSettings() }
+    @objc private func updateAction() { NSWorkspace.shared.open(UpdateChecker.releasesPage) }
 
     // MARK: - Key/value rows (custom views: exact colors, exact width,
     // no system dimming, aligned with the car image)

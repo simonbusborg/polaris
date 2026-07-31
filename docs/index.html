@@ -11,247 +11,400 @@
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0A0A0A;
-    --paper:#F5F2EC;
-    --dim:rgba(245,242,236,.52);
-    --line:rgba(245,242,236,.14);
+    --paper:#FFFFFF;
+    --ink:#141414;
+    --dim:rgba(20,20,20,.55);
+    --line:rgba(20,20,20,.14);
+    --panel:#F6F5F3;
     --accent:#FF4D00;
+    --menu-bg:#FBFAF9;
+    --menu-ink:#1A1A1A;
+    --menu-dim:rgba(26,26,26,.55);
+    --menu-line:rgba(26,26,26,.09);
     --r:2px;
-    --display:'Figtree',system-ui,sans-serif;
-    --body:'Figtree',system-ui,sans-serif;
+    --sans:'Figtree',system-ui,sans-serif;
+  }
+  [data-theme="dark"]{
+    --paper:#0D0D0D;
+    --ink:#F5F2EC;
+    --dim:rgba(245,242,236,.55);
+    --line:rgba(245,242,236,.16);
+    --panel:#161616;
+    --menu-bg:#1E1E20;
+    --menu-ink:#F2F0EC;
+    --menu-dim:rgba(242,240,236,.55);
+    --menu-line:rgba(242,240,236,.09);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{
-    background:var(--ink);color:var(--paper);
-    font-family:var(--body);font-size:17px;line-height:1.6;
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:17px;line-height:1.6;
     -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    transition:background .3s ease,color .3s ease;
   }
-  ::selection{background:var(--accent);color:var(--ink)}
-
-  /* grain */
-  body::after{
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:9;opacity:.05;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-
+  ::selection{background:var(--accent);color:#fff}
   .wrap{max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
 
-  /* top row */
-  header{display:flex;justify-content:space-between;align-items:baseline;padding-top:2rem}
-  .mark{font-family:var(--display);font-weight:600;font-size:1.15rem;letter-spacing:-.01em}
+  .kicker{
+    font-size:.72rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--dim);
+  }
+
+  /* header */
+  header{display:flex;justify-content:space-between;align-items:center;padding-top:1.6rem}
+  .mark{font-weight:600;font-size:1.1rem;letter-spacing:-.01em}
   .mark span{color:var(--accent)}
-  header a{color:var(--dim);text-decoration:none;font-size:.9rem;border-bottom:1px solid var(--line);padding-bottom:2px;transition:color .3s cubic-bezier(.2,.6,.2,1)}
-  header a:hover{color:var(--paper)}
+  nav{display:flex;align-items:center;gap:1.6rem}
+  nav a{color:var(--dim);text-decoration:none;font-size:.88rem;transition:color .25s}
+  nav a:hover{color:var(--ink)}
+  #themeToggle{
+    background:none;border:1px solid var(--line);border-radius:50%;
+    width:34px;height:34px;cursor:pointer;color:var(--ink);
+    display:grid;place-items:center;transition:border-color .25s;
+  }
+  #themeToggle:hover{border-color:var(--ink)}
+  #themeToggle svg{width:15px;height:15px}
+  [data-theme="dark"] .sun{display:block}
+  [data-theme="dark"] .moon{display:none}
+  .sun{display:none}
 
   /* hero */
-  .hero{padding:clamp(5rem,14vh,10rem) 0 clamp(4rem,10vh,7rem)}
+  .hero{padding:clamp(4rem,12vh,8rem) 0 1rem;max-width:800px}
   h1{
-    font-family:var(--display);font-weight:600;
-    font-size:clamp(3.2rem,9vw,8.5rem);
-    line-height:.98;letter-spacing:-.03em;text-wrap:balance;
-    max-width:12ch;
+    font-weight:600;font-size:clamp(2.8rem,7vw,5.5rem);
+    line-height:1.02;letter-spacing:-.03em;text-wrap:balance;margin-top:1.2rem;
   }
   h1 em{font-style:normal;color:var(--dim)}
-  .hero p.lede{margin-top:2rem;max-width:44ch;color:var(--dim);font-size:1.05rem}
-  .cta-row{margin-top:3rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+  .hero p.lede{margin-top:1.6rem;max-width:46ch;color:var(--dim);font-size:1.05rem}
+  .cta-row{margin-top:2.4rem;display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap}
   .btn{
-    font-family:var(--display);font-weight:500;font-size:1.05rem;letter-spacing:-.01em;
-    background:var(--paper);color:var(--ink);text-decoration:none;
-    padding:1.05rem 2.2rem;border-radius:var(--r);
+    font-weight:500;font-size:.95rem;letter-spacing:.02em;
+    background:var(--ink);color:var(--paper);text-decoration:none;
+    padding:1rem 2.4rem;border-radius:var(--r);
     display:inline-flex;align-items:center;gap:.7rem;
-    transition:background .3s cubic-bezier(.2,.6,.2,1),color .3s cubic-bezier(.2,.6,.2,1),transform .3s cubic-bezier(.2,.6,.2,1);
+    transition:background .25s,transform .25s;
   }
-  .btn:hover{background:var(--accent);color:var(--ink);transform:translateY(-2px)}
-  .btn svg{width:15px;height:15px}
-  .cta-note{color:var(--dim);font-size:.85rem;max-width:26ch;line-height:1.5}
-  .cta-note a{color:var(--paper);text-decoration:none;border-bottom:1px solid var(--line)}
+  .btn:hover{background:var(--accent);color:#fff;transform:translateY(-2px)}
+  .btn svg{width:14px;height:14px}
+  .cta-note{color:var(--dim);font-size:.82rem;max-width:28ch;line-height:1.5}
+  .cta-note a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
 
-  /* menu bar mock — offset, crosses the grid */
-  .mock-zone{position:relative;padding:2rem 0 clamp(5rem,12vh,9rem)}
-  .mock{
-    margin-left:auto;width:min(430px,100%);
-    transform:rotate(.4deg);
+  /* car band */
+  .car-band{padding:clamp(2rem,6vh,4rem) 0 0}
+  .car-band svg{width:100%;height:auto;display:block;color:var(--ink)}
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;
+    border-top:1px solid var(--line);margin-top:-1px;padding:1.6rem 0 0;
   }
+  .stat b{font-weight:600;font-size:1.6rem;letter-spacing:-.02em;display:block}
+  .stat span{color:var(--dim);font-size:.82rem}
+
+  /* real menu section */
+  .real{padding:clamp(5rem,12vh,8rem) 0;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+  .real h2,.features h2,.get h2{
+    font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
+    letter-spacing:-.02em;max-width:18ch;margin-top:1rem;
+  }
+  .real .side p{color:var(--dim);margin-top:1.2rem;max-width:42ch}
+  .real .side p b{color:var(--ink);font-weight:500}
+
+  .mock{width:min(360px,100%);margin:0 auto}
   .menubar{
-    display:flex;justify-content:flex-end;align-items:center;gap:1.1rem;
-    background:#1B1B1D;border:1px solid var(--line);border-bottom:none;
-    border-radius:var(--r) var(--r) 0 0;
-    padding:.45rem .9rem;font-size:.8rem;color:var(--dim);
+    display:flex;justify-content:flex-end;align-items:center;gap:1rem;
+    background:var(--panel);border:1px solid var(--line);border-bottom:none;
+    border-radius:6px 6px 0 0;
+    padding:.4rem .8rem;font-size:.78rem;color:var(--dim);
   }
   .menubar .live{
-    display:flex;align-items:center;gap:.35rem;color:var(--paper);
-    background:rgba(245,242,236,.08);padding:.15rem .55rem;border-radius:var(--r);
+    display:flex;align-items:center;gap:.3rem;color:var(--ink);font-weight:500;
     font-variant-numeric:tabular-nums;
   }
-  .menubar .live svg{width:14px;height:14px}
   .panel{
-    background:#131315;border:1px solid var(--line);
-    border-radius:0 0 var(--r) var(--r);
-    padding:1.1rem 1.25rem;font-size:.92rem;
+    background:var(--menu-bg);border:1px solid var(--line);
+    border-radius:0 0 10px 10px;box-shadow:0 18px 50px rgba(0,0,0,.14);
+    padding:.5rem .6rem;font-size:.86rem;color:var(--menu-ink);
   }
+  .panel .carimg{padding:.4rem .6rem 0}
+  .panel .carimg svg{width:100%;height:auto;color:var(--menu-ink)}
+  .panel .model{font-weight:600;font-size:.95rem;padding:.15rem .6rem}
   .panel .row{
-    display:flex;justify-content:space-between;padding:.5rem 0;
-    border-bottom:1px solid rgba(245,242,236,.07);
-    font-variant-numeric:tabular-nums;
+    display:flex;justify-content:space-between;gap:1rem;
+    padding:.22rem .6rem;font-variant-numeric:tabular-nums;
   }
-  .panel .row:last-child{border-bottom:none}
-  .panel .k{color:var(--dim)}
-  .panel .model{font-family:var(--display);font-weight:500;font-size:1rem;padding-bottom:.7rem}
-  .charging{color:var(--accent);display:inline-flex;align-items:center;gap:.4rem}
+  .panel .row .k{color:var(--menu-dim)}
+  .panel hr{border:none;border-top:1px solid var(--menu-line);margin:.35rem .3rem}
+  .panel .action{display:flex;justify-content:space-between;padding:.22rem .6rem;border-radius:5px}
+  .panel .action:hover{background:var(--accent);color:#fff}
+  .panel .action:hover .kbd{color:#fff}
+  .panel .kbd{color:var(--menu-dim);font-size:.8rem}
+  .charging{color:var(--accent);display:inline-flex;align-items:center;gap:.4rem;font-weight:500}
   .charging::before{
     content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);
-    animation:pulse 2.4s cubic-bezier(.2,.6,.2,1) infinite;
+    animation:pulse 2.4s ease-in-out infinite;
   }
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
-  .mock-caption{
-    position:absolute;left:0;bottom:clamp(2rem,6vh,4rem);
-    max-width:30ch;color:var(--dim);font-size:.9rem;
-  }
-  .mock-caption b{color:var(--paper);font-weight:500}
 
-  /* features — editorial numbered list, no cards */
-  .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,8rem) 0}
-  .features h2, .source h2{
-    font-family:var(--display);font-weight:600;font-size:clamp(1.8rem,3.5vw,2.8rem);
-    letter-spacing:-.02em;margin-bottom:3.5rem;max-width:20ch;
+  /* features */
+  .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
+  .grid{
+    margin-top:3rem;display:grid;grid-template-columns:repeat(3,1fr);
+    gap:1px;background:var(--line);border:1px solid var(--line);
   }
-  .feat{
-    display:grid;grid-template-columns:5rem 1fr 1.4fr;gap:2rem;
-    padding:2.2rem 0;border-bottom:1px solid var(--line);align-items:baseline;
-  }
-  .feat:last-child{border-bottom:none}
-  .feat .no{font-family:var(--display);color:var(--dim);font-size:.95rem}
-  .feat h3{font-family:var(--display);font-weight:500;font-size:1.35rem;letter-spacing:-.01em}
-  .feat p{color:var(--dim);font-size:.98rem;max-width:52ch}
-  .feat p code{font-size:.85em;background:rgba(245,242,236,.08);padding:.1em .4em;border-radius:var(--r)}
+  .cell{background:var(--paper);padding:1.8rem 1.6rem 2rem;transition:background .3s}
+  .cell:hover{background:var(--panel)}
+  .cell svg{width:22px;height:22px;color:var(--accent)}
+  .cell h3{font-weight:500;font-size:1.05rem;margin:1rem 0 .4rem;letter-spacing:-.01em}
+  .cell p{color:var(--dim);font-size:.9rem;line-height:1.55}
+  .cell p code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
 
-  /* build from source */
-  .source{border-top:1px solid var(--line);padding:clamp(4rem,10vh,8rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3rem}
-  .source .side p{color:var(--dim);max-width:36ch}
+  /* get it */
+  .get{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
+  .get .side p{color:var(--dim);max-width:36ch;margin-top:1.2rem}
+  .get ol{margin:1.4rem 0 0 1.1rem;color:var(--dim);font-size:.95rem}
+  .get ol li{margin-bottom:.5rem}
+  .get ol b{color:var(--ink);font-weight:500}
   pre{
-    background:#131315;border:1px solid var(--line);border-radius:var(--r);
-    padding:1.6rem;overflow-x:auto;font-size:.9rem;line-height:1.7;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:1.5rem;overflow-x:auto;font-size:.88rem;line-height:1.7;
     font-family:ui-monospace,'SF Mono',Menlo,monospace;
   }
   pre .c{color:var(--dim)}
 
   footer{
-    border-top:1px solid var(--line);padding:3rem 0 4rem;
+    border-top:1px solid var(--line);padding:2.6rem 0 3.4rem;
     display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;
-    color:var(--dim);font-size:.85rem;
+    color:var(--dim);font-size:.84rem;
   }
-  footer a{color:var(--paper);text-decoration:none;border-bottom:1px solid var(--line)}
+  footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
 
   /* reveal motion */
-  .rv{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.6,.2,1),transform .8s cubic-bezier(.2,.6,.2,1)}
+  .rv{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.6,.2,1),transform .8s cubic-bezier(.2,.6,.2,1)}
   .rv.in{opacity:1;transform:none}
   @media (prefers-reduced-motion:reduce){
     .rv{opacity:1;transform:none;transition:none}
     .charging::before{animation:none}
   }
-  @media (max-width:760px){
-    .feat{grid-template-columns:3rem 1fr;grid-template-rows:auto auto}
-    .feat p{grid-column:2}
-    .source{grid-template-columns:1fr}
-    .mock{transform:none}
-    .mock-caption{position:static;margin-top:2rem}
+  @media (max-width:860px){
+    .real{grid-template-columns:1fr}
+    .get{grid-template-columns:1fr}
+    .grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr);row-gap:1.6rem}
   }
 </style>
 </head>
 <body>
 
+<!-- Side-profile car, drawn once, used in the hero and the menu mock -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="car-side" viewBox="0 0 760 232">
+      <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <!-- body -->
+        <path d="M70 180
+                 C62 170 60 154 66 142
+                 C74 130 96 125 124 121
+                 C168 82 224 66 306 64
+                 C368 62 424 66 470 80
+                 C500 90 524 102 548 112
+                 C592 118 634 126 656 134
+                 C670 140 676 150 674 158
+                 C672 168 664 176 650 179
+                 L618 180
+                 A48 48 0 0 0 522 180
+                 L258 180
+                 A48 48 0 0 0 162 180
+                 L70 180"/>
+        <!-- glasshouse -->
+        <path d="M240 106 C246 94 272 82 302 78 C364 74 420 78 464 92 L496 108 C420 100 330 100 240 106 Z" stroke-width="2"/>
+        <!-- door seam -->
+        <path d="M400 106 L396 176" stroke-width="1.5" opacity=".4"/>
+        <!-- wheels -->
+        <circle cx="570" cy="180" r="33"/>
+        <circle cx="570" cy="180" r="13" stroke-width="2"/>
+        <circle cx="210" cy="180" r="33"/>
+        <circle cx="210" cy="180" r="13" stroke-width="2"/>
+      </g>
+      <!-- headlight + charge port -->
+      <path d="M640 133 L668 141" stroke="#FF4D00" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="100" cy="130" r="3.5" fill="#FF4D00"/>
+      <!-- ground -->
+      <path d="M40 218 L720 218" stroke="currentColor" stroke-width="1" opacity=".25"/>
+    </symbol>
+  </defs>
+</svg>
+
 <div class="wrap">
   <header>
     <div class="mark">Polaris<span>.</span></div>
-    <a href="https://github.com/simonbusborg/polaris">GitHub ↗</a>
+    <nav>
+      <a href="https://github.com/simonbusborg/polaris">GitHub</a>
+      <a href="https://github.com/simonbusborg/polaris/releases/latest">Download</a>
+      <button id="themeToggle" aria-label="Toggle dark mode">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
   </header>
 
   <section class="hero">
-    <h1 class="rv">Your Polestar,<br><em>in the menu bar.</em></h1>
-    <p class="lede rv">Battery, range, and charging status — one glance, no app to open.
-    A tiny native macOS utility. No Electron, no accounts, no tracking.</p>
-    <div class="cta-row rv">
-      <a class="btn" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.zip">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1v9.3L4.7 7 3.3 8.4 8 13l4.7-4.6L11.3 7 9 10.3V1H8zM2 14v1h12v-1H2z"/></svg>
+    <div class="kicker">A native macOS app · for your Polestar</div>
+    <h1>Your Polestar.<br><em>In the menu bar.</em></h1>
+    <p class="lede">Battery, range and charging status — always one glance away.
+    Pure AppKit, a single small binary, talking only to Polestar's official API.</p>
+    <div class="cta-row">
+      <a class="btn" href="https://github.com/simonbusborg/polaris/releases/latest">
         Download for macOS
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
       </a>
-      <p class="cta-note">macOS 13+. Unsigned build — right-click&nbsp;→&nbsp;Open on first launch. Or <a href="#source">build from source</a>.</p>
+      <p class="cta-note">Free &amp; open source. macOS 13+.
+      Or <a href="https://github.com/simonbusborg/polaris#build-from-source">build it from source</a>.</p>
     </div>
   </section>
 
-  <section class="mock-zone">
+  <section class="car-band rv">
+    <svg role="img" aria-label="Side profile of a Polestar"><use href="#car-side"/></svg>
+    <div class="stats">
+      <div class="stat"><b>5 min</b><span>refresh while idle</span></div>
+      <div class="stat"><b>60 s</b><span>refresh while charging</span></div>
+      <div class="stat"><b>0</b><span>trackers, analytics, third parties</span></div>
+      <div class="stat"><b>1</b><span>small native binary</span></div>
+    </div>
+  </section>
+
+  <section class="real">
+    <div class="side rv">
+      <div class="kicker">The real thing</div>
+      <h2>No concept shots. This is the menu.</h2>
+      <p>Every row below is rendered by the app from the live Polestar API —
+      the studio image of <b>your exact car</b>, battery, range, charging state,
+      odometer and service data. Click the plate or VIN to copy them.</p>
+      <p>While charging, Polaris polls every minute and can notify you the
+      moment the battery is full.</p>
+    </div>
     <div class="mock rv">
       <div class="menubar">
-        <div class="live">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 10.5h12M3.5 10.5V8a1.5 1.5 0 0 1 1.5-1.5h6A1.5 1.5 0 0 1 12.5 8v2.5M4 13h.5M11.5 13h.5"/><path d="M8.6 3.5 7 6h2l-1.6 2.5" stroke-linejoin="round"/></svg>
-          87%
-        </div>
-        <span>Fri 31 Jul</span><span>10.02</span>
+        <span>Wed 14:32</span>
+        <span class="live">⚡︎ 82%</span>
       </div>
       <div class="panel">
-        <div class="row model">Polestar 2</div>
-        <div class="row"><span class="k">Battery</span><span>87%</span></div>
-        <div class="row"><span class="k">Range</span><span>342 km / 213 mi</span></div>
+        <div class="carimg"><svg role="img" aria-label="Your car, seen from the side"><use href="#car-side"/></svg></div>
+        <div class="model">Polestar 2 · 2024</div>
+        <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
+        <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
+        <hr>
+        <div class="row"><span class="k">Battery</span><span>82%</span></div>
+        <div class="row"><span class="k">Range</span><span>412 km / 256 mi</span></div>
         <div class="row"><span class="k">Status</span><span class="charging">Charging</span></div>
-        <div class="row"><span class="k">Full in</span><span>1h20m</span></div>
-        <div class="row"><span class="k">Updated</span><span>10.02</span></div>
+        <div class="row"><span class="k">Full in</span><span>1h05m</span></div>
+        <hr>
+        <div class="row"><span class="k">Odometer</span><span>23.412 km</span></div>
+        <div class="row"><span class="k">Service</span><span>in 208 days / 17.500 km</span></div>
+        <hr>
+        <div class="row"><span class="k">Updated</span><span>14:32</span></div>
+        <hr>
+        <div class="action"><span>Refresh Now</span><span class="kbd">⌘R</span></div>
+        <div class="action"><span>Settings…</span><span class="kbd">⌘,</span></div>
+        <hr>
+        <div class="action"><span>Quit Polaris</span><span class="kbd">⌘Q</span></div>
       </div>
     </div>
-    <p class="mock-caption rv"><b>That's the whole app.</b> A number in your menu bar and a panel when you want more. It refreshes every five minutes and stays out of the way.</p>
   </section>
 
   <section class="features">
-    <h2 class="rv">Small on purpose.</h2>
-    <div class="feat rv">
-      <span class="no">01</span>
-      <h3>Native AppKit</h3>
-      <p>A single small binary. No Electron, no web views, no helper daemons. It idles in the background using close to nothing.</p>
-    </div>
-    <div class="feat rv">
-      <span class="no">02</span>
-      <h3>Keychain, not plaintext</h3>
-      <p>Your Polestar password is stored in the macOS Keychain, encrypted at rest. It never touches a preferences file.</p>
-    </div>
-    <div class="feat rv">
-      <span class="no">03</span>
-      <h3>Official API only</h3>
-      <p>Polaris speaks OAuth2 with PKCE directly to Polestar's own endpoints. No third-party servers, no analytics, no telemetry — the source is short enough to read over coffee.</p>
-    </div>
-    <div class="feat rv">
-      <span class="no">04</span>
-      <h3>Open source</h3>
-      <p>MIT licensed on <a style="color:var(--paper)" href="https://github.com/simonbusborg/polaris">GitHub</a>. Releases are built in public by CI, straight from the tagged source.</p>
+    <div class="kicker rv">Why Polaris</div>
+    <h2 class="rv">Small. Native. Yours.</h2>
+    <div class="grid rv">
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="17" height="9" rx="2"/><path d="M21 11v3"/><path d="M6 11v3M10 11v3"/></svg>
+        <h3>Glanceable state of charge</h3>
+        <p>Battery %, range in km or miles, charging status and time-to-full.
+        You choose what the menu bar shows.</p>
+      </div>
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <h3>Charging notifications</h3>
+        <p>A quiet nudge when charging starts, completes, or the charger
+        reports a fault. Nothing else, ever.</p>
+      </div>
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h3>Keychain, not plaintext</h3>
+        <p>Password and session live in the macOS Keychain. Once signed in,
+        Polaris resumes its session without logging in again.</p>
+      </div>
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4.9 12.5H11L9.9 22 19 10.5h-6.2z"/></svg>
+        <h3>Official API only</h3>
+        <p>OAuth2/OIDC with PKCE against Polestar's own endpoints.
+        No third-party servers, no analytics, no tracking.</p>
+      </div>
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+        <h3>Stays current</h3>
+        <p>A once-a-day check against GitHub releases; when there's a new
+        version, a menu item appears. No background updater.</p>
+      </div>
+      <div class="cell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
+        <h3>Open source</h3>
+        <p>MIT licensed, pure AppKit, no Electron, no SwiftUI, no background
+        services. <code>make app</code> and you have it.</p>
+      </div>
     </div>
   </section>
 
-  <section class="source" id="source">
+  <section class="get">
     <div class="side rv">
-      <h2>Build it yourself.</h2>
-      <p>Nothing but the Xcode Command Line Tools required. Four lines from clone to running app.</p>
+      <div class="kicker">Get started</div>
+      <h2>Running in a minute.</h2>
+      <p>Download, drag to Applications, sign in with your Polestar account.
+      Your VIN is in the Polestar app if it's not on hand.</p>
+      <ol>
+        <li><b>Download</b> Polaris.zip and unzip it</li>
+        <li><b>Drag</b> Polaris.app to Applications</li>
+        <li><b>Sign in</b> — email, password, VIN</li>
+      </ol>
     </div>
-    <pre class="rv"><span class="c"># macOS 13+, xcode-select --install</span>
+    <div class="rv">
+      <pre><span class="c"># …or build it from source</span>
 git clone https://github.com/simonbusborg/polaris
 cd polaris
 make app
-open Polaris.app</pre>
+open Polaris.app
+
+<span class="c"># quick iteration without a bundle</span>
+make run
+
+<span class="c"># run the tests</span>
+make test</pre>
+    </div>
   </section>
 
   <footer>
-    <span>© 2026 Simon Busborg · MIT License</span>
-    <span>Not affiliated with Polestar.</span>
-    <a href="https://github.com/simonbusborg/polaris">github.com/simonbusborg/polaris</a>
+    <div>Polaris<span style="color:var(--accent)">.</span> — MIT licensed.
+      Not affiliated with Polestar.</div>
+    <div><a href="https://github.com/simonbusborg/polaris">GitHub</a></div>
   </footer>
 </div>
 
 <script>
+  // Theme: manual toggle wins, otherwise follow the system.
+  const root = document.documentElement;
+  const saved = localStorage.getItem('theme');
+  if (saved) root.dataset.theme = saved;
+  else if (matchMedia('(prefers-color-scheme: dark)').matches) root.dataset.theme = 'dark';
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+
+  // Reveal on scroll
   const io = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-  }), { threshold: .15 });
-  document.querySelectorAll('.rv').forEach((el, i) => {
-    el.style.transitionDelay = (i % 4) * 60 + 'ms';
-    io.observe(el);
-  });
+  }), {threshold: .15});
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
 </script>
 </body>
 </html>

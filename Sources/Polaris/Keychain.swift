@@ -2,8 +2,9 @@
 //  Keychain.swift
 //  Polaris (AppKit rewrite)
 //
-//  Minimal generic-password Keychain wrapper. The Polestar password is
-//  stored under a fixed service/account pair, encrypted at rest by macOS.
+//  Minimal generic-password Keychain wrapper. Two items live under a fixed
+//  service: the Polestar password, and the OAuth refresh token that lets the
+//  app resume its session without replaying the scripted form login.
 //
 
 import Foundation
@@ -23,9 +24,24 @@ enum KeychainError: Error, LocalizedError {
 
 enum Keychain {
     private static let service = "com.weareheavy.polaris"
-    private static let account = "polestar-password"
+    private static let passwordAccount = "polestar-password"
+    private static let sessionAccount = "polestar-refresh-token"
 
-    private static var baseQuery: [String: Any] {
+    // MARK: - Password
+
+    static func savePassword(_ password: String) throws { try save(password, account: passwordAccount) }
+    static func readPassword() throws -> String? { try read(account: passwordAccount) }
+    static func deletePassword() { delete(account: passwordAccount) }
+
+    // MARK: - Session (OAuth refresh token)
+
+    static func saveSessionToken(_ token: String) throws { try save(token, account: sessionAccount) }
+    static func readSessionToken() throws -> String? { try read(account: sessionAccount) }
+    static func deleteSessionToken() { delete(account: sessionAccount) }
+
+    // MARK: - Plumbing
+
+    private static func baseQuery(account: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -33,25 +49,23 @@ enum Keychain {
         ]
     }
 
-    static func savePassword(_ password: String) throws {
-        let data = Data(password.utf8)
-
+    private static func save(_ value: String, account: String) throws {
         // Delete-then-add rather than update: ad-hoc builds get a new code
         // signature every rebuild, and an item created by an older build may
         // refuse access to the new one. Recreating the item resets its access
         // control to the currently-running app.
-        SecItemDelete(baseQuery as CFDictionary)
+        SecItemDelete(baseQuery(account: account) as CFDictionary)
 
-        var add = baseQuery
-        add[kSecValueData as String] = data
+        var add = baseQuery(account: account)
+        add[kSecValueData as String] = Data(value.utf8)
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         let status = SecItemAdd(add as CFDictionary, nil)
         guard status == errSecSuccess else { throw KeychainError.status(status) }
     }
 
-    /// Returns nil when no password is stored.
-    static func readPassword() throws -> String? {
-        var query = baseQuery
+    /// Returns nil when no item is stored.
+    private static func read(account: String) throws -> String? {
+        var query = baseQuery(account: account)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
@@ -64,7 +78,7 @@ enum Keychain {
         return String(data: data, encoding: .utf8)
     }
 
-    static func deletePassword() {
-        SecItemDelete(baseQuery as CFDictionary)
+    private static func delete(account: String) {
+        SecItemDelete(baseQuery(account: account) as CFDictionary)
     }
 }

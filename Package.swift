@@ -10,6 +10,11 @@ let package = Package(
         .executableTarget(
             name: "Polaris",
             path: "Sources/Polaris"
+        ),
+        .testTarget(
+            name: "PolarisTests",
+            dependencies: ["Polaris"],
+            path: "Tests/PolarisTests"
         )
     ]
 )

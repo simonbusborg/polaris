@@ -132,6 +132,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             }
         }
 
+        // Credentials may have changed — drop the stored session so the next
+        // login uses the new account rather than resuming the old one.
+        Keychain.deleteSessionToken()
+
         window?.orderOut(nil)
         onSave()
     }

@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsController: SettingsWindowController?
 
     private let api = PolestarAPI()
+    private let notifier = Notifier()
+    private let updateChecker = UpdateChecker()
     private var refreshTimer: Timer?
     private var latest: CarData?
     private var lastError: String?
@@ -25,6 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onSettings: { [weak self] in self?.showSettings() }
         )
         statusController.render(data: nil, error: nil, authenticated: false)
+        notifier.requestAuthorizationIfNeeded()
+        updateChecker.checkIfDue { [weak self] version in
+            guard let self else { return }
+            self.statusController.updateVersion = version
+            self.statusController.render(data: self.latest, error: self.lastError,
+                                         authenticated: self.api.isAuthenticated)
+        }
 
         if hasCredentials {
             startSession()
@@ -82,14 +91,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusController.showLoading()
         Task {
             do {
-                try await api.authenticate(email: email, password: pass, vin: vin)
-                let data = try await api.fetchCarData(vin: vin)
-                await MainActor.run {
-                    self.latest = data
-                    self.lastError = nil
-                    self.statusController.render(data: data, error: nil, authenticated: true)
-                    self.scheduleRefresh()
+                // Resume the stored session when possible; only replay the
+                // full scripted password login when that fails.
+                do {
+                    try await api.restoreSession(vin: vin)
+                } catch {
+                    try await api.authenticate(email: email, password: pass, vin: vin)
                 }
+                let data = try await api.fetchCarData(vin: vin)
+                await MainActor.run { self.apply(data) }
             } catch {
                 await MainActor.run {
                     self.lastError = error.localizedDescription
@@ -105,11 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 let data = try await api.fetchCarData(vin: vin)
-                await MainActor.run {
-                    self.latest = data
-                    self.lastError = nil
-                    self.statusController.render(data: data, error: nil, authenticated: true)
-                }
+                await MainActor.run { self.apply(data) }
             } catch {
                 await MainActor.run {
                     self.lastError = error.localizedDescription
@@ -119,9 +125,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func apply(_ data: CarData) {
+        notifier.carDataDidUpdate(old: latest, new: data)
+        latest = data
+        lastError = nil
+        statusController.render(data: data, error: nil, authenticated: true)
+        scheduleRefresh()
+    }
+
+    /// Poll every minute while charging (the numbers actually move),
+    /// every 5 minutes otherwise.
     private func scheduleRefresh() {
+        let interval: TimeInterval = (latest?.isCharging == true) ? 60 : 300
+        if let timer = refreshTimer, timer.isValid, timer.timeInterval == interval { return }
         refreshTimer?.invalidate()
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshNow()
         }
     }

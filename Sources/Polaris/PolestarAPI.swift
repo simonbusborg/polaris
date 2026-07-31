@@ -115,6 +115,28 @@ final class PolestarAPI {
         await fetchCarImage()
     }
 
+    /// Resume the previous session using the refresh token stored in the
+    /// Keychain — no password login, no HTML scraping. Throws when no session
+    /// is stored or Polestar rejects it; the caller falls back to
+    /// `authenticate`. A rejected token is deleted so it isn't retried.
+    func restoreSession(vin: String) async throws {
+        guard let stored = ((try? Keychain.readSessionToken()) ?? nil), !stored.isEmpty else {
+            throw PolestarError.authenticationFailed
+        }
+        try await discoverOidcConfiguration()
+        refreshToken = stored
+        do {
+            try await refreshAccessToken()
+        } catch {
+            Keychain.deleteSessionToken()
+            refreshToken = nil
+            throw error
+        }
+        debugLog("session restored from stored refresh token")
+        try? await fetchCarInfo(vin: vin)
+        await fetchCarImage()
+    }
+
     func fetchCarData(vin: String) async throws -> CarData {
         try await refreshTokenIfNeeded()
         guard let token = accessToken else { throw PolestarError.notConfigured }
@@ -358,10 +380,15 @@ final class PolestarAPI {
         accessToken = access
         refreshToken = json["refresh_token"] as? String
         tokenExpiry = Date().addingTimeInterval(TimeInterval(expiresIn))
+        persistSession()
     }
 
     private func refreshTokenIfNeeded() async throws {
         guard let expiry = tokenExpiry, expiry.timeIntervalSinceNow < 300 else { return }
+        try await refreshAccessToken()
+    }
+
+    private func refreshAccessToken() async throws {
         guard let tokenEndpoint, let refresh = refreshToken else { throw PolestarError.authenticationFailed }
 
         var request = URLRequest(url: URL(string: tokenEndpoint)!)
@@ -383,6 +410,14 @@ final class PolestarAPI {
         accessToken = access
         if let newRefresh = json["refresh_token"] as? String { refreshToken = newRefresh }
         tokenExpiry = Date().addingTimeInterval(TimeInterval(expiresIn))
+        persistSession()
+    }
+
+    /// Polestar rotates refresh tokens; keep the newest one in the Keychain
+    /// so the next launch can skip the password login entirely.
+    private func persistSession() {
+        guard let refreshToken else { return }
+        try? Keychain.saveSessionToken(refreshToken)
     }
 
     // MARK: - GraphQL
@@ -448,9 +483,12 @@ final class PolestarAPI {
 
         let transparent = images["transparent"] as? [[String: Any]] ?? []
         let opaque = images["opaque"] as? [[String: Any]] ?? []
-        // Prefer a transparent render; pick a three-quarter view if present.
+        // Prefer a transparent render; pick the side profile (angle 2) when
+        // available, falling back to the three-quarter view (angle 1).
         let pool = transparent.isEmpty ? opaque : transparent
-        let pick = pool.first(where: { ($0["angle"] as? Int) == 1 }) ?? pool.first
+        let pick = pool.first(where: { ($0["angle"] as? Int) == 2 })
+            ?? pool.first(where: { ($0["angle"] as? Int) == 1 })
+            ?? pool.first
         guard let urlString = pick?["url"] as? String, let url = URL(string: urlString) else { return }
 
         if let (imageBytes, _) = try? await session.data(from: url) {
