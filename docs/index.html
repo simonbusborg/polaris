@@ -121,6 +121,11 @@
     border-radius:0 0 10px 10px;box-shadow:0 18px 50px rgba(0,0,0,.14);
     padding:.5rem .6rem;font-size:.86rem;color:var(--menu-ink);
   }
+  .panel .greet{font-weight:600;font-size:.95rem;padding:.4rem .6rem .1rem}
+  .panel img.car{display:block;width:100%;height:auto;padding:.2rem .5rem;box-sizing:border-box}
+  .car-dark{display:none}
+  [data-theme="dark"] .car-dark{display:block}
+  [data-theme="dark"] .car-light{display:none}
   .panel .model{font-weight:600;font-size:.95rem;padding:.3rem .6rem .15rem}
   .panel .row{
     display:flex;justify-content:space-between;gap:1rem;
@@ -151,6 +156,11 @@
   .cell h3{font-weight:500;font-size:1.05rem;margin:1rem 0 .4rem;letter-spacing:-.01em}
   .cell p{color:var(--dim);font-size:.9rem;line-height:1.4}
   .cell p code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
+
+  /* car band */
+  .car-band{border-top:1px solid var(--line);padding:clamp(3rem,8vh,5rem) 0;text-align:center}
+  .car-band img{display:block;width:min(680px,92%);height:auto;margin:0 auto}
+  .car-band p{color:var(--dim);font-size:.9rem;margin-top:1.2rem}
 
   /* get it */
   .get{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
@@ -245,12 +255,15 @@
         <span class="live">⚡︎ 82%</span>
       </div>
       <div class="panel">
+        <div class="greet">Hi, Simon</div>
+        <img class="car car-light" src="assets/polestar-thunder.png" alt="Studio side profile of a Polestar 2" width="1400" height="787" loading="lazy">
+        <img class="car car-dark" src="assets/polestar-snow.png" alt="Studio side profile of a Polestar 2" width="1400" height="787" loading="lazy">
         <div class="model">Polestar 2 · 2024</div>
         <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
         <hr>
         <div class="row"><span class="k">Battery</span><span>82%</span></div>
-        <div class="row"><span class="k">Range</span><span>412 km / 256 mi</span></div>
+        <div class="row"><span class="k">Range</span><span>412 km</span></div>
         <div class="row"><span class="k">Status</span><span class="charging">Charging</span></div>
         <div class="row"><span class="k">Full in</span><span>1h05m</span></div>
         <hr>
@@ -274,7 +287,7 @@
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="17" height="9" rx="2"/><path d="M21 11v3"/><path d="M6 11v3M10 11v3"/></svg>
         <h3>Glanceable state of charge</h3>
-        <p>Battery %, range in km or miles, charging status and time-to-full.
+        <p>Battery %, range, charging status and time-to-full.
         You choose what the menu bar shows.</p>
       </div>
       <div class="cell">
@@ -308,6 +321,13 @@
         services. <code>make app</code> and you have it.</p>
       </div>
     </div>
+  </section>
+
+  <section class="car-band rv">
+    <img class="car-light" src="assets/polestar-thunder.png" alt="Studio side profile of a Polestar 2 in Thunder" width="1400" height="787" loading="lazy">
+    <img class="car-dark" src="assets/polestar-snow.png" alt="Studio side profile of a Polestar 2 in Snow" width="1400" height="787" loading="lazy">
+    <p>The studio render of your exact configuration — paint, wheels and all —<br>
+    fetched straight from Polestar and shown at the top of the menu.</p>
   </section>
 
   <section class="get">
