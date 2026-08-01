@@ -140,6 +140,12 @@
     padding:.22rem .6rem;font-variant-numeric:tabular-nums;
   }
   .panel .row .k{color:rgba(255,255,255,.55)}
+  /* Battery bar, as rendered by the app: green while charging. */
+  .panel .bar{
+    height:5px;border-radius:2.5px;background:rgba(255,255,255,.14);
+    margin:.15rem .6rem .35rem;overflow:hidden;
+  }
+  .panel .bar i{display:block;height:100%;border-radius:2.5px;background:#30D158}
   .panel hr{border:none;border-top:1px solid rgba(255,255,255,.14);margin:.35rem .3rem}
   .panel .action{display:flex;justify-content:space-between;padding:.22rem .6rem;border-radius:5px}
   .panel .action:hover{background:var(--accent);color:#fff}
@@ -274,9 +280,10 @@
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
         <hr>
         <div class="row"><span class="k">Battery</span><span>82%</span></div>
+        <div class="bar"><i style="width:82%"></i></div>
         <div class="row"><span class="k">Range</span><span>412 km</span></div>
         <div class="row"><span class="k">Status</span><span class="charging">Charging</span></div>
-        <div class="row"><span class="k">Full in</span><span>1h05m</span></div>
+        <div class="row"><span class="k">Full in</span><span>1h05m · 15:37</span></div>
         <hr>
         <div class="row"><span class="k">Odometer</span><span>23.412 km</span></div>
         <div class="row"><span class="k">Service</span><span>in 208 days / 17.500 km</span></div>
