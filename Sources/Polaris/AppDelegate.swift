@@ -89,6 +89,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let email = Preferences.email
         let vin = Preferences.vin
 
+        // Ad-hoc builds have no stable code-signing identity, so the item a
+        // previous version created triggers a keychain prompt once. Re-saving
+        // after a successful read rebinds it to this binary — later launches
+        // of this version read silently.
+        try? Keychain.savePassword(pass)
+
         statusController.showLoading()
         Task {
             do {
