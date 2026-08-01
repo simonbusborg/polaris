@@ -6,7 +6,7 @@ DMG     = Polaris.dmg
 # "Developer ID Application: …" identity for notarized releases.
 IDENTITY ?= -
 
-.PHONY: build app dmg run test clean
+.PHONY: build app dmg run test clean release
 
 ## Build the release binary
 build:
@@ -48,3 +48,17 @@ test:
 
 clean:
 	rm -rf .build $(APP) $(DMG) dmg-staging
+
+## Cut a release: make release VERSION=2.5.0
+## Bumps Info.plist, commits, tags v2.5.0, pushes — GitHub Actions then
+## builds, packages and publishes the DMG/zip. Same process as Teslaris.
+release:
+	@test -n "$(VERSION)" || { echo "usage: make release VERSION=x.y.z"; exit 1; }
+	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "VERSION must be x.y.z"; exit 1; }
+	@git diff --quiet && git diff --cached --quiet || { echo "working tree not clean"; exit 1; }
+	/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $(VERSION)" Resources/Info.plist
+	/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $$(( $$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist) + 1 ))" Resources/Info.plist
+	git commit -am "Release v$(VERSION)"
+	git tag "v$(VERSION)"
+	git push origin HEAD "v$(VERSION)"
+	@echo "Done → GitHub Actions is building the release"

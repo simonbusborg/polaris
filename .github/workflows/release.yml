@@ -19,6 +19,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The update checker compares Info.plist's version against the
+      # latest release tag — a mismatch would nag every user forever.
+      - name: Verify tag matches Info.plist version
+        run: |
+          PLIST=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)
+          TAG="${GITHUB_REF_NAME#v}"
+          test "$PLIST" = "$TAG" || { echo "Info.plist has $PLIST but tag is $TAG"; exit 1; }
+
       - name: Import Developer ID certificate
         if: env.HAS_SIGNING == 'true'
         env:
