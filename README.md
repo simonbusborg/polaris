@@ -24,8 +24,9 @@ no background services. It talks only to Polestar's official API.
 
 ## Install
 
-Download `Polaris.zip` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
-unzip, and drag Polaris.app to Applications. Releases are built by GitHub Actions.
+Download `Polaris.dmg` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
+open it, and drag Polaris to Applications (a `Polaris.zip` is also
+attached for scripted installs). Releases are built by GitHub Actions.
 If macOS complains about an unidentified developer on first launch
 (older, unsigned releases): **right-click → Open → Open**.
 

@@ -58,11 +58,15 @@ jobs:
             --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait
           xcrun stapler staple Polaris.app
 
-      - name: Zip the app
-        run: ditto -c -k --keepParent Polaris.app Polaris.zip
+      - name: Package (dmg + zip)
+        run: |
+          make dmg
+          ditto -c -k --keepParent Polaris.app Polaris.zip
 
-      - name: Create GitHub release with asset
+      - name: Create GitHub release with assets
         uses: softprops/action-gh-release@v2
         with:
-          files: Polaris.zip
+          files: |
+            Polaris.dmg
+            Polaris.zip
           generate_release_notes: true
