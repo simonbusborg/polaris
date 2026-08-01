@@ -9,15 +9,6 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(StatusItemController.shortDuration(minutes: 135), "2h15m")
     }
 
-    func testRelativeAge() {
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 30), "1min ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 45 * 60), "45min ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 200 * 60), "3h20m ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 23 * 3600), "23h ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 27 * 3600), "1d ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 3 * 86400), "3d ago")
-    }
-
     func testBatteryColor() {
         XCTAssertEqual(StatusItemController.batteryColor(percentage: 15, charging: true), .systemGreen)
         XCTAssertEqual(StatusItemController.batteryColor(percentage: 15, charging: false), .systemOrange)

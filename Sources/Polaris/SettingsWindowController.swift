@@ -55,6 +55,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         emailField.placeholderString = "you@example.com"
         passwordField.placeholderString = "Polestar password"
         vinField.placeholderString = "Vehicle VIN"
+        // Editable text fields have no useful intrinsic width; without one,
+        // the grid hands the window's spare width to the label column and
+        // the whole form ends up shoved against the right edge.
+        for field in [emailField, passwordField, vinField] {
+            field.translatesAutoresizingMaskIntoConstraints = false
+            field.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        }
 
         displayPopup.removeAllItems()
         for option in DisplayOption.allCases {
@@ -109,7 +116,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         NSLayoutConstraint.activate([
             grid.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
             grid.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            grid.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            grid.trailingAnchor.constraint(lessThanOrEqualTo: content.trailingAnchor, constant: -20),
             buttons.topAnchor.constraint(equalTo: grid.bottomAnchor, constant: 20),
             buttons.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20)

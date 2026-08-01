@@ -175,15 +175,6 @@ final class StatusItemController {
 
             menu.addItem(.separator())
             menu.addItem(kvItem("Updated", timeFormatter.string(from: data.lastUpdated)))
-            // "Updated" is when we fetched; the car itself may not have phoned
-            // home for hours. Only call that out when it's meaningfully stale.
-            if let reported = data.carReportedAt {
-                let age = data.lastUpdated.timeIntervalSince(reported)
-                if age > 30 * 60 {
-                    menu.addItem(kvItem("Car last seen", Self.relativeAge(seconds: age),
-                                        valueWarning: age > 6 * 3600))
-                }
-            }
         } else {
             menu.addItem(Self.infoItem("No data yet"))
         }
@@ -297,14 +288,6 @@ final class StatusItemController {
         if minutes < 60 { return "\(minutes)min" }
         let h = minutes / 60, m = minutes % 60
         return m == 0 ? "\(h)h" : "\(h)h\(m)m"
-    }
-
-    /// Coarse age for the "Car last seen" row, e.g. "45min ago", "3h20m ago",
-    /// "1d ago". Past a day, hours stop mattering — it's a staleness hint.
-    static func relativeAge(seconds: TimeInterval) -> String {
-        let minutes = Int(seconds / 60)
-        if minutes >= 24 * 60 { return "\(minutes / (24 * 60))d ago" }
-        return "\(shortDuration(minutes: max(minutes, 1))) ago"
     }
 
     /// "7.2 kW" below 10 kW, "150 kW" above — DC fast charging doesn't
