@@ -116,6 +116,44 @@ final class FormattingTests: XCTestCase {
         XCTAssertNil(car(connection: nil).isPluggedIn)
     }
 
+    func testMenuBarIcon() {
+        func car(status: String, battery: Double, connection: String?) -> CarData {
+            CarData(batteryPercentage: battery, rangeKm: 200,
+                    chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
+                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
+                    ownerFirstName: nil,
+                    odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                    serviceWarning: false, fluidWarnings: [], imageData: nil,
+                    lastUpdated: Date(), carReportedAt: nil,
+                    grpcExtras: connection.map {
+                        GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
+                                          chargingCurrentAmps: nil, chargingVoltageVolts: nil)
+                    })
+        }
+        // Charging: green bolted car, regardless of level.
+        var icon = StatusItemController.icon(for: car(status: "CHARGING_STATUS_CHARGING",
+                                                      battery: 15, connection: "CONNECTED"))
+        XCTAssertEqual(icon.symbol, "bolt.car.fill"); XCTAssertEqual(icon.tint, .systemGreen)
+        // Plugged in, not charging: bolt, no tint.
+        icon = StatusItemController.icon(for: car(status: "CHARGING_STATUS_IDLE",
+                                                  battery: 15, connection: "CONNECTED"))
+        XCTAssertEqual(icon.symbol, "bolt.car"); XCTAssertNil(icon.tint)
+        // Unplugged and low: orange plain car.
+        icon = StatusItemController.icon(for: car(status: "CHARGING_STATUS_IDLE",
+                                                  battery: 15, connection: "DISCONNECTED"))
+        XCTAssertEqual(icon.symbol, "car"); XCTAssertEqual(icon.tint, .systemOrange)
+        // Unplugged, healthy: plain car, no tint. Unknown plug state too.
+        icon = StatusItemController.icon(for: car(status: "CHARGING_STATUS_IDLE",
+                                                  battery: 80, connection: "DISCONNECTED"))
+        XCTAssertEqual(icon.symbol, "car"); XCTAssertNil(icon.tint)
+        icon = StatusItemController.icon(for: car(status: "CHARGING_STATUS_IDLE",
+                                                  battery: 80, connection: nil))
+        XCTAssertEqual(icon.symbol, "car"); XCTAssertNil(icon.tint)
+        // No data yet.
+        icon = StatusItemController.icon(for: nil)
+        XCTAssertEqual(icon.symbol, "car"); XCTAssertNil(icon.tint)
+    }
+
     func testVersionComparison() {
         XCTAssertTrue(UpdateChecker.isVersion("2.0.0", newerThan: "1.9.9"))
         XCTAssertTrue(UpdateChecker.isVersion("1.10.0", newerThan: "1.9.1"))

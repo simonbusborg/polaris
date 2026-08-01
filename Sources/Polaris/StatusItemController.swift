@@ -48,10 +48,23 @@ final class StatusItemController {
     }
 
     func render(data: CarData?, error: String?, authenticated: Bool) {
-        let symbol = (data?.isCharging == true) ? "bolt.car.fill" : "bolt.car"
+        let (symbol, tint) = Self.icon(for: data)
         statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Polaris")
+        statusItem.button?.contentTintColor = tint
         statusItem.button?.title = " " + barTitle(for: data)
         statusItem.menu = buildMenu(data: data, error: error)
+    }
+
+    /// Menu bar icon by car state: green bolted car while charging, bolted
+    /// car when plugged in but not charging, plain car when unplugged —
+    /// orange if the battery is low on top of that. Unknown plug state
+    /// (gRPC unavailable) reads as unplugged.
+    static func icon(for data: CarData?) -> (symbol: String, tint: NSColor?) {
+        guard let data else { return ("car", nil) }
+        if data.isCharging { return ("bolt.car.fill", .systemGreen) }
+        if data.isPluggedIn == true { return ("bolt.car", nil) }
+        if data.batteryPercentage <= 20 { return ("car", .systemOrange) }
+        return ("car", nil)
     }
 
     private func barTitle(for data: CarData?) -> String {
