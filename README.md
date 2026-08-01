@@ -6,6 +6,9 @@ Polaris is a tiny native macOS app that shows your Polestar's battery, range,
 and charging status in the menu bar. Pure AppKit — no Electron, no SwiftUI,
 no background services. It talks only to Polestar's official API.
 
+Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
+(the same app for Tesla).
+
 **[Download the latest release](https://github.com/simonbusborg/polaris/releases/latest)** · [Website](https://simonbusborg.github.io/polaris/)
 
 ## Features
