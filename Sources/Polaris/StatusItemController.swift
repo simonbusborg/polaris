@@ -60,7 +60,8 @@ final class StatusItemController {
         case .batteryPercentage:
             return String(format: "%.0f%%", data.batteryPercentage)
         case .rangeKm:
-            return "\(data.rangeKm)km"
+            let unit = Preferences.distanceUnit
+            return "\(unit.convert(km: data.rangeKm))\(unit.suffix)"
         case .chargeTime:
             guard data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 else {
                 return "0min"
@@ -119,8 +120,17 @@ final class StatusItemController {
                 color: Self.batteryColor(percentage: data.batteryPercentage, charging: data.isCharging)
             )
             menu.addItem(barItem)
-            menu.addItem(kvItem("Range", "\(data.rangeKm) km"))
+            menu.addItem(kvItem("Range", Self.distance(km: data.rangeKm)))
             menu.addItem(kvItem("Status", Self.humanStatus(data.statusKey)))
+            switch data.grpcExtras?.chargerConnectionStatus {
+            case "CONNECTED": menu.addItem(kvItem("Charger", "Connected"))
+            case "DISCONNECTED": menu.addItem(kvItem("Charger", "Disconnected"))
+            case "FAULT": menu.addItem(kvItem("Charger", "Fault", valueWarning: true))
+            default: break
+            }
+            if data.isCharging, let watts = data.grpcExtras?.chargingPowerWatts, watts > 0 {
+                menu.addItem(kvItem("Power", Self.kilowatts(watts: watts)))
+            }
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
                 let fullAt = data.lastUpdated.addingTimeInterval(TimeInterval(minutes * 60))
                 menu.addItem(kvItem("Full in",
@@ -130,13 +140,12 @@ final class StatusItemController {
             // Car stats
             var stats: [(String, String)] = []
             if let km = data.odometerKm {
-                let f = NumberFormatter(); f.numberStyle = .decimal
-                stats.append(("Odometer", "\(f.string(from: NSNumber(value: km)) ?? "\(km)") km"))
+                stats.append(("Odometer", Self.distance(km: km, grouped: true)))
             }
             var serviceSoon = false
             if let days = data.daysToService {
                 var service = "in \(days) days"
-                if let km = data.distanceToServiceKm { service += " / \(km) km" }
+                if let km = data.distanceToServiceKm { service += " / \(Self.distance(km: km))" }
                 serviceSoon = days < 30
                 stats.append(("Service", service))
             }
@@ -282,6 +291,24 @@ final class StatusItemController {
         let minutes = Int(seconds / 60)
         if minutes >= 48 * 60 { return "\(minutes / (24 * 60))d ago" }
         return "\(shortDuration(minutes: max(minutes, 1))) ago"
+    }
+
+    /// "7.2 kW" below 10 kW, "150 kW" above — DC fast charging doesn't
+    /// need a decimal.
+    static func kilowatts(watts: Int) -> String {
+        let kw = Double(watts) / 1000
+        return kw >= 10 ? String(format: "%.0f kW", kw) : String(format: "%.1f kW", kw)
+    }
+
+    /// "412 km" / "256 mi"; `grouped` adds thousands separators (odometer).
+    static func distance(km: Int, grouped: Bool = false,
+                         unit: DistanceUnit = Preferences.distanceUnit) -> String {
+        let value = unit.convert(km: km)
+        if grouped {
+            let f = NumberFormatter(); f.numberStyle = .decimal
+            return "\(f.string(from: NSNumber(value: value)) ?? "\(value)") \(unit.suffix)"
+        }
+        return "\(value) \(unit.suffix)"
     }
 
     static func batteryColor(percentage: Double, charging: Bool) -> NSColor {

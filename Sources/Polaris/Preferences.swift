@@ -10,8 +10,20 @@ import Foundation
 
 enum DisplayOption: String, CaseIterable {
     case batteryPercentage = "Battery Percentage"
-    case rangeKm = "Range (km)"
+    case rangeKm = "Range"
     case chargeTime = "Charge Time"
+}
+
+enum DistanceUnit: String, CaseIterable {
+    case kilometers = "Kilometers (km)"
+    case miles = "Miles (mi)"
+
+    var suffix: String { self == .kilometers ? "km" : "mi" }
+
+    /// The API reports km only; miles are converted locally.
+    func convert(km: Int) -> Int {
+        self == .kilometers ? km : Int((Double(km) * 0.621371).rounded())
+    }
 }
 
 enum Preferences {
@@ -30,9 +42,19 @@ enum Preferences {
     static var displayOption: DisplayOption {
         get {
             let raw = d.string(forKey: "statusbar_display_option") ?? ""
+            // "Range (km)" was the stored value before units became a setting.
+            if raw == "Range (km)" { return .rangeKm }
             return DisplayOption(rawValue: raw) ?? .batteryPercentage
         }
         set { d.set(newValue.rawValue, forKey: "statusbar_display_option") }
+    }
+
+    static var distanceUnit: DistanceUnit {
+        get {
+            let raw = d.string(forKey: "distance_unit") ?? ""
+            return DistanceUnit(rawValue: raw) ?? .kilometers
+        }
+        set { d.set(newValue.rawValue, forKey: "distance_unit") }
     }
 
     static var launchAtLogin: Bool {

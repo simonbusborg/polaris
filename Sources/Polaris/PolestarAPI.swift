@@ -31,6 +31,8 @@ struct CarData {
     /// When the car itself last reported battery data (API event timestamp).
     /// `lastUpdated` is merely when we fetched; a garaged car can be hours older.
     let carReportedAt: Date?
+    /// Extra fields from the gRPC battery service; nil when it's unreachable.
+    let grpcExtras: GrpcBatteryExtras?
 
     /// Status with the CHARGING_STATUS_ / CHARGING_STATUS_V2_ prefix stripped,
     /// e.g. "CHARGING", "IDLE", "DONE".
@@ -42,6 +44,14 @@ struct CarData {
 
     var isCharging: Bool {
         statusKey == "CHARGING" || statusKey == "SMART_CHARGING"
+    }
+
+    var isPluggedIn: Bool? {
+        switch grpcExtras?.chargerConnectionStatus {
+        case "CONNECTED", "FAULT": return true
+        case "DISCONNECTED": return false
+        default: return nil
+        }
     }
 }
 
@@ -107,6 +117,7 @@ final class PolestarAPI {
     private var ownerFirstName: String?
 
     private var session: URLSession
+    private let grpc = PolestarGRPC()
 
     private(set) var modelName: String?
     private(set) var modelYear: String?
@@ -259,6 +270,15 @@ final class PolestarAPI {
             fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
         }
 
+        // Best-effort: the gRPC service supplies charger connection and live
+        // charging power. Any failure just means those rows don't appear.
+        var extras: GrpcBatteryExtras?
+        do {
+            extras = try await grpc.fetchBattery(vin: vin, accessToken: token)
+        } catch {
+            debugLog("grpc battery extras unavailable: \(error.localizedDescription)")
+        }
+
         return CarData(
             batteryPercentage: battery["batteryChargeLevelPercentage"] as? Double ?? 0,
             rangeKm: battery["estimatedDistanceToEmptyKm"] as? Int ?? 0,
@@ -276,7 +296,8 @@ final class PolestarAPI {
             fluidWarnings: fluids,
             imageData: carImageData,
             lastUpdated: Date(),
-            carReportedAt: carReportedAt
+            carReportedAt: carReportedAt,
+            grpcExtras: extras
         )
     }
 

@@ -40,7 +40,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         } else if old.isCharging && !new.isCharging && done {
             guard Preferences.notifyChargingComplete else { return }
             post(title: "Charging complete",
-                 body: String(format: "%.0f%% · %d km range", new.batteryPercentage, new.rangeKm))
+                 body: String(format: "%.0f%% · %@ range", new.batteryPercentage,
+                              StatusItemController.distance(km: new.rangeKm)))
         } else if old.isCharging && trouble {
             guard Preferences.notifyChargingProblem else { return }
             post(title: "Charging problem",
