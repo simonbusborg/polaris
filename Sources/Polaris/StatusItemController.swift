@@ -167,7 +167,7 @@ final class StatusItemController {
             if let reported = data.carReportedAt {
                 let age = data.lastUpdated.timeIntervalSince(reported)
                 if age > 30 * 60 {
-                    menu.addItem(kvItem("Car reported", Self.relativeAge(seconds: age),
+                    menu.addItem(kvItem("Car last seen", Self.relativeAge(seconds: age),
                                         valueWarning: age > 6 * 3600))
                 }
             }
@@ -286,10 +286,11 @@ final class StatusItemController {
         return m == 0 ? "\(h)h" : "\(h)h\(m)m"
     }
 
-    /// Coarse age for the "Car reported" row, e.g. "45min ago", "3h20m ago", "2d ago".
+    /// Coarse age for the "Car last seen" row, e.g. "45min ago", "3h20m ago",
+    /// "1d ago". Past a day, hours stop mattering — it's a staleness hint.
     static func relativeAge(seconds: TimeInterval) -> String {
         let minutes = Int(seconds / 60)
-        if minutes >= 48 * 60 { return "\(minutes / (24 * 60))d ago" }
+        if minutes >= 24 * 60 { return "\(minutes / (24 * 60))d ago" }
         return "\(shortDuration(minutes: max(minutes, 1))) ago"
     }
 

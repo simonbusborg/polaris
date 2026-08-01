@@ -190,8 +190,9 @@
   }
   .steps li::before{
     content:counter(step);position:absolute;left:0;top:-.15rem;
-    width:1.8rem;height:1.8rem;border:1px solid var(--line);border-radius:50%;
-    display:grid;place-items:center;font-size:.85rem;color:var(--ink);
+    width:1.8rem;height:1.8rem;background:var(--panel);border-radius:50%;
+    display:grid;place-items:center;font-size:.85rem;font-weight:600;
+    color:var(--accent);
   }
   .steps b{color:var(--ink);font-weight:500}
   .steps .note{display:block;font-size:.85rem;margin-top:.3rem}

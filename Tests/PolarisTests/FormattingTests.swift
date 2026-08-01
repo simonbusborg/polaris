@@ -13,7 +13,8 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(StatusItemController.relativeAge(seconds: 30), "1min ago")
         XCTAssertEqual(StatusItemController.relativeAge(seconds: 45 * 60), "45min ago")
         XCTAssertEqual(StatusItemController.relativeAge(seconds: 200 * 60), "3h20m ago")
-        XCTAssertEqual(StatusItemController.relativeAge(seconds: 47 * 3600), "47h ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 23 * 3600), "23h ago")
+        XCTAssertEqual(StatusItemController.relativeAge(seconds: 27 * 3600), "1d ago")
         XCTAssertEqual(StatusItemController.relativeAge(seconds: 3 * 86400), "3d ago")
     }
 
