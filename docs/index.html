@@ -87,6 +87,7 @@
   .stat{background:var(--panel);padding:1.6rem}
   .stat span{display:block;color:var(--dim);font-size:.88rem}
   .stat b{font-weight:600;font-size:1.7rem;letter-spacing:-.02em;line-height:1.2}
+  .stat p{margin-top:.55rem;color:var(--dim);font-size:.82rem;line-height:1.45;max-width:26ch}
 
   /* real menu section */
   .real{padding:clamp(5rem,12vh,8rem) 0;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
@@ -246,10 +247,14 @@
 
   <section class="stats-band rv">
     <div class="stats">
-      <div class="stat"><span>Refresh while idle</span><b>5 min</b></div>
-      <div class="stat"><span>Refresh while charging</span><b>60 s</b></div>
-      <div class="stat"><span>Trackers and third parties</span><b>0</b></div>
-      <div class="stat"><span>Small native binary</span><b>1</b></div>
+      <div class="stat"><span>Refresh while idle</span><b>5 min</b>
+        <p>Battery and range quietly update every five minutes.</p></div>
+      <div class="stat"><span>Refresh while charging</span><b>60 s</b>
+        <p>Once you plug in, Polaris checks every minute so the numbers keep up.</p></div>
+      <div class="stat"><span>Trackers and third parties</span><b>0</b>
+        <p>Your data travels between your Mac and Polestar — nowhere else.</p></div>
+      <div class="stat"><span>Small native binary</span><b>1</b>
+        <p>One tiny app, built for the Mac. Nothing running behind your back.</p></div>
     </div>
   </section>
 
