@@ -9,7 +9,7 @@ no background services. It talks only to Polestar's official API.
 Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 (the same app for Tesla).
 
-**[Download the latest release](https://github.com/simonbusborg/polaris/releases/latest)** · [Website](https://simonbusborg.github.io/polaris/)
+**[Download Polaris.dmg](https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg)** · [All releases](https://github.com/simonbusborg/polaris/releases) · [Website](https://simonbusborg.github.io/polaris/)
 
 ## Features
 
