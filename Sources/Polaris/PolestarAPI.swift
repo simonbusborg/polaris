@@ -20,6 +20,8 @@ struct CarData {
     let modelYear: String?
     let registrationNo: String?
     let vin: String?
+    /// Make/model/variant decoded from `pno34`; nil when the car reported no code.
+    let spec: PNO34?
     let ownerFirstName: String?
     let odometerKm: Int?
     let daysToService: Int?
@@ -288,6 +290,7 @@ final class PolestarAPI {
             modelYear: modelYear,
             registrationNo: registrationNo,
             vin: vin,
+            spec: PNO34.decode(pno34),
             ownerFirstName: ownerFirstName,
             odometerKm: odometerKm,
             daysToService: health?["daysToService"] as? Int,

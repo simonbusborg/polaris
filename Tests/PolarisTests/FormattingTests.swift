@@ -91,7 +91,7 @@ final class FormattingTests: XCTestCase {
         func car(connection: String?) -> CarData {
             CarData(batteryPercentage: 50, rangeKm: 200,
                     chargingStatus: "CHARGING_STATUS_IDLE", estimatedChargingTimeToFullMinutes: nil,
-                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
+                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
                     odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
@@ -111,7 +111,7 @@ final class FormattingTests: XCTestCase {
         func car(status: String, battery: Double, connection: String?) -> CarData {
             CarData(batteryPercentage: battery, rangeKm: 200,
                     chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
-                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
+                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
                     odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
@@ -176,7 +176,7 @@ final class FormattingTests: XCTestCase {
     private func car(status: String) -> CarData {
         CarData(batteryPercentage: 50, rangeKm: 200,
                 chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
-                modelName: nil, modelYear: nil, registrationNo: nil, vin: nil,
+                modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                 ownerFirstName: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,

@@ -101,6 +101,20 @@ final class StatusItemController {
             if !title.isEmpty {
                 menu.addItem(rowItem(title, bold: true))
             }
+            if let spec = data.spec {
+                menu.addItem(kvItem("Make", spec.make))
+                if let model = spec.model {
+                    menu.addItem(kvItem("Model", model))
+                }
+                if let variant = spec.variant {
+                    menu.addItem(kvItem("Variant", variant))
+                } else {
+                    // Nothing to show for this code yet. Surface it copyable so
+                    // it can be added to PNO34.variantsByPrefix rather than
+                    // leaving the user with a silently missing row.
+                    menu.addItem(kvItem("Product Code", spec.raw, copyable: true))
+                }
+            }
             if let plate = data.registrationNo, !plate.isEmpty {
                 menu.addItem(kvItem("Plate", plate, copyable: true))
             }
