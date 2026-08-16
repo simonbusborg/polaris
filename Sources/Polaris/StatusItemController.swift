@@ -155,7 +155,12 @@ final class StatusItemController {
             default: break
             }
             if data.isCharging, let watts = data.grpcExtras?.chargingPowerWatts, watts > 0 {
-                menu.addItem(kvItem("Power", Self.kilowatts(watts: watts)))
+                // The AC/DC distinction belongs with the power reading rather
+                // than on its own row — it is what makes 11 kW or 150 kW make
+                // sense. The car only reports it while it is actually charging.
+                var power = Self.kilowatts(watts: watts)
+                if let type = data.grpcExtras?.chargingType { power += " · \(type)" }
+                menu.addItem(kvItem("Power", power))
             }
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
                 let fullAt = data.lastUpdated.addingTimeInterval(TimeInterval(minutes * 60))
@@ -167,6 +172,9 @@ final class StatusItemController {
             var stats: [(String, String)] = []
             if let km = data.odometerKm {
                 stats.append(("Odometer", Self.distance(km: km, grouped: true)))
+            }
+            if let consumption = data.grpcExtras?.averageConsumptionKwhPer100Km {
+                stats.append(("Consumption", Self.consumption(kwhPer100Km: consumption)))
             }
             var serviceSoon = false
             if let days = data.daysToService {
@@ -308,6 +316,15 @@ final class StatusItemController {
     static func kilowatts(watts: Int) -> String {
         let kw = Double(watts) / 1000
         return kw >= 10 ? String(format: "%.0f kW", kw) : String(format: "%.1f kW", kw)
+    }
+
+    /// "18.4 kWh/100km" — or per 100 mi when the user picked miles. The API
+    /// only ever reports the metric figure, so the imperial one is scaled here
+    /// the same way `DistanceUnit.convert` scales ranges.
+    static func consumption(kwhPer100Km: Double,
+                            unit: DistanceUnit = Preferences.distanceUnit) -> String {
+        let value = unit == .kilometers ? kwhPer100Km : kwhPer100Km / 0.621371
+        return String(format: "%.1f kWh/100%@", value, unit.suffix)
     }
 
     /// "412 km" / "256 mi"; `grouped` adds thousands separators (odometer).

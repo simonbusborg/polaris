@@ -27,6 +27,11 @@ struct GrpcBatteryExtras {
     let chargingPowerWatts: Int?
     let chargingCurrentAmps: Int?
     let chargingVoltageVolts: Int?
+    /// "AC", "DC" or "WIRELESS". NONE and UNSPECIFIED both map to nil — the
+    /// car reports NONE whenever it isn't charging, which is not worth a row.
+    let chargingType: String?
+    /// Lifetime average, kWh per 100 km.
+    let averageConsumptionKwhPer100Km: Double?
 }
 
 final class PolestarGRPC {
@@ -120,30 +125,46 @@ final class PolestarGRPC {
     }
 
     /// Battery (pccs.vehiclestates.entities.battery.v1) — the fields we use:
-    /// 6 = charger_connection_status, 10 = charging_power_watts,
-    /// 11 = charging_current_amps, 18 = charging_voltage_volts.
+    /// 3 = average_energy_consumption_kwh_per_100_km (double), 6 =
+    /// charger_connection_status, 10 = charging_power_watts, 11 =
+    /// charging_current_amps, 17 = charging_type, 18 = charging_voltage_volts.
     static func parseBattery(_ data: Data) -> GrpcBatteryExtras {
         var connection: String?
         var watts: Int?, amps: Int?, volts: Int?
-        for field in Protobuf.fields(data) where field.wire == 0 {
-            switch field.number {
-            case 6:
+        var type: String?
+        var consumption: Double?
+        for field in Protobuf.fields(data) {
+            switch (field.number, field.wire) {
+            case (6, 0):
                 switch field.varint {
                 case 1: connection = "CONNECTED"
                 case 2: connection = "DISCONNECTED"
                 case 3: connection = "FAULT"
                 default: break
                 }
-            case 10: watts = Int(field.varint)
-            case 11: amps = Int(field.varint)
-            case 18: volts = Int(field.varint)
+            case (10, 0): watts = Int(field.varint)
+            case (11, 0): amps = Int(field.varint)
+            case (18, 0): volts = Int(field.varint)
+            case (17, 0):
+                switch field.varint {
+                case 2: type = "AC"
+                case 3: type = "DC"
+                case 4: type = "WIRELESS"
+                default: break
+                }
+            // A car that has never reported consumption sends 0, which would
+            // render as a confident "0.0 kWh/100km" — treat it as absent.
+            case (3, 1):
+                if let value = field.double, value > 0 { consumption = value }
             default: break
             }
         }
         return GrpcBatteryExtras(chargerConnectionStatus: connection,
                                  chargingPowerWatts: watts,
                                  chargingCurrentAmps: amps,
-                                 chargingVoltageVolts: volts)
+                                 chargingVoltageVolts: volts,
+                                 chargingType: type,
+                                 averageConsumptionKwhPer100Km: consumption)
     }
 }
 
@@ -156,8 +177,16 @@ enum Protobuf {
         let wire: Int
         /// Value for wire type 0; 0 otherwise.
         let varint: UInt64
-        /// Payload for wire type 2; empty otherwise.
+        /// Payload for wire types 1, 2 and 5; empty otherwise.
         let data: Data
+
+        /// The proto3 `double` in a wire-type-1 field, little-endian.
+        var double: Double? {
+            guard wire == 1, data.count == 8 else { return nil }
+            return Double(bitPattern: UInt64(littleEndian: data.withUnsafeBytes {
+                $0.loadUnaligned(as: UInt64.self)
+            }))
+        }
     }
 
     static func varint(_ value: UInt64) -> Data {
@@ -217,8 +246,9 @@ enum Protobuf {
             case 1, 5:
                 let width = wire == 1 ? 8 : 4
                 guard i + width <= bytes.count else { return fields }
+                fields.append(Field(number: number, wire: wire, varint: 0,
+                                    data: Data(bytes[i..<i + width])))
                 i += width
-                fields.append(Field(number: number, wire: wire, varint: 0, data: Data()))
             case 2:
                 guard let len = readVarint(), i + Int(len) <= bytes.count else { return fields }
                 fields.append(Field(number: number, wire: 2, varint: 0,
