@@ -8,6 +8,11 @@ final class PNO34Tests: XCTestCase {
         XCTAssertEqual(spec?.model, "Polestar 2")
     }
 
+    /// Read off a real 2026 car the API reported as "Polestar 4".
+    func testDecodesPolestar4Prefix() {
+        XCTAssertEqual(PNO34.decode("814PAPP0E11972900P01")?.model, "Polestar 4")
+    }
+
     /// An unknown car must degrade to make-only, never to a guessed model.
     func testUnknownPrefixYieldsMakeOnly() {
         let spec = PNO34.decode("999ABCDEFGHIJKLMNOPQRSTUVWXYZ01234")

@@ -30,6 +30,8 @@ extension PNO34 {
     /// than showing nothing, because it renders as fact in the menu.
     static let modelsByPrefix: [String: String] = [
         "534": "Polestar 2",
+        // Read off a 2026 car whose modelName the API reported as "Polestar 4".
+        "814": "Polestar 4",
     ]
 
     /// Full-prefix → variant, longest match wins.

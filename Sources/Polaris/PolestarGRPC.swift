@@ -101,6 +101,7 @@ final class PolestarGRPC {
         // GetBatteryResponse { id = 1, vin = 2, battery = 3 }
         guard let batteryBytes = Protobuf.fields(body).first(where: { $0.number == 3 && $0.wire == 2 })?.data
         else { throw PolestarError.parse("gRPC: no battery in response") }
+        Self.dumpFieldsIfDebugging(batteryBytes)
         return Self.parseBattery(batteryBytes)
     }
 
@@ -122,6 +123,22 @@ final class PolestarGRPC {
         else { throw PolestarError.parse("C3 discovery failed") }
         c3BaseURL = url
         return url
+    }
+
+    /// Developer aid: `defaults write com.weareheavy.polaris debug_grpc_fields
+    /// -bool YES` logs which fields the battery message actually carries, so a
+    /// missing row can be told apart from a field we read from the wrong
+    /// number. Numbers and numeric values only — no VIN, no raw payloads.
+    static func dumpFieldsIfDebugging(_ data: Data) {
+        guard UserDefaults.standard.bool(forKey: "debug_grpc_fields") else { return }
+        let summary = Protobuf.fields(data).map { field -> String in
+            switch field.wire {
+            case 0: return "\(field.number)=\(field.varint)"
+            case 1: return "\(field.number)=\(field.double.map { String($0) } ?? "?")d"
+            default: return "\(field.number):wire\(field.wire)"
+            }
+        }
+        NSLog("[Polaris] battery fields: \(summary.joined(separator: " "))")
     }
 
     /// Battery (pccs.vehiclestates.entities.battery.v1) — the fields we use:
