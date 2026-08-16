@@ -60,13 +60,19 @@ runs the test suite.
 
 ## Releasing
 
-Tag a version and push — GitHub Actions builds the app and attaches `Polaris.zip`
-to the release automatically:
+One command from a clean working tree — it bumps `Info.plist`, commits, tags
+and pushes, and GitHub Actions builds the app and attaches `Polaris.dmg` and
+`Polaris.zip` to the release:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+make release VERSION=1.0.0
 ```
+
+Don't tag by hand. The release workflow checks the tag against
+`CFBundleShortVersionString` and fails if they disagree, because the update
+checker compares the two — a release whose plist says something else would nag
+every user forever. `make release` bumps the plist as part of the same commit,
+which is what keeps them in step.
 
 Releases are signed and notarized when these repository secrets are configured
 (without them the workflow falls back to an ad-hoc-signed build):
