@@ -107,6 +107,13 @@ final class StatusItemController {
             if let variant = data.spec?.variant {
                 menu.addItem(kvItem("Variant", variant))
             }
+            // `defaults write com.weareheavy.polaris debug_pno34 -bool YES`
+            // brings the raw code back, copyable. It is how a car's pno34 gets
+            // read off a running app in the first place, which is the only way
+            // PNO34.variantsByPrefix will ever be filled in.
+            if let spec = data.spec, UserDefaults.standard.bool(forKey: "debug_pno34") {
+                menu.addItem(kvItem("Product Code", spec.raw, copyable: true))
+            }
             if let plate = data.registrationNo, !plate.isEmpty {
                 menu.addItem(kvItem("Plate", plate, copyable: true))
             }
@@ -146,7 +153,14 @@ final class StatusItemController {
             case "FAULT": menu.addItem(kvItem("Charger", "Fault", valueWarning: true))
             default: break
             }
-            if data.isCharging, let watts = data.grpcExtras?.chargingPowerWatts, watts > 0 {
+            // `defaults write com.weareheavy.polaris debug_charging_type -string DC`
+            // renders the charging rows on a parked car. The values are invented
+            // here rather than injected upstream, so the flag can never dress up
+            // a parser fault as a working feature — if this row looks right, it
+            // says the layout is right and nothing about the wire format.
+            if let fake = UserDefaults.standard.string(forKey: "debug_charging_type"), !fake.isEmpty {
+                menu.addItem(kvItem("Power", "\(Self.kilowatts(watts: 11000)) · \(fake)"))
+            } else if data.isCharging, let watts = data.grpcExtras?.chargingPowerWatts, watts > 0 {
                 // The AC/DC distinction belongs with the power reading rather
                 // than on its own row — it is what makes 11 kW or 150 kW make
                 // sense. The car only reports it while it is actually charging.
