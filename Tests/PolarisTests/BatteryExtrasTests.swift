@@ -1,11 +1,16 @@
 import XCTest
 @testable import Polaris
 
-/// Covers the gRPC battery fields Polaris reads beyond charge level: the
-/// charging type and the average consumption double. The double is the
-/// interesting one — it is the first wire-type-1 field the parser has had to
-/// hand back rather than skip.
+/// Covers the charging type field and the wire-format handling of 64-bit
+/// values. Nothing Polaris shows is a double today, but the battery message is
+/// full of them, and the parser used to drop their payloads — a field sitting
+/// after one would still be misread if that regressed.
 final class BatteryExtrasTests: XCTestCase {
+
+    private enum Encoded {
+        case varint(UInt64)
+        case double(Double)
+    }
 
     /// Builds a proto3 wire-format message the way the battery service would.
     private func message(_ fields: [(number: Int, value: Encoded)]) -> Data {
@@ -23,14 +28,9 @@ final class BatteryExtrasTests: XCTestCase {
         return out
     }
 
-    private enum Encoded {
-        case varint(UInt64)
-        case double(Double)
-    }
-
-    func testParsesChargingTypeAndConsumption() {
+    func testParsesChargingFields() {
         let data = message([
-            (3, .double(18.4)),   // average_energy_consumption_kwh_per_100_km
+            (2, .double(75)),     // battery_charge_level_percentage
             (6, .varint(1)),      // charger_connection_status = CONNECTED
             (10, .varint(11000)), // charging_power_watts
             (17, .varint(3)),     // charging_type = DC
@@ -43,7 +43,6 @@ final class BatteryExtrasTests: XCTestCase {
         XCTAssertEqual(extras.chargingPowerWatts, 11000)
         XCTAssertEqual(extras.chargingVoltageVolts, 400)
         XCTAssertEqual(extras.chargingType, "DC")
-        XCTAssertEqual(extras.averageConsumptionKwhPer100Km ?? 0, 18.4, accuracy: 0.0001)
     }
 
     func testChargingTypeNoneAndUnspecifiedAreDropped() {
@@ -55,24 +54,21 @@ final class BatteryExtrasTests: XCTestCase {
         XCTAssertEqual(PolestarGRPC.parseBattery(message([(17, .varint(4))])).chargingType, "WIRELESS")
     }
 
-    /// A car with no consumption history reports 0.0, which must not render as
-    /// a confident "0.0 kWh/100km".
-    func testZeroConsumptionIsTreatedAsAbsent() {
-        XCTAssertNil(PolestarGRPC.parseBattery(message([(3, .double(0))])).averageConsumptionKwhPer100Km)
-    }
-
     /// Fields after a 64-bit one must still parse — the parser previously
-    /// skipped those eight bytes without recording them.
+    /// advanced past those eight bytes without recording them.
     func testFieldsFollowingADoubleStillParse() {
-        let extras = PolestarGRPC.parseBattery(message([(3, .double(21.7)), (10, .varint(7200))]))
+        let extras = PolestarGRPC.parseBattery(message([(2, .double(75)), (10, .varint(7200))]))
         XCTAssertEqual(extras.chargingPowerWatts, 7200)
     }
 
-    func testConsumptionFormatting() {
-        XCTAssertEqual(StatusItemController.consumption(kwhPer100Km: 18.4, unit: .kilometers),
-                       "18.4 kWh/100km")
-        // 18.4 kWh per 100 km is 29.6 kWh per 100 miles.
-        XCTAssertEqual(StatusItemController.consumption(kwhPer100Km: 18.4, unit: .miles),
-                       "29.6 kWh/100mi")
+    /// A real car reported `2=75.0d`, matching the 75% the menu showed.
+    func testDecodesDoublePayload() {
+        let fields = Protobuf.fields(message([(2, .double(75))]))
+        XCTAssertEqual(fields.first?.double ?? 0, 75, accuracy: 0.0001)
+    }
+
+    /// A varint field has no double in it, however the bytes happen to land.
+    func testDoubleIsNilForOtherWireTypes() {
+        XCTAssertNil(Protobuf.fields(message([(10, .varint(11000))])).first?.double)
     }
 }

@@ -30,8 +30,6 @@ struct GrpcBatteryExtras {
     /// "AC", "DC" or "WIRELESS". NONE and UNSPECIFIED both map to nil — the
     /// car reports NONE whenever it isn't charging, which is not worth a row.
     let chargingType: String?
-    /// Lifetime average, kWh per 100 km.
-    let averageConsumptionKwhPer100Km: Double?
 }
 
 final class PolestarGRPC {
@@ -142,14 +140,12 @@ final class PolestarGRPC {
     }
 
     /// Battery (pccs.vehiclestates.entities.battery.v1) — the fields we use:
-    /// 3 = average_energy_consumption_kwh_per_100_km (double), 6 =
-    /// charger_connection_status, 10 = charging_power_watts, 11 =
+    /// 6 = charger_connection_status, 10 = charging_power_watts, 11 =
     /// charging_current_amps, 17 = charging_type, 18 = charging_voltage_volts.
     static func parseBattery(_ data: Data) -> GrpcBatteryExtras {
         var connection: String?
         var watts: Int?, amps: Int?, volts: Int?
         var type: String?
-        var consumption: Double?
         for field in Protobuf.fields(data) {
             switch (field.number, field.wire) {
             case (6, 0):
@@ -169,10 +165,6 @@ final class PolestarGRPC {
                 case 4: type = "WIRELESS"
                 default: break
                 }
-            // A car that has never reported consumption sends 0, which would
-            // render as a confident "0.0 kWh/100km" — treat it as absent.
-            case (3, 1):
-                if let value = field.double, value > 0 { consumption = value }
             default: break
             }
         }
@@ -180,8 +172,7 @@ final class PolestarGRPC {
                                  chargingPowerWatts: watts,
                                  chargingCurrentAmps: amps,
                                  chargingVoltageVolts: volts,
-                                 chargingType: type,
-                                 averageConsumptionKwhPer100Km: consumption)
+                                 chargingType: type)
     }
 }
 

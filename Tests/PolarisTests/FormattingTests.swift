@@ -99,7 +99,7 @@ final class FormattingTests: XCTestCase {
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
                                           chargingCurrentAmps: nil, chargingVoltageVolts: nil,
-                                          chargingType: nil, averageConsumptionKwhPer100Km: nil)
+                                          chargingType: nil)
                     })
         }
         XCTAssertEqual(car(connection: "CONNECTED").isPluggedIn, true)
@@ -120,7 +120,7 @@ final class FormattingTests: XCTestCase {
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
                                           chargingCurrentAmps: nil, chargingVoltageVolts: nil,
-                                          chargingType: nil, averageConsumptionKwhPer100Km: nil)
+                                          chargingType: nil)
                     })
         }
         // Charging: filled bolted car, regardless of level.

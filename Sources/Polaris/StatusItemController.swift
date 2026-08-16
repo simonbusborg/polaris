@@ -101,19 +101,11 @@ final class StatusItemController {
             if !title.isEmpty {
                 menu.addItem(rowItem(title, bold: true))
             }
-            if let spec = data.spec {
-                menu.addItem(kvItem("Make", spec.make))
-                if let model = spec.model {
-                    menu.addItem(kvItem("Model", model))
-                }
-                if let variant = spec.variant {
-                    menu.addItem(kvItem("Variant", variant))
-                } else {
-                    // Nothing to show for this code yet. Surface it copyable so
-                    // it can be added to PNO34.variantsByPrefix rather than
-                    // leaving the user with a silently missing row.
-                    menu.addItem(kvItem("Product Code", spec.raw, copyable: true))
-                }
+            // Only the variant earns a row: the title above already says
+            // "Polestar 4 · 2026", so make and model would just repeat it, and
+            // the raw pno34 means nothing to an owner.
+            if let variant = data.spec?.variant {
+                menu.addItem(kvItem("Variant", variant))
             }
             if let plate = data.registrationNo, !plate.isEmpty {
                 menu.addItem(kvItem("Plate", plate, copyable: true))
@@ -172,9 +164,6 @@ final class StatusItemController {
             var stats: [(String, String)] = []
             if let km = data.odometerKm {
                 stats.append(("Odometer", Self.distance(km: km, grouped: true)))
-            }
-            if let consumption = data.grpcExtras?.averageConsumptionKwhPer100Km {
-                stats.append(("Consumption", Self.consumption(kwhPer100Km: consumption)))
             }
             var serviceSoon = false
             if let days = data.daysToService {
@@ -316,15 +305,6 @@ final class StatusItemController {
     static func kilowatts(watts: Int) -> String {
         let kw = Double(watts) / 1000
         return kw >= 10 ? String(format: "%.0f kW", kw) : String(format: "%.1f kW", kw)
-    }
-
-    /// "18.4 kWh/100km" — or per 100 mi when the user picked miles. The API
-    /// only ever reports the metric figure, so the imperial one is scaled here
-    /// the same way `DistanceUnit.convert` scales ranges.
-    static func consumption(kwhPer100Km: Double,
-                            unit: DistanceUnit = Preferences.distanceUnit) -> String {
-        let value = unit == .kilometers ? kwhPer100Km : kwhPer100Km / 0.621371
-        return String(format: "%.1f kWh/100%@", value, unit.suffix)
     }
 
     /// "412 km" / "256 mi"; `grouped` adds thousands separators (odometer).
