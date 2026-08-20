@@ -73,3 +73,7 @@
 "Check automatically" = "Søk automatisk";
 "Download and install automatically" = "Last ned og installer automatisk";
 "Updates:" = "Oppdateringer:";
+"Add Car…" = "Legg til bil…";
+"Remove Car" = "Fjern bil";
+"Sign out and forget this car?" = "Logg ut og glem denne bilen?";
+"Polaris will forget the login for %@." = "Polaris glemmer innloggingen for %@.";

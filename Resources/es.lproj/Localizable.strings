@@ -73,3 +73,7 @@
 "Check automatically" = "Buscar automáticamente";
 "Download and install automatically" = "Descargar e instalar automáticamente";
 "Updates:" = "Actualizaciones:";
+"Add Car…" = "Añadir coche…";
+"Remove Car" = "Quitar coche";
+"Sign out and forget this car?" = "¿Cerrar sesión y olvidar este coche?";
+"Polaris will forget the login for %@." = "Polaris olvidará el inicio de sesión de %@.";

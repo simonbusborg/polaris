@@ -73,3 +73,7 @@
 "Check automatically" = "Tarkista automaattisesti";
 "Download and install automatically" = "Lataa ja asenna automaattisesti";
 "Updates:" = "Päivitykset:";
+"Add Car…" = "Lisää auto…";
+"Remove Car" = "Poista auto";
+"Sign out and forget this car?" = "Kirjaudutaanko ulos ja unohdetaan tämä auto?";
+"Polaris will forget the login for %@." = "Polaris unohtaa kirjautumisen %@.";

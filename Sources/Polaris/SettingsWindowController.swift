@@ -26,6 +26,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// left out entirely rather than shown dead.
     private let updater: Updater?
 
+    private let addCarButton = NSButton(title: L("Add Car…"), target: nil, action: nil)
+    private let removeCarButton = NSButton(title: L("Remove Car"), target: nil, action: nil)
+
+    /// Set while the form holds a login for a car being added, so saving
+    /// creates a second account instead of overwriting the current one.
+    private var isAddingCar = false
+
     private let onSave: () -> Void
 
     init(updater: Updater? = nil, onSave: @escaping () -> Void) {
@@ -124,14 +131,27 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let cancelButton = NSButton(title: L("Cancel"), target: self, action: #selector(cancelAction))
         cancelButton.keyEquivalent = "\u{1b}"
 
+        addCarButton.target = self
+        addCarButton.action = #selector(addCarAction)
+        removeCarButton.target = self
+        removeCarButton.action = #selector(removeCarAction)
+
         let buttons = NSStackView(views: [cancelButton, saveButton])
         buttons.orientation = .horizontal
         buttons.spacing = 12
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
+        let accountButtons = NSStackView(views: [addCarButton, removeCarButton])
+        accountButtons.orientation = .horizontal
+        accountButtons.spacing = 8
+        accountButtons.translatesAutoresizingMaskIntoConstraints = false
+
         content.addSubview(grid)
         content.addSubview(buttons)
+        content.addSubview(accountButtons)
         NSLayoutConstraint.activate([
+            accountButtons.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            accountButtons.centerYAnchor.constraint(equalTo: buttons.centerYAnchor),
             grid.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
             grid.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
             grid.trailingAnchor.constraint(lessThanOrEqualTo: content.trailingAnchor, constant: -20),
@@ -150,6 +170,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func loadValues() {
+        isAddingCar = false
+        // Nothing to remove until there's a second car to fall back to.
+        removeCarButton.isHidden = Accounts.all.count < 2
         emailField.stringValue = Preferences.email
         passwordField.stringValue = ((try? Keychain.readPassword()) ?? nil) ?? ""
         vinField.stringValue = Preferences.vin
@@ -168,7 +191,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     // MARK: - Actions
 
     @objc private func saveAction() {
-        Preferences.email = emailField.stringValue.trimmingCharacters(in: .whitespaces)
+        let email = emailField.stringValue.trimmingCharacters(in: .whitespaces)
+        let previous = Preferences.email
+        // Editing the address of the account you're on is a rename, not a
+        // new car: the old entry and its Keychain items would otherwise be
+        // orphaned with no way to reach them.
+        if !isAddingCar, !previous.isEmpty, previous != email {
+            Accounts.remove(previous)
+        }
+        Preferences.email = email
+        Accounts.add(email)
         Preferences.vin = vinField.stringValue.trimmingCharacters(in: .whitespaces).uppercased()
         if displayPopup.indexOfSelectedItem >= 0 {
             Preferences.displayOption = DisplayOption.allCases[displayPopup.indexOfSelectedItem]
@@ -210,5 +242,30 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     @objc private func cancelAction() {
         window?.orderOut(nil)
+    }
+
+    /// Empty the form for a second Polestar login. The current car stays
+    /// signed in — its password and session live under its own address in
+    /// the Keychain — and both turn up in the menu's switcher afterwards.
+    @objc private func addCarAction() {
+        isAddingCar = true
+        emailField.stringValue = ""
+        passwordField.stringValue = ""
+        vinField.stringValue = ""
+        window?.makeFirstResponder(emailField)
+    }
+
+    @objc private func removeCarAction() {
+        let alert = NSAlert()
+        alert.messageText = L("Sign out and forget this car?")
+        alert.informativeText = String(format: L("Polaris will forget the login for %@."),
+                                       Preferences.email)
+        alert.addButton(withTitle: L("Remove Car"))
+        alert.addButton(withTitle: L("Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        Accounts.remove(Preferences.email)
+        window?.orderOut(nil)
+        onSave()
     }
 }

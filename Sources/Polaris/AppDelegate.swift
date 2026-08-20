@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         installMainMenu()
         Preferences.migrateLegacyPassword()
+        Accounts.migrateSingleAccount()
 
         statusController = StatusItemController(
             onRefresh: { [weak self] in self?.refreshNow() },
@@ -149,18 +150,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notifier.carDataDidUpdate(old: latest, new: data)
         latest = data
         lastError = nil
-        statusController.cars = api.cars
+        // The switcher lists every car the user has ever signed in to, not
+        // just this account's — that's the whole point of adding a second
+        // one. Refreshing the cache here is what keeps the other account's
+        // entry alive while it's signed out.
+        Accounts.setCars(api.cars, for: Accounts.active)
+        statusController.cars = Accounts.allCars
         statusController.activeVin = Preferences.vin
         statusController.render(data: data, error: nil, authenticated: true)
         scheduleRefresh()
     }
 
-    /// Point the app at another of the account's cars: persist the VIN,
-    /// refetch identity + image, then reload live data.
+    /// Point the app at another car: persist the VIN, refetch identity +
+    /// image, then reload live data. A car belonging to a different account
+    /// means a different session, so that case starts over from the login
+    /// rather than just swapping the VIN.
     private func switchCar(to vin: String) {
-        Preferences.vin = vin
         latest = nil   // old car's data must not seed notifications
         statusController.showLoading()
+
+        if let owner = Accounts.owner(ofVin: vin), owner != Accounts.active {
+            Preferences.email = owner
+            Preferences.vin = vin
+            startSession()
+            return
+        }
+
+        Preferences.vin = vin
         Task {
             await api.selectCar(vin: vin)
             await MainActor.run { self.refreshNow() }

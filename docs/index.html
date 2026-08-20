@@ -182,10 +182,12 @@
     line-height:1.15;letter-spacing:-.02em;margin-top:1rem;
   }
   .notify-head p{color:var(--dim);margin:1.4rem auto 0;max-width:46ch;line-height:1.55}
-  .notify-cards{position:relative;width:min(380px,100%);height:104px}
+  .notify-cards{position:relative;width:min(380px,100%);height:190px}
+  /* One banner and its sign travel together; the wrapper is what the
+     scroll handler moves, so the two can never drift apart. */
+  .deal{position:absolute;inset:0 0 auto 0;will-change:transform,opacity}
   /* A macOS banner: icon, title, body, and the delivery time in the corner. */
   .banner{
-    position:absolute;inset:0 0 auto 0;
     display:grid;grid-template-columns:auto 1fr auto;
     gap:.75rem;align-items:start;text-align:left;
     background:rgba(30,30,32,.72);
@@ -194,18 +196,25 @@
     border:1px solid rgba(255,255,255,.14);border-radius:14px;
     box-shadow:0 18px 44px rgba(0,0,0,.45);padding:.85rem .9rem;
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
-    color:#f5f5f7;will-change:transform,opacity;
+    color:#f5f5f7;
   }
   .banner img{width:34px;height:34px;border-radius:8px}
   .banner .t{font-size:.85rem;font-weight:600;line-height:1.25}
   .banner .b{font-size:.82rem;color:rgba(255,255,255,.6);margin-top:.15rem;
     font-variant-numeric:tabular-nums}
   .banner .when{font-size:.75rem;color:rgba(255,255,255,.45);white-space:nowrap}
-  .toggles{margin-top:1.6rem;display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;justify-content:center}
-  .toggles li{list-style:none;color:var(--dim);font-size:.88rem;
-    display:flex;align-items:center;gap:.5rem}
-  .toggles li::before{content:"";width:26px;height:15px;border-radius:999px;
-    background:var(--accent);flex:none;box-shadow:inset -11px 0 0 -8px #fff}
+  /* The sign under the banner: which switch in Settings this one is,
+     and when it fires. */
+  .sign{margin-top:1.1rem;display:flex;flex-direction:column;align-items:center;
+    gap:.55rem;color:var(--dim);font-size:.86rem;line-height:1.45;
+    will-change:transform,opacity}
+  .sign .pill{
+    display:inline-flex;align-items:center;gap:.5rem;
+    background:var(--panel);border-radius:999px;padding:.3rem .85rem .3rem .6rem;
+    color:var(--ink);font-size:.82rem;font-weight:500;
+  }
+  .sign .pill::before{content:"";width:24px;height:14px;border-radius:999px;
+    background:var(--accent);flex:none;box-shadow:inset -10px 0 0 -7px #fff}
 
   /* features */
   .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
@@ -262,8 +271,9 @@
        simply sit under the text. */
     .notify-stage{height:auto}
     .notify-sticky{position:static;height:auto;padding:clamp(4rem,10vh,7rem) 0}
-    .notify-cards{position:static;height:auto;display:grid;gap:.9rem}
-    .banner{position:static;opacity:1!important;transform:none!important}
+    .notify-cards{position:static;height:auto;display:grid;gap:2.4rem}
+    .deal{position:static;opacity:1!important;transform:none!important}
+    .sign{opacity:1!important;transform:none!important}
     .dot.live::before{animation:none}
   }
   @media (max-width:860px){
@@ -370,27 +380,34 @@
           shows up when something actually changed — plugged in, finished, or
           the charger threw an error. Nothing else pings you, and each of the
           three is its own switch in Settings.</p>
-          <ul class="toggles">
-            <li>Charging started</li>
-            <li>Charging complete</li>
-            <li>Charging problems</li>
-          </ul>
         </div>
         <div class="notify-cards" id="notifyCards">
-          <div class="banner">
-            <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
-            <div><div class="t">Charging started</div><div class="b">54% · full in 2h10m</div></div>
-            <div class="when">now</div>
+          <div class="deal">
+            <div class="banner">
+              <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+              <div><div class="t">Charging started</div><div class="b">54% · full in 2h10m</div></div>
+              <div class="when">now</div>
+            </div>
+            <div class="sign"><span class="pill">Charging started</span>
+              <span>Sendes i det øjeblik bilen begynder at lade.</span></div>
           </div>
-          <div class="banner">
-            <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
-            <div><div class="t">Charging complete</div><div class="b">100% · 560 km range</div></div>
-            <div class="when">2h ago</div>
+          <div class="deal">
+            <div class="banner">
+              <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+              <div><div class="t">Charging complete</div><div class="b">100% · 560 km range</div></div>
+              <div class="when">2h ago</div>
+            </div>
+            <div class="sign"><span class="pill">Charging complete</span>
+              <span>Når batteriet er fuldt — også hvis du har lagt Mac'en i dvale imens.</span></div>
           </div>
-          <div class="banner">
-            <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
-            <div><div class="t">Charging problem</div><div class="b">Charger reported an error at 43%</div></div>
-            <div class="when">yesterday</div>
+          <div class="deal">
+            <div class="banner">
+              <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+              <div><div class="t">Charging problem</div><div class="b">Charger reported an error at 43%</div></div>
+              <div class="when">yesterday</div>
+            </div>
+            <div class="sign"><span class="pill">Charging problems</span>
+              <span>Hvis laderen melder fejl, så du ikke vågner til et halvtomt batteri.</span></div>
           </div>
         </div>
       </div>
@@ -572,7 +589,7 @@
   // Each banner owns one slice of the progress; inside its slice it rises
   // in, holds, and leaves upward — one on screen at a time.
   const stage = document.getElementById('notifyStage');
-  const banners = [...document.getElementById('notifyCards').children];
+  const deals = [...document.getElementById('notifyCards').children];
   const still = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function placeBanners() {
@@ -580,17 +597,30 @@
     const rect = stage.getBoundingClientRect();
     const travel = rect.height - window.innerHeight;
     const p = Math.min(1, Math.max(0, -rect.top / travel));
-    const slice = 1 / banners.length;
-    banners.forEach((el, i) => {
+    const slice = 1 / deals.length;
+    deals.forEach((el, i) => {
       // -1 → below and unseen, 0 → centred and settled, 1 → gone upward.
-      const local = (p - i * slice) / slice;
-      let t = Math.min(1.35, Math.max(-0.35, (local - 0.5) * 2.2));
+      let t = ((p - i * slice) / slice - 0.5) * 2.2;
       // The last one never leaves: it holds while the section scrolls away,
       // so the stage doesn't end on an empty frame.
-      if (i === banners.length - 1) t = Math.min(t, 0);
+      if (i === deals.length - 1) t = Math.min(t, 0);
+      // Fade off the raw distance so a banner that is nowhere near its turn
+      // reaches a true zero; only the travel is clamped, so the ones waiting
+      // offstage don't drift kilometres away.
       const seen = Math.max(0, 1 - Math.abs(t) * 1.6);
+      const shift = Math.min(1.35, Math.max(-1.35, t));
       el.style.opacity = seen;
-      el.style.transform = 'translateY(' + (-t * 46) + 'px) scale(' + (0.94 + seen * 0.06) + ')';
+      el.style.transform = 'translateY(' + (-shift * 46) + 'px) scale(' + (0.94 + seen * 0.06) + ')';
+      // At zero it is not just transparent: the blur and shadow would still
+      // paint a halo over whatever is on screen.
+      el.style.visibility = seen > 0 ? 'visible' : 'hidden';
+      // Whichever is most visible paints on top — otherwise the one on its
+      // way out covers the one arriving.
+      el.style.zIndex = Math.round(seen * 100);
+      // The sign follows a beat behind the banner, in and out.
+      const sign = el.lastElementChild;
+      sign.style.opacity = Math.max(0, 1 - Math.abs(t) * 2.2);
+      sign.style.transform = 'translateY(' + (-t * 14) + 'px)';
     });
   }
 
@@ -603,7 +633,10 @@
   window.addEventListener('scroll', onNotifyScroll, {passive: true});
   window.addEventListener('resize', onNotifyScroll, {passive: true});
   still.addEventListener('change', () => {
-    banners.forEach(el => { el.style.opacity = ''; el.style.transform = ''; });
+    deals.forEach(el => {
+      el.style.opacity = el.style.transform = el.style.zIndex = el.style.visibility = '';
+      el.lastElementChild.style.opacity = el.lastElementChild.style.transform = '';
+    });
     placeBanners();
   });
   placeBanners();

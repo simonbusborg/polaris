@@ -27,17 +27,48 @@ enum Keychain {
     private static let passwordAccount = "polestar-password"
     private static let sessionAccount = "polestar-refresh-token"
 
+    /// Items are scoped by the Polestar address they belong to, so two
+    /// accounts can be signed in at once. The unscoped names are what a
+    /// single-account install wrote; `Accounts.migrateSingleAccount()`
+    /// moves those across on first launch.
+    private static func scoped(_ base: String, _ email: String) -> String {
+        email.isEmpty ? base : "\(base):\(email)"
+    }
+
     // MARK: - Password
 
-    static func savePassword(_ password: String) throws { try save(password, account: passwordAccount) }
-    static func readPassword() throws -> String? { try read(account: passwordAccount) }
-    static func deletePassword() { delete(account: passwordAccount) }
+    static func savePassword(_ password: String, account email: String = Accounts.active) throws {
+        try save(password, account: scoped(passwordAccount, email))
+    }
+
+    static func readPassword(account email: String = Accounts.active) throws -> String? {
+        try read(account: scoped(passwordAccount, email))
+    }
+
+    static func deletePassword(account email: String = Accounts.active) {
+        delete(account: scoped(passwordAccount, email))
+    }
 
     // MARK: - Session (OAuth refresh token)
 
-    static func saveSessionToken(_ token: String) throws { try save(token, account: sessionAccount) }
-    static func readSessionToken() throws -> String? { try read(account: sessionAccount) }
-    static func deleteSessionToken() { delete(account: sessionAccount) }
+    static func saveSessionToken(_ token: String, account email: String = Accounts.active) throws {
+        try save(token, account: scoped(sessionAccount, email))
+    }
+
+    static func readSessionToken(account email: String = Accounts.active) throws -> String? {
+        try read(account: scoped(sessionAccount, email))
+    }
+
+    static func deleteSessionToken(account email: String = Accounts.active) {
+        delete(account: scoped(sessionAccount, email))
+    }
+
+    // MARK: - Pre-multi-account items (read once, then removed)
+
+    static func readLegacyPassword() throws -> String? { try read(account: passwordAccount) }
+    static func deleteLegacyPassword() { delete(account: passwordAccount) }
+    static func readLegacySessionToken() throws -> String? { try read(account: sessionAccount) }
+    static func deleteLegacySessionToken() { delete(account: sessionAccount) }
 
     // MARK: - Plumbing
 
