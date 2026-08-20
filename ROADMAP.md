@@ -32,9 +32,8 @@ comment describing where it now stands.
 
 ## Next
 
-- **[In-app updates](https://github.com/simonbusborg/polaris/issues/8)** — "Update now" and an automatic-updates toggle,
-  via Sparkle. Today the app only tells you a new version exists and sends you
-  to the browser. Now possible because releases are signed.
+- **[Appcast publishing fails in CI](https://github.com/simonbusborg/polaris/issues/9)** — the update feed had to be signed and
+  committed by hand for v2.6.0. Doesn't affect the released app.
 - **[A better "in use" signal](https://github.com/simonbusborg/polaris/issues/3)** — the API's charging status reads `IDLE`
   whether the car is parked or on the motorway, so driving is currently
   inferred from how fresh the odometer reading is. It works, but it can lag
@@ -55,13 +54,18 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **In-app updates** (v2.6.0) — "Check for Updates…" in the menu, plus
+  automatic checking and installing, via Sparkle.
+- **More than one car, across accounts** (v2.6.0) — "Add Car…" in Settings;
+  every car from every login shows up in the same switcher.
+
 - **Signed and notarized builds** (v2.5.1) — releases are signed with a
   Developer ID and notarized by Apple. The first-launch security warning is
   gone.
 
 - **Multiple cars** (v2.2.0) — a switcher appears in the menu when the
   account has more than one car.
-- **System language, 12 languages** (v2.5.0, extended in v2.6.0) — English, Danish,
+- **System language, 12 languages** (v2.5.0, five more in v2.6.0) — English, Danish,
   Swedish, Norwegian, German, Spanish and Italian. The app follows the macOS
   language setting; there is no language picker to find.
 - **"In use" while driving** (v2.5.0) — the charging status never says
