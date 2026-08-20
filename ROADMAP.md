@@ -28,6 +28,9 @@ comment describing where it now stands.
 
 ## Next
 
+- **[In-app updates](https://github.com/simonbusborg/polaris/issues/8)** — "Update now" and an automatic-updates toggle,
+  via Sparkle. Today the app only tells you a new version exists and sends you
+  to the browser. Now possible because releases are signed.
 - **[More languages](https://github.com/simonbusborg/polaris/issues/2)** — the seven below cover most of Polestar's European
   markets, but not all of them. Dutch, Finnish, French, Portuguese and Polish
   are the obvious next ones. One file per language; translators welcome.
