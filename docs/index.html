@@ -129,6 +129,15 @@
   }
   .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
   .btn svg{width:14px;height:14px}
+  .btn.ghost{background:transparent;color:var(--paper);border:1px solid rgba(255,255,255,.28)}
+  .btn.ghost:hover{background:rgba(255,255,255,.1);color:var(--paper)}
+  /* Shown only when the visitor is not on a Mac: the download is pointless
+     there, so the card says so before the button does anything. */
+  .not-mac{
+    font-size:.85rem;line-height:1.5;color:rgba(255,255,255,.7);
+    margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.14);
+  }
+  .cta-row .btn + .btn{margin-top:.6rem}
   @media(max-width:900px){
     .hero{min-height:0}
     .hero-inner{padding-top:clamp(3rem,10vh,5rem);gap:2.2rem}
@@ -465,12 +474,13 @@
         <div class="meta">Free &amp; open source · macOS 13+</div>
         <p>Signs in with your Polestar account, keeps the session in the
         Keychain, and talks to nothing but Polestar's own API.</p>
-        <div class="cta-row">
-          <a class="btn" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
+        <div class="cta-row" id="ctaRow">
+          <a class="btn" id="ctaDownload" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
             Download for macOS
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
           </a>
         </div>
+        <p class="not-mac" id="notMac" hidden></p>
       </div>
     </div>
   </section>
@@ -838,6 +848,49 @@
       document.getElementById(other.getAttribute('aria-controls')).hidden = !selected;
     });
   }));
+
+  // Polaris is a Mac app, so on anything else the download button is a dead
+  // end. iPadOS reports itself as a Mac, so touch support settles that case.
+  const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent)
+    && !(navigator.maxTouchPoints > 1 || /iPhone|iPad|iPod/.test(navigator.userAgent));
+
+  if (!isMac) {
+    const dl = document.getElementById('ctaDownload');
+    const row = document.getElementById('ctaRow');
+    const note = document.getElementById('notMac');
+    const pageURL = location.origin + location.pathname;
+
+    dl.className = 'btn ghost';
+    dl.href = 'https://github.com/simonbusborg/polaris';
+    dl.textContent = 'View on GitHub';
+
+    note.hidden = false;
+    note.textContent = 'Polaris runs on macOS 13 or later — there is no version for this device. Open this page on your Mac to install it.';
+
+    // A phone visitor almost certainly wants the link on their Mac rather
+    // than the repo, so that gets the primary button.
+    const share = document.createElement('button');
+    share.type = 'button';
+    share.className = 'btn';
+    share.textContent = navigator.share ? 'Send link to your Mac' : 'Copy link for your Mac';
+    share.addEventListener('click', async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({title: 'Polaris — your Polestar in the menu bar', url: pageURL});
+        } else {
+          await navigator.clipboard.writeText(pageURL);
+          share.textContent = 'Link copied';
+          setTimeout(() => { share.textContent = 'Copy link for your Mac'; }, 1600);
+        }
+      } catch (e) { /* dismissed share sheet — nothing to report */ }
+    });
+    row.insertBefore(share, dl);
+
+    // The install section leads with the same promise, so it says it too.
+    const get = document.querySelector('.get .side p');
+    if (get) get.insertAdjacentHTML('afterend',
+      '<p style="margin-top:.8rem;font-size:.9rem;opacity:.72">These steps need a Mac running macOS 13 or later.</p>');
+  }
 
   document.querySelectorAll('.cmd [data-copy]').forEach(btn => {
     btn.addEventListener('click', async () => {
