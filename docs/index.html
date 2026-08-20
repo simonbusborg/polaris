@@ -35,16 +35,23 @@
 
   .kicker{font-size:.95rem;color:var(--dim)}
 
-  /* header — sticky, Polestar-style: a solid white full-width bar, logo
-     left, plain dark links right; a hairline appears once content
-     scrolls under it. */
+  /* header — sticky, Polestar-style. Over the hero photograph it is
+     transparent with inverted (white) marks; once the hero has scrolled
+     past it turns into the solid white bar with a hairline. The .scrolled
+     class is driven from JS off the hero's height, not a fixed offset, so
+     the swap lands exactly as the photo leaves. */
   header{
     position:sticky;top:0;z-index:100;
-    background:var(--paper);
+    background:transparent;color:var(--paper);
     border-bottom:1px solid transparent;
-    transition:border-color .3s ease;
+    transition:background .3s ease,color .3s ease,border-color .3s ease;
   }
-  header.scrolled{border-bottom-color:var(--line)}
+  header:not(.scrolled) .mark,
+  header:not(.scrolled) nav a{color:var(--paper)}
+  /* The emblem dot keeps the accent, but on the photo it needs to be the
+     brighter end of it to survive the silver bodywork behind. */
+  header:not(.scrolled) .mark span{color:var(--accent)}
+  header.scrolled{background:var(--paper);color:var(--ink);border-bottom-color:var(--line)}
   .nav-inner{display:flex;justify-content:space-between;align-items:center;height:72px}
   .mark{font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
   .mark span{color:var(--accent)}
@@ -54,35 +61,103 @@
   /* Anchor targets land clear of the sticky bar. */
   section[id]{scroll-margin-top:88px}
 
-  /* hero */
-  .hero{padding:clamp(4rem,12vh,8rem) 0 1rem;max-width:800px}
+  /* hero — full-bleed photograph, headline sitting on it bottom-left and a
+     glass card top-right, the way a product page leads with the object
+     rather than with a paragraph. It escapes .wrap by pulling itself out to
+     the viewport width; html has overflow-x:clip so this can't scroll. */
+  .hero{
+    position:relative;isolation:isolate;
+    margin-inline:calc(50% - 50vw);width:100vw;
+    min-height:min(94vh,900px);display:flex;
+    background:#0d0d0d;color:var(--paper);
+    /* Pulled up under the transparent sticky bar so the photo runs to the
+       top of the window rather than starting below a 72px gap. */
+    margin-top:-72px;padding-top:72px;
+  }
+  .hero-media{position:absolute;inset:0;z-index:-2;overflow:hidden}
+  .hero-media img{
+    width:100%;height:100%;object-fit:cover;
+    /* Landscape 3:2. Anchored slightly low so the nose and the emblem stay
+       in frame when a short window crops the top away. */
+    object-position:50% 58%;
+  }
+  /* Two scrims, not one: the lower gradient buys contrast for the headline,
+     the flat wash keeps the bright wall top-right from blowing out the card. */
+  .hero-media::after{
+    content:'';position:absolute;inset:0;
+    background:
+      linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.08) 75%),
+      linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 30%);
+  }
+  .hero-inner{
+    max-width:1200px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(2.5rem,6vh,4rem);
+    width:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2rem;
+  }
+  .hero-copy{max-width:900px}
   /* The icns artwork already carries the squircle, margins and depth.
      No filter here: drop-shadow() on an <img> makes iOS Safari paint the
      element's whole backing store as an opaque grey plate. */
   .appicon{
-    width:96px;height:96px;margin:-8px 0 .6rem -8px;
+    width:72px;height:72px;margin:0 0 .4rem -6px;
   }
+  .hero .kicker{color:rgba(255,255,255,.72)}
   h1{
-    font-weight:600;font-size:clamp(2.8rem,7vw,5.5rem);
-    line-height:.98;letter-spacing:-.03em;text-wrap:balance;margin-top:.9rem;
+    font-weight:600;font-size:clamp(2.8rem,8vw,6.5rem);
+    line-height:.95;letter-spacing:-.035em;text-wrap:balance;margin-top:.6rem;
   }
-  h1 em{font-style:normal;color:var(--dim)}
-  .hero p.lede{margin-top:1.6rem;max-width:46ch;color:var(--dim);font-size:1.05rem}
-  .cta-row{margin-top:2.4rem;display:flex;gap:1.4rem;align-items:center;flex-wrap:wrap}
+  h1 em{font-style:normal;color:rgba(255,255,255,.62)}
+  .hero p.lede{margin-top:1.4rem;max-width:44ch;color:rgba(255,255,255,.78);font-size:1.05rem}
+  /* The card floats top-right on desktop and falls back into the flow on
+     narrow screens, where there is no room beside the headline. */
+  .hero-card{
+    position:absolute;top:calc(72px + 2rem);right:clamp(1.25rem,4vw,3rem);
+    width:min(330px,32vw);padding:1.5rem;
+    background:rgba(15,15,15,.52);border:1px solid rgba(255,255,255,.18);
+    border-radius:var(--r);backdrop-filter:blur(18px) saturate(1.2);
+    -webkit-backdrop-filter:blur(18px) saturate(1.2);
+  }
+  .hero-card h2{font-size:1.05rem;font-weight:600;letter-spacing:-.01em}
+  .hero-card .meta{font-size:.85rem;color:rgba(255,255,255,.66);margin-top:.15rem}
+  .hero-card p{font-size:.88rem;line-height:1.5;color:rgba(255,255,255,.8);margin-top:.9rem}
+  .cta-row{margin-top:1.4rem;display:flex;flex-direction:column;gap:.8rem;align-items:flex-start}
   .btn{
     font-weight:500;font-size:.95rem;letter-spacing:.02em;
-    background:var(--ink);color:var(--paper);text-decoration:none;
-    padding:1rem 2.4rem;border-radius:var(--r);
-    display:inline-flex;align-items:center;gap:.7rem;
-    transition:background .25s,transform .25s;
+    background:var(--accent);color:#fff;text-decoration:none;
+    padding:.9rem 1.6rem;border-radius:var(--r);
+    display:inline-flex;align-items:center;gap:.7rem;width:100%;justify-content:center;
+    transition:background .25s,transform .25s,color .25s;
   }
-  .btn:hover{background:var(--accent);color:#fff;transform:translateY(-2px)}
+  .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
   .btn svg{width:14px;height:14px}
-  .cta-note{color:var(--dim);font-size:.82rem;max-width:28ch;line-height:1.4}
-  .cta-note a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+  .cta-note{color:rgba(255,255,255,.62);font-size:.8rem;line-height:1.4}
+  .cta-note a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
+  @media(max-width:900px){
+    .hero{min-height:0}
+    .hero-inner{padding-top:clamp(3rem,10vh,5rem);gap:2.2rem}
+    .hero-card{position:static;width:100%;max-width:420px}
+  }
 
-  /* stats band */
-  .stats-band{padding:clamp(3rem,8vh,5rem) 0 0}
+  /* stats band — the same Bayer dither as the notifications section, but in
+     colour and running full-bleed behind the four cells. The cells stay
+     opaque so the numbers keep their contrast; the field reads in the
+     padding around them and in the 2px gutters. */
+  .stats-band{
+    position:relative;isolation:isolate;
+    margin-inline:calc(50% - 50vw);width:100vw;
+    padding:clamp(3rem,8vh,5rem) 0;
+  }
+  .stats-field{
+    position:absolute;inset:0;z-index:-1;
+    width:100%;height:100%;pointer-events:none;
+    /* Same weight as .notify-field — the colour comes through the stops,
+       not by letting this one sit heavier on the page than that one. */
+    opacity:.16;
+    /* Fades into the paper at both ends so the field has no cut edge —
+       same treatment as .notify-field. */
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+    mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+  }
+  .stats-inner{max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
   .stat{background:var(--panel);padding:1.6rem}
   .stat span{display:block;color:var(--dim);font-size:.88rem}
@@ -177,7 +252,9 @@
        section sits inside .wrap, so it breaks out of the gutters. */
     position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
     width:100vw;height:100%;
-    opacity:.1;pointer-events:none;
+    /* Lifted from .1 with the move to colour: saturated stops at ink weight
+       read as dirty grey rather than as a gradient. */
+    opacity:.16;pointer-events:none;
     /* Fades into the paper at both ends so the field has no cut edge. */
     -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
     mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
@@ -311,22 +388,39 @@
 <div class="wrap">
 
   <section class="hero">
-    <img class="appicon" src="assets/app-icon.png" alt="Polaris app icon" width="1024" height="1024">
-    <div class="kicker">A native macOS app · for your Polestar</div>
-    <h1>Your Polestar.<br><em>In the menu bar.</em></h1>
-    <p class="lede">Battery, range and charging status — always one glance away.
-    Pure AppKit, a single small binary, talking only to Polestar's official API.</p>
-    <div class="cta-row">
-      <a class="btn" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
-        Download for macOS
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
-      </a>
-      <p class="cta-note">Free &amp; open source. macOS 13+.
-      Or <a href="https://github.com/simonbusborg/polaris#build-from-source">build it from source</a>.</p>
+    <div class="hero-media">
+      <img src="assets/hero-polestar.jpg" alt="Close crop of the nose and emblem of a silver Polestar" width="2940" height="1960" fetchpriority="high">
+    </div>
+
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <img class="appicon" src="assets/app-icon.png" alt="Polaris app icon" width="1024" height="1024">
+        <div class="kicker">A native macOS app · for your Polestar</div>
+        <h1>Your Polestar.<br><em>In the menu bar.</em></h1>
+        <p class="lede">Battery, range and charging status — always one glance away.
+        It taps you on the shoulder when charging finishes, and stays out of the way
+        the rest of the time.</p>
+      </div>
+
+      <div class="hero-card">
+        <h2>Polaris</h2>
+        <div class="meta">Free &amp; open source · macOS 13+</div>
+        <p>Signs in with your Polestar account, keeps the session in the
+        Keychain, and talks to nothing but Polestar's own API.</p>
+        <div class="cta-row">
+          <a class="btn" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
+            Download for macOS
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+          </a>
+          <p class="cta-note">Or <a href="https://github.com/simonbusborg/polaris#build-from-source">build it from source</a>.</p>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="stats-band rv">
+    <canvas class="stats-field" id="statsField" aria-hidden="true"></canvas>
+    <div class="stats-inner">
     <div class="stats">
       <div class="stat"><span>Refresh while idle</span><b>5 min</b>
         <p>Battery and range quietly update every five minutes.</p></div>
@@ -336,6 +430,7 @@
         <p>Your data travels between your Mac and Polestar — nowhere else.</p></div>
       <div class="stat"><span>Small native binary</span><b>1</b>
         <p>One tiny app, built for the Mac. Nothing running behind your back.</p></div>
+    </div>
     </div>
   </section>
 
@@ -447,8 +542,9 @@
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
         <h3>Stays current</h3>
-        <p>A once-a-day check against GitHub releases; when there's a new
-        version, a menu item appears. No background updater.</p>
+        <p>Polaris updates itself. New versions arrive over a signed
+        appcast — Sparkle refuses anything whose signature doesn't match —
+        and you install with one click. Turn it off in Settings.</p>
       </div>
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
@@ -469,21 +565,22 @@
     <div class="side rv">
       <div class="kicker">Get started</div>
       <h2>Running in a minute.</h2>
-      <p>No terminal, no Xcode — every release is a ready-built app.
-      Download, drag to Applications and sign in with your Polestar
-      account. Your VIN is in the Polestar app if it's not on hand.</p>
+      <p>No terminal, no Xcode — every release is a ready-built app that
+      opens like any other. Sign in with your Polestar account and Polaris
+      is in the menu bar.</p>
       <p class="buildnote">Prefer to compile it yourself?
       <a href="https://github.com/simonbusborg/polaris#build-from-source">Build from source</a>
       is one command.</p>
     </div>
     <div class="rv">
       <ol class="steps">
-        <li><b>Download</b> Polaris.dmg and open it</li>
-        <li><b>Drag</b> Polaris into the Applications folder</li>
-        <li><b>Open it</b> — no security warning to click past.
-          <span class="note">Polaris is signed with a Developer ID and
-          notarized by Apple.</span></li>
-        <li><b>Sign in</b> — email, password, VIN</li>
+        <li><b>Install</b> — open Polaris.dmg, drag it to Applications, launch it.
+          <span class="note">No security warning to click past: Polaris is
+          signed with a Developer ID and notarized by Apple.</span></li>
+        <li><b>Sign in</b> — email, password and your car's VIN.
+          <span class="note">The VIN is in the Polestar app under your car's
+          details, if it isn't on hand.</span></li>
+        <li><b>That's it</b> — Polaris keeps itself up to date from here.</li>
       </ol>
     </div>
   </section>
@@ -493,7 +590,8 @@
       Not affiliated with Polestar.</div>
     <div>
       <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
-      <a href="https://simonbusborg.github.io/teslaris/">Teslaris — the same app for Tesla</a>
+      <a href="https://simonbusborg.github.io/teslaris/">Teslaris — the same app for Tesla</a> ·
+      <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photo via Unsplash</a>
     </div>
   </footer>
 </div>
@@ -655,9 +753,13 @@
      Raw WebGL2, same as over there: two triangles do not need a library.
      NB: the upstream demo ships no LICENSE, so reuse is formally unsettled —
      worth knowing, since this repo is MIT and public.
-     No WebGL2, no field — the section has its own paper background. */
-  (() => {
-    const canvas = document.getElementById('notifyField');
+     No WebGL2, no field — the section has its own paper background.
+     Built as a factory because the page runs two of these: the ink field
+     behind the notifications, and a bright three-stop gradient behind the
+     stats band. */
+  const makeDitherField = (canvasId, opts = {}) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
     const gl = canvas.getContext('webgl2', {alpha: true, antialias: false, premultipliedAlpha: false});
     if (!gl) return;
 
@@ -668,6 +770,12 @@ void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
     const FRAG = `#version 300 es
 precision highp float;
 uniform vec3  uColor;
+// Three stops and a switch: at 0 the field is uColor flat, at 1 it is a
+// gradient drifting across the diagonal.
+uniform vec3  uStopA;
+uniform vec3  uStopB;
+uniform vec3  uStopC;
+uniform float uGradient;
 uniform vec2  uResolution;
 uniform float uTime;
 uniform float uPixelSize;
@@ -735,7 +843,16 @@ void main(){
   feed += pow(max(0.0, 1.0 - d * d), 2.0) * 0.42;
 
   float bayer = Bayer8(fragCoord / uPixelSize) - 0.5;
-  fragColor = vec4(uColor, step(0.5, feed + bayer));
+
+  // Tint across the diagonal, drifting slowly so the colour moves even where
+  // the noise happens to be still.
+  vec2 nuv = fragCoord / uResolution + 0.5;
+  float g = clamp(nuv.x * 0.78 + nuv.y * 0.3 - 0.06 + 0.14 * sin(uTime * 0.18), 0.0, 1.0);
+  vec3 grad = g < 0.5 ? mix(uStopA, uStopB, g * 2.0)
+                      : mix(uStopB, uStopC, (g - 0.5) * 2.0);
+  vec3 tint = mix(uColor, grad, uGradient);
+
+  fragColor = vec4(tint, step(0.5, feed + bayer));
 }`;
 
     const compile = (type, src) => {
@@ -765,10 +882,17 @@ void main(){
     const uTime = gl.getUniformLocation(prog, 'uTime');
     const uPointer = gl.getUniformLocation(prog, 'uPointer');
     const uReach = gl.getUniformLocation(prog, 'uReach');
-    gl.uniform1f(gl.getUniformLocation(prog, 'uPixelSize'), 3);
+    gl.uniform1f(gl.getUniformLocation(prog, 'uPixelSize'), opts.pixelSize || 3);
     // Ink on paper: the field is the page's own text colour, carried down by
     // the canvas opacity rather than by a pale colour nobody can tune.
     gl.uniform3f(gl.getUniformLocation(prog, 'uColor'), 0.04, 0.04, 0.04);
+    // Orange is the site accent; pink and cyan carry it somewhere brighter
+    // without landing on any colour the app itself uses for state.
+    const stops = opts.stops || [[1.0, 0.30, 0.0], [1.0, 0.16, 0.58], [0.0, 0.78, 1.0]];
+    gl.uniform3fv(gl.getUniformLocation(prog, 'uStopA'), stops[0]);
+    gl.uniform3fv(gl.getUniformLocation(prog, 'uStopB'), stops[1]);
+    gl.uniform3fv(gl.getUniformLocation(prog, 'uStopC'), stops[2]);
+    gl.uniform1f(gl.getUniformLocation(prog, 'uGradient'), opts.gradient ? 1 : 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -793,8 +917,18 @@ void main(){
       gl.uniform1f(uReach, Math.min(320, w * 0.3));
     };
 
+    // Two GL contexts on one page is two rAF loops; neither needs to run
+    // while its section is off screen.
+    let onScreen = true;
+    new IntersectionObserver(([e]) => {
+      const was = onScreen;
+      onScreen = e.isIntersecting;
+      if (onScreen && !was && !still.matches) requestAnimationFrame(draw);
+    }, {rootMargin: '120px'}).observe(canvas);
+
     const start = performance.now();
     const draw = now => {
+      if (!onScreen) return;
       resize();
       const t = (now - start) / 1000;
       gl.uniform1f(uTime, t);
@@ -811,12 +945,20 @@ void main(){
     requestAnimationFrame(draw);
     // Reduced motion gets the field, drawn once and left standing still.
     still.addEventListener('change', () => { if (!still.matches) requestAnimationFrame(draw); });
-  })();
+  };
 
-  // Sticky nav: hairline + frosted bg only once content scrolls under it.
+  makeDitherField('notifyField', {gradient: true});
+  makeDitherField('statsField', {gradient: true});
+
+  // Sticky nav: inverted and transparent while it sits on the hero photo,
+  // solid white with a hairline from the moment the photo is behind it.
+  // Falls back to the old 8px offset if the hero is ever not on the page.
   const siteNav = document.getElementById('siteNav');
-  const onScroll = () => siteNav.classList.toggle('scrolled', window.scrollY > 8);
+  const heroEl = document.querySelector('.hero');
+  const swapPoint = () => heroEl ? heroEl.offsetHeight - siteNav.offsetHeight : 8;
+  const onScroll = () => siteNav.classList.toggle('scrolled', window.scrollY > swapPoint());
   window.addEventListener('scroll', onScroll, {passive: true});
+  window.addEventListener('resize', onScroll, {passive: true});
   onScroll();
 
   // Reveal on scroll
