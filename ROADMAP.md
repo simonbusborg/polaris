@@ -17,6 +17,10 @@ writes the code — until it's tagged, nothing is out with users. So:
 3. Then, on each issue the release closes: a comment saying what actually
    shipped and in which version, and what deliberately didn't — then close it.
 
+Everything public is written in English — issues, comments, releases, this
+file. The people asking are from all over Polestar's markets, and a reply in
+Danish is a reply only Simon can read.
+
 The comment is the point. A silently closed issue tells the person who asked
 nothing, and this roadmap's "Shipped" list is only trustworthy if every entry
 has a version next to it. An issue that got *partly* solved stays open with a
