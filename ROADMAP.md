@@ -28,9 +28,6 @@ comment describing where it now stands.
 
 ## Next
 
-- **[Signed and notarized builds](https://github.com/simonbusborg/polaris/issues/1)** — the app is ad-hoc signed today, which is
-  why macOS makes you right-click → Open on first launch. Waiting on an Apple
-  Developer account, then this becomes a re-release rather than new code.
 - **[More languages](https://github.com/simonbusborg/polaris/issues/2)** — the seven below cover most of Polestar's European
   markets, but not all of them. Dutch, Finnish, French, Portuguese and Polish
   are the obvious next ones. One file per language; translators welcome.
@@ -53,6 +50,10 @@ can be promised before someone has tried it.
 - **[Multiple accounts](https://github.com/simonbusborg/polaris/issues/7)** — distinct from multiple cars, which already works.
 
 ## Shipped
+
+- **Signed and notarized builds** (v2.5.1) — releases are signed with a
+  Developer ID and notarized by Apple. The first-launch security warning is
+  gone.
 
 - **Multiple cars** (v2.2.0) — a switcher appears in the menu when the
   account has more than one car.

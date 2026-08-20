@@ -40,11 +40,9 @@ deliberately isn't happening.
 
 Download `Polaris.dmg` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
 open it, and drag Polaris to Applications (a `Polaris.zip` is also
-attached for scripted installs). Releases are built by GitHub Actions.
-macOS blocks the first launch of unsigned releases ("Apple could not
-verify…"): click **Done**, then **System Settings → Privacy & Security →
-Open Anyway**. On macOS 14 and earlier, **right-click → Open → Open**
-also works. This happens once.
+attached for scripted installs). Releases are built by GitHub Actions,
+signed with a Developer ID and notarized by Apple, so it opens like any
+other app — no security warning to click past.
 
 Then click the menu bar icon → Settings… → enter your Polestar email, password,
 and VIN.
