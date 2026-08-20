@@ -95,7 +95,7 @@ final class FormattingTests: XCTestCase {
                     ownerFirstName: nil,
                     odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
-                    lastUpdated: Date(), carReportedAt: nil,
+                    lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
                                           chargingCurrentAmps: nil, chargingVoltageVolts: nil,
@@ -108,6 +108,41 @@ final class FormattingTests: XCTestCase {
         XCTAssertNil(car(connection: nil).isPluggedIn)
     }
 
+    func testIsDriving() {
+        func car(status: String, connection: String?, odometerAge: TimeInterval?) -> CarData {
+            CarData(batteryPercentage: 50, rangeKm: 200,
+                    chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
+                    modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
+                    ownerFirstName: nil,
+                    odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                    serviceWarning: false, fluidWarnings: [], imageData: nil,
+                    lastUpdated: Date(), carReportedAt: nil,
+                    odometerReportedAt: odometerAge.map { Date(timeIntervalSinceNow: -$0) },
+                    grpcExtras: connection.map {
+                        GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
+                                          chargingCurrentAmps: nil, chargingVoltageVolts: nil,
+                                          chargingType: nil)
+                    })
+        }
+        // A fresh odometer report from an unplugged car is the only sign of use.
+        XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                          odometerAge: 60).isDriving)
+        // Unknown plug state (no gRPC) still counts — it isn't a "yes".
+        XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: nil,
+                          odometerAge: 60).isDriving)
+        // Parked long enough for the report to go stale.
+        XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                           odometerAge: 3600).isDriving)
+        // Sitting on the charger, however recent the odometer.
+        XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "CONNECTED",
+                           odometerAge: 60).isDriving)
+        XCTAssertFalse(car(status: "CHARGING_STATUS_CHARGING", connection: "CONNECTED",
+                           odometerAge: 60).isDriving)
+        // No odometer timestamp at all.
+        XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                           odometerAge: nil).isDriving)
+    }
+
     func testMenuBarIcon() {
         func car(status: String, battery: Double, connection: String?) -> CarData {
             CarData(batteryPercentage: battery, rangeKm: 200,
@@ -116,7 +151,7 @@ final class FormattingTests: XCTestCase {
                     ownerFirstName: nil,
                     odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
-                    lastUpdated: Date(), carReportedAt: nil,
+                    lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
                                           chargingCurrentAmps: nil, chargingVoltageVolts: nil,
@@ -182,6 +217,7 @@ final class FormattingTests: XCTestCase {
                 ownerFirstName: nil,
                 odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,
-                lastUpdated: Date(), carReportedAt: nil, grpcExtras: nil)
+                lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
+                grpcExtras: nil)
     }
 }
