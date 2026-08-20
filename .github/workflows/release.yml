@@ -82,7 +82,17 @@ jobs:
           make dmg
           ditto -c -k --keepParent Polaris.app Polaris.zip
 
-      # Sparkle only trusts an appcast entry it can verify against the EdDSA
+      - name: Create GitHub release with assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Polaris.dmg
+            Polaris.zip
+          generate_release_notes: true
+
+      # Runs after the release exists: the appcast points at the release's
+      # download URL, and a broken feed shouldn't hold up shipping the build
+      # itself. Sparkle only trusts an appcast entry it can verify against the EdDSA
       # public key baked into Info.plist, so the zip is signed here and the
       # feed regenerated from that signature. The commit goes to main, which
       # is what GitHub Pages serves the feed from.
@@ -93,7 +103,10 @@ jobs:
         run: |
           SIGN=$(find .build/artifacts -type f -name sign_update | head -1)
           test -n "$SIGN" || { echo "sign_update missing from the Sparkle artifact"; exit 1; }
-          ATTRS=$("$SIGN" Polaris.zip -s "$SPARKLE_PRIVATE_KEY")
+          # -s is deprecated and now exits non-zero; the key goes in a file.
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > sparkle.key
+          ATTRS=$("$SIGN" Polaris.zip --ed-key-file sparkle.key)
+          rm -f sparkle.key
           BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)
           git fetch origin main
           git checkout -B main origin/main
@@ -103,11 +116,3 @@ jobs:
           git add docs/appcast.xml
           git commit -m "Publish $GITHUB_REF_NAME to the Sparkle appcast"
           git push origin main
-
-      - name: Create GitHub release with assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            Polaris.dmg
-            Polaris.zip
-          generate_release_notes: true
