@@ -170,6 +170,16 @@
      three banners are dealt out over. */
   .notify{border-top:1px solid var(--line)}
   .notify-stage{height:300vh;position:relative}
+  /* The dither field sits behind the pinned content and only there — it is
+     a backdrop for this one section, not for the page. */
+  .notify-field{
+    position:absolute;inset:0;width:100%;height:100%;
+    opacity:.5;pointer-events:none;
+    /* Fades into the paper at both ends so the field has no cut edge. */
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+    mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+  }
+  .notify-head,.notify-cards{position:relative;z-index:1}
   .notify-sticky{
     position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:clamp(2rem,6vh,3.6rem);
@@ -373,6 +383,7 @@
   <section class="notify" id="notifications">
     <div class="notify-stage" id="notifyStage">
       <div class="notify-sticky">
+        <canvas class="notify-field" id="notifyField" aria-hidden="true"></canvas>
         <div class="notify-head">
           <div class="kicker">Notifications</div>
           <h2>It tells you when it matters.</h2>
@@ -640,6 +651,169 @@
     placeBanners();
   });
   placeBanners();
+
+  /* Bayer-dithered fbm, lifted from the labs site (which took the shader
+     from zavalit/bayer-dithering-webgl-demo). The word mask, the break-up
+     and the per-cell accents are cut — there is no word in this field, so
+     what is left is the noise, the Bayer threshold and the pointer bell.
+     Raw WebGL2, same as over there: two triangles do not need a library.
+     No WebGL2, no field — the section has its own paper background. */
+  (() => {
+    const canvas = document.getElementById('notifyField');
+    const gl = canvas.getContext('webgl2', {alpha: true, antialias: false, premultipliedAlpha: false});
+    if (!gl) return;
+
+    const VERT = `#version 300 es
+in vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+    const FRAG = `#version 300 es
+precision highp float;
+uniform vec3  uColor;
+uniform vec2  uResolution;
+uniform float uTime;
+uniform float uPixelSize;
+uniform vec2  uPointer;
+uniform float uReach;
+out vec4 fragColor;
+
+// Bayer-matrix: the steps an ordered dither thresholds against.
+float Bayer2(vec2 a){ a = floor(a); return fract(a.x / 2. + a.y * a.y * .75); }
+#define Bayer4(a) (Bayer2(.5*(a))*0.25 + Bayer2(a))
+#define Bayer8(a) (Bayer4(.5*(a))*0.25 + Bayer2(a))
+
+#define FBM_OCTAVES     5
+#define FBM_LACUNARITY  1.25
+#define FBM_GAIN        1.
+#define FBM_SCALE       4.0
+
+float hash11(float n){ return fract(sin(n)*43758.5453); }
+
+float vnoise(vec3 p){
+  vec3 ip = floor(p), fp = fract(p);
+  vec3 k = vec3(1.0, 57.0, 113.0);
+  float n000 = hash11(dot(ip + vec3(0,0,0), k));
+  float n100 = hash11(dot(ip + vec3(1,0,0), k));
+  float n010 = hash11(dot(ip + vec3(0,1,0), k));
+  float n110 = hash11(dot(ip + vec3(1,1,0), k));
+  float n001 = hash11(dot(ip + vec3(0,0,1), k));
+  float n101 = hash11(dot(ip + vec3(1,0,1), k));
+  float n011 = hash11(dot(ip + vec3(0,1,1), k));
+  float n111 = hash11(dot(ip + vec3(1,1,1), k));
+  vec3 w = fp*fp*fp*(fp*(fp*6.0-15.0)+10.0);
+  float x00 = mix(n000, n100, w.x), x10 = mix(n010, n110, w.x);
+  float x01 = mix(n001, n101, w.x), x11 = mix(n011, n111, w.x);
+  return mix(mix(x00, x10, w.y), mix(x01, x11, w.y), w.z) * 2.0 - 1.0;
+}
+
+float fbm2(vec2 uv, float t){
+  vec3 p = vec3(uv * FBM_SCALE, t);
+  float amp = 1., freq = 1., sum = 1.;
+  for (int i = 0; i < FBM_OCTAVES; ++i){
+    sum  += amp * vnoise(p * freq);
+    freq *= FBM_LACUNARITY;
+    amp  *= FBM_GAIN;
+  }
+  return sum * 0.5 + 0.5;
+}
+
+void main(){
+  vec2 fragCoord = gl_FragCoord.xy - uResolution * .5;
+  float aspect = uResolution.x / uResolution.y;
+
+  // 8x8 is the Bayer matrix's own size; the field is sampled per CELL, not
+  // per pixel, which is what makes the raster coarse enough to read.
+  float cell = 8. * uPixelSize;
+  vec2 cellId = floor(fragCoord / cell);
+  vec2 uv = (cellId * cell) / uResolution * vec2(aspect, 1.0);
+
+  float feed = fbm2(uv, uTime * 0.05);
+  feed = feed * 0.5 - 0.72;
+
+  // The pointer thickens the pattern around itself. A soft bell, not a hard
+  // cut — the edge of the falloff must not draw a circle in the raster.
+  vec2 cellCenter = cellId * cell + cell * 0.5 + uResolution * 0.5;
+  float d = length(cellCenter - uPointer) / max(uReach, 1.0);
+  feed += pow(max(0.0, 1.0 - d * d), 2.0) * 0.42;
+
+  float bayer = Bayer8(fragCoord / uPixelSize) - 0.5;
+  fragColor = vec4(uColor, step(0.5, feed + bayer));
+}`;
+
+    const compile = (type, src) => {
+      const sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      // Without this a broken shader fails silently and you just see no field.
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) console.error('dither:', gl.getShaderInfoLog(sh));
+      return sh;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+
+    // One triangle covering clip space. It never changes, so it is uploaded
+    // once and stays bound.
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes = gl.getUniformLocation(prog, 'uResolution');
+    const uTime = gl.getUniformLocation(prog, 'uTime');
+    const uPointer = gl.getUniformLocation(prog, 'uPointer');
+    const uReach = gl.getUniformLocation(prog, 'uReach');
+    gl.uniform1f(gl.getUniformLocation(prog, 'uPixelSize'), 3);
+    // Ink on paper: the field is the page's own text colour, carried down by
+    // the canvas opacity rather than by a pale colour nobody can tune.
+    gl.uniform3f(gl.getUniformLocation(prog, 'uColor'), 0.08, 0.08, 0.08);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    // Its own matchMedia rather than the banner section's: this block runs
+    // before that one is declared.
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let mouseX = 0, mouseY = 0, hasMouse = false;
+    window.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      mouseX = e.clientX; mouseY = e.clientY; hasMouse = true;
+    }, {passive: true});
+
+    // The raster is the whole point, so it is drawn in CSS pixels: at dpr 2
+    // the cells would halve and the pattern would read as noise.
+    const resize = () => {
+      const w = Math.max(1, Math.round(canvas.clientWidth));
+      const h = Math.max(1, Math.round(canvas.clientHeight));
+      if (canvas.width === w && canvas.height === h) return;
+      canvas.width = w; canvas.height = h;
+      gl.viewport(0, 0, w, h);
+      gl.uniform2f(uRes, w, h);
+      gl.uniform1f(uReach, Math.min(320, w * 0.3));
+    };
+
+    const start = performance.now();
+    const draw = now => {
+      resize();
+      const t = (now - start) / 1000;
+      gl.uniform1f(uTime, t);
+      const rect = canvas.getBoundingClientRect();
+      // With no mouse an invisible target walks a slow round, so the field
+      // still lives on a phone.
+      const px = hasMouse ? mouseX - rect.left : rect.width * (0.5 + 0.34 * Math.cos(t * 0.31));
+      const py = hasMouse ? mouseY - rect.top : rect.height * (0.5 + 0.28 * Math.sin(t * 0.47));
+      // gl_FragCoord counts from the bottom edge, the pointer from the top.
+      gl.uniform2f(uPointer, px, rect.height - py);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (!still.matches) requestAnimationFrame(draw);
+    };
+    requestAnimationFrame(draw);
+    // Reduced motion gets the field, drawn once and left standing still.
+    still.addEventListener('change', () => { if (!still.matches) requestAnimationFrame(draw); });
+  })();
 
   // Sticky nav: hairline + frosted bg only once content scrolls under it.
   const siteNav = document.getElementById('siteNav');

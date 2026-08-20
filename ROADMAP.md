@@ -17,6 +17,10 @@ writes the code — until it's tagged, nothing is out with users. So:
 3. Then, on each issue the release closes: a comment saying what actually
    shipped and in which version, and what deliberately didn't — then close it.
 
+Don't put `Closes #…` in a commit message. GitHub acts on it the moment the
+commit reaches `main`, which closes the issue a release too early and skips
+the comment that was the whole point. Reference the issue by number instead.
+
 Everything public is written in English — issues, comments, releases, this
 file. The people asking are from all over Polestar's markets, and a reply in
 Danish is a reply only Simon can read.
