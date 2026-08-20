@@ -170,10 +170,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Poll every minute while charging (the numbers actually move),
+    /// Poll every minute while charging or driving (the numbers actually move,
+    /// and a short cycle keeps "In use" from lingering after parking),
     /// every 5 minutes otherwise.
     private func scheduleRefresh() {
-        let interval: TimeInterval = (latest?.isCharging == true) ? 60 : 300
+        let interval: TimeInterval = (latest?.isCharging == true || latest?.isDriving == true) ? 60 : 300
         if let timer = refreshTimer, timer.isValid, timer.timeInterval == interval { return }
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in

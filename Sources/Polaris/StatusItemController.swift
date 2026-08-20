@@ -62,6 +62,7 @@ final class StatusItemController {
     static func icon(for data: CarData?) -> String {
         guard let data else { return "car" }
         if data.isCharging { return "bolt.car.fill" }
+        if data.isDriving { return "car.fill" }
         if data.isPluggedIn == true { return "bolt.car" }
         return "car"
     }
@@ -146,7 +147,7 @@ final class StatusItemController {
             )
             menu.addItem(barItem)
             menu.addItem(kvItem("Range", Self.distance(km: data.rangeKm)))
-            menu.addItem(kvItem("Status", Self.humanStatus(data.statusKey)))
+            menu.addItem(kvItem("Status", data.isDriving ? "In use" : Self.humanStatus(data.statusKey)))
             switch data.grpcExtras?.chargerConnectionStatus {
             case "CONNECTED": menu.addItem(kvItem("Charger", "Connected"))
             case "DISCONNECTED": menu.addItem(kvItem("Charger", "Disconnected"))

@@ -33,6 +33,9 @@ struct CarData {
     /// When the car itself last reported battery data (API event timestamp).
     /// `lastUpdated` is merely when we fetched; a garaged car can be hours older.
     let carReportedAt: Date?
+    /// When the car last reported its odometer. The only live sign of use we
+    /// get: a driving car pushes odometer updates, a parked one goes quiet.
+    let odometerReportedAt: Date?
     /// Extra fields from the gRPC battery service; nil when it's unreachable.
     let grpcExtras: GrpcBatteryExtras?
 
@@ -46,6 +49,15 @@ struct CarData {
 
     var isCharging: Bool {
         statusKey == "CHARGING" || statusKey == "SMART_CHARGING"
+    }
+
+    /// The charging status stays IDLE while driving (confirmed on a PS4 2026),
+    /// so "in use" has to be inferred: a fresh odometer report from a car that
+    /// isn't charging or plugged in means it's out on the road. Stale by at
+    /// most one refresh cycle after parking.
+    var isDriving: Bool {
+        guard !isCharging, isPluggedIn != true, let odometerReportedAt else { return false }
+        return Date().timeIntervalSince(odometerReportedAt) < 600
     }
 
     var isPluggedIn: Bool? {
@@ -239,16 +251,16 @@ final class PolestarAPI {
 
         // AppSync serializes the protobuf timestamp's int64 seconds as either
         // a number or a string depending on magnitude — accept both.
-        var carReportedAt: Date?
-        if let ts = battery["timestamp"] as? [String: Any] {
+        func reportedAt(_ container: [String: Any]?) -> Date? {
+            guard let ts = container?["timestamp"] as? [String: Any] else { return nil }
             let seconds: TimeInterval?
             if let n = ts["seconds"] as? Int { seconds = TimeInterval(n) }
             else if let s = ts["seconds"] as? String { seconds = TimeInterval(s) }
             else { seconds = nil }
-            if let seconds, seconds > 0 {
-                carReportedAt = Date(timeIntervalSince1970: seconds)
-            }
+            guard let seconds, seconds > 0 else { return nil }
+            return Date(timeIntervalSince1970: seconds)
         }
+        let carReportedAt = reportedAt(battery)
 
         let warning: Bool
         if let sw = health?["serviceWarning"] as? String {
@@ -300,6 +312,7 @@ final class PolestarAPI {
             imageData: carImageData,
             lastUpdated: Date(),
             carReportedAt: carReportedAt,
+            odometerReportedAt: reportedAt(odometer),
             grpcExtras: extras
         )
     }
