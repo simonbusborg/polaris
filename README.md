@@ -33,6 +33,9 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 - Launch at login (optional)
 - A single small binary
 
+See [ROADMAP.md](ROADMAP.md) for what's planned, what's shipped, and what
+deliberately isn't happening.
+
 ## Install
 
 Download `Polaris.dmg` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
