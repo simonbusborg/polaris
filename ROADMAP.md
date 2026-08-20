@@ -7,6 +7,21 @@ a car API that isn't documented for third parties.
 Each item links to an issue. Comment there if you want it, or if you can
 help; that's more useful than a wish sent anywhere else.
 
+## How issues are worked
+
+An issue is closed by the release that ships it, not by the commit that
+writes the code — until it's tagged, nothing is out with users. So:
+
+1. The work lands on `main` and CI goes green.
+2. `make release VERSION=x.y.z` tags it and Actions builds the release.
+3. Then, on each issue the release closes: a comment saying what actually
+   shipped and in which version, and what deliberately didn't — then close it.
+
+The comment is the point. A silently closed issue tells the person who asked
+nothing, and this roadmap's "Shipped" list is only trustworthy if every entry
+has a version next to it. An issue that got *partly* solved stays open with a
+comment describing where it now stands.
+
 ## Next
 
 - **[Signed and notarized builds](https://github.com/simonbusborg/polaris/issues/1)** — the app is ad-hoc signed today, which is
@@ -37,10 +52,11 @@ can be promised before someone has tried it.
 
 - **Multiple cars** (v2.2.0) — a switcher appears in the menu when the
   account has more than one car.
-- **System language, 7 languages** (unreleased, on `main`) — English, Danish,
+- **System language, 7 languages** (v2.5.0) — English, Danish,
   Swedish, Norwegian, German, Spanish and Italian. The app follows the macOS
   language setting; there is no language picker to find.
-- **"In use" while driving** (unreleased, on `main`).
+- **"In use" while driving** (v2.5.0) — the charging status never says
+  "driving", so it's inferred from odometer freshness.
 - **Notifications** (v2.2.0) — charging started, complete, and charger faults.
 - **Charging power, AC/DC and charger connection** (v2.3.0).
 - **Update notice** (v2.1.0) — a menu item when a new release exists.
