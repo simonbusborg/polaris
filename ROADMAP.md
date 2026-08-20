@@ -38,8 +38,6 @@ comment describing where it now stands.
   whether the car is parked or on the motorway, so driving is currently
   inferred from how fresh the odometer reading is. It works, but it can lag
   behind by a refresh cycle after you park.
-- **[Homebrew cask](https://github.com/simonbusborg/polaris/issues/4)** — `brew install --cask polaris` instead of downloading a
-  DMG and dragging it.
 
 ## Being looked at
 
@@ -54,6 +52,8 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Homebrew cask** (v2.6.0) — `brew install --cask simonbusborg/polaris/polaris`,
+  kept current by the release workflow.
 - **In-app updates** (v2.6.0) — "Check for Updates…" in the menu, plus
   automatic checking and installing, via Sparkle.
 - **More than one car, across accounts** (v2.6.0) — "Add Car…" in Settings;

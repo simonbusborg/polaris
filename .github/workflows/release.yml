@@ -13,6 +13,7 @@ permissions:
 env:
   HAS_SIGNING: ${{ secrets.MACOS_CERT_P12 != '' }}
   HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
+  HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
 
 jobs:
   build-and-release:
@@ -123,4 +124,27 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/appcast.xml
           git commit -m "Publish $GITHUB_REF_NAME to the Sparkle appcast"
+          git push origin main
+
+      # The cask lives in simonbusborg/homebrew-polaris and points at this
+      # release's DMG, so it can only be written once the release exists.
+      # Like the appcast, a failure here doesn't unship the build — the cask
+      # can be corrected by hand afterwards.
+      - name: Update the Homebrew cask
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -x
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA=$(shasum -a 256 Polaris.dmg | awk '{print $1}')
+          git clone "https://x-access-token:$GH_TOKEN@github.com/simonbusborg/homebrew-polaris.git" tap
+          cd tap
+          sed -i '' -e "s/^  version \".*\"$/  version \"$VERSION\"/" \
+                    -e "s/^  sha256 \".*\"$/  sha256 \"$SHA\"/" Casks/polaris.rb
+          git diff --quiet && { echo "cask already at $VERSION"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update the cask to $VERSION"
           git push origin main

@@ -39,9 +39,14 @@ deliberately isn't happening.
 
 ## Install
 
-Download `Polaris.dmg` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
+```bash
+brew install --cask simonbusborg/polaris/polaris
+```
+
+Or download `Polaris.dmg` from the [latest release](https://github.com/simonbusborg/polaris/releases/latest),
 open it, and drag Polaris to Applications (a `Polaris.zip` is also
-attached for scripted installs). Releases are built by GitHub Actions,
+attached for scripted installs). However you install it, the app keeps itself
+up to date through Sparkle. Releases are built by GitHub Actions,
 signed with a Developer ID and notarized by Apple, so it opens like any
 other app — no security warning to click past.
 
@@ -89,6 +94,12 @@ Releases are signed and notarized when these repository secrets are configured
 | `NOTARY_APPLE_ID` | Apple ID email used for notarization |
 | `NOTARY_TEAM_ID` | 10-character Apple Developer Team ID |
 | `NOTARY_APP_PASSWORD` | App-specific password for that Apple ID |
+
+Two more secrets are optional and independent of signing: `SPARKLE_PRIVATE_KEY`
+signs the build for the update feed, and `HOMEBREW_TAP_TOKEN` — a token with
+`contents: write` on [simonbusborg/homebrew-polaris](https://github.com/simonbusborg/homebrew-polaris) —
+lets the workflow point the cask at the new DMG. Both steps run after the
+release is published and neither can fail it.
 
 ## Debug flags
 
