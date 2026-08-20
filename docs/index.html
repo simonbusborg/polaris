@@ -119,7 +119,7 @@
   .hero-card h2{font-size:1.05rem;font-weight:600;letter-spacing:-.01em}
   .hero-card .meta{font-size:.85rem;color:rgba(255,255,255,.66);margin-top:.15rem}
   .hero-card p{font-size:.88rem;line-height:1.5;color:rgba(255,255,255,.8);margin-top:.9rem}
-  .cta-row{margin-top:1.4rem;display:flex;flex-direction:column;gap:.8rem;align-items:flex-start}
+  .cta-row{margin-top:1.4rem}
   .btn{
     font-weight:500;font-size:.95rem;letter-spacing:.02em;
     background:var(--accent);color:#fff;text-decoration:none;
@@ -129,8 +129,6 @@
   }
   .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
   .btn svg{width:14px;height:14px}
-  .cta-note{color:rgba(255,255,255,.62);font-size:.8rem;line-height:1.4}
-  .cta-note a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4)}
   @media(max-width:900px){
     .hero{min-height:0}
     .hero-inner{padding-top:clamp(3rem,10vh,5rem);gap:2.2rem}
@@ -336,6 +334,41 @@
   .steps b{color:var(--ink);font-weight:500}
   .steps .note{display:block;font-size:.85rem;margin-top:.3rem}
 
+  /* Install methods. Same pill switcher as the menu-state tabs, but left
+     aligned above the steps — each method gets its own numbered list, since
+     what you do second depends on what you chose first. */
+  .ways{
+    display:flex;gap:2px;margin:0 0 1.6rem;width:fit-content;
+    background:var(--panel);border-radius:999px;padding:3px;
+  }
+  .ways button{
+    appearance:none;border:0;background:transparent;color:var(--dim);
+    font:inherit;font-size:.82rem;padding:.42rem 1rem;border-radius:999px;
+    cursor:pointer;transition:background .2s,color .2s;
+  }
+  .ways button:hover{color:var(--ink)}
+  .ways button[aria-selected="true"]{background:var(--accent);color:#fff}
+  .way[hidden]{display:none}
+  .way .steps{margin-top:0}
+  .way .steps code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
+  .way .cmd{
+    display:flex;align-items:center;gap:.6rem;margin-top:.5rem;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:.55rem .7rem;
+  }
+  .way .cmd code{
+    font-size:.82rem;color:var(--ink);overflow-x:auto;white-space:nowrap;flex:1;
+  }
+  .way .cmd button{
+    appearance:none;border:0;background:transparent;color:var(--dim);
+    font:inherit;font-size:.78rem;cursor:pointer;padding:0;flex:none;
+  }
+  .way .cmd button:hover{color:var(--ink)}
+  .way .dl{
+    display:block;width:fit-content;margin-top:.5rem;color:var(--ink);font-size:.9rem;
+    text-decoration:none;border-bottom:1px solid var(--accent);
+  }
+
   footer{
     border-top:1px solid var(--line);padding:2.6rem 0 3.4rem;
     display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;
@@ -412,8 +445,6 @@
             Download for macOS
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
           </a>
-          <p class="cta-note">Or <code>brew install --cask simonbusborg/polaris/polaris</code>,
-          or <a href="https://github.com/simonbusborg/polaris#build-from-source">build it from source</a>.</p>
         </div>
       </div>
     </div>
@@ -569,22 +600,63 @@
       <p>No terminal, no Xcode — every release is a ready-built app that
       opens like any other. Sign in with your Polestar account and Polaris
       is in the menu bar.</p>
-      <p class="buildnote">Prefer to compile it yourself?
-      <a href="https://github.com/simonbusborg/polaris#build-from-source">Build from source</a>
-      is one command.</p>
     </div>
     <div class="rv">
-      <ol class="steps">
-        <li><b>Install</b> — open Polaris.dmg, drag it to Applications, launch it.
-          <span class="note">Or <code>brew install --cask simonbusborg/polaris/polaris</code>
-          if you'd rather Homebrew handled it.</span>
-          <span class="note">No security warning to click past: Polaris is
-          signed with a Developer ID and notarized by Apple.</span></li>
-        <li><b>Sign in</b> — email, password and your car's VIN.
-          <span class="note">The VIN is in the Polestar app under your car's
-          details, if it isn't on hand.</span></li>
-        <li><b>That's it</b> — Polaris keeps itself up to date from here.</li>
-      </ol>
+      <div class="ways" role="tablist" aria-label="Install method">
+        <button type="button" role="tab" id="way-dmg" aria-controls="pane-dmg" aria-selected="true">Download</button>
+        <button type="button" role="tab" id="way-brew" aria-controls="pane-brew" aria-selected="false">Homebrew</button>
+        <button type="button" role="tab" id="way-src" aria-controls="pane-src" aria-selected="false">Source</button>
+      </div>
+
+      <div class="way" id="pane-dmg" role="tabpanel" aria-labelledby="way-dmg">
+        <ol class="steps">
+          <li><b>Download</b> — the disk image from the latest release.
+            <a class="dl" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">Polaris.dmg</a></li>
+          <li><b>Install</b> — open it, drag Polaris to Applications, launch it.
+            <span class="note">No security warning to click past: the build is
+            signed with a Developer ID and notarized by Apple.</span></li>
+          <li><b>Sign in</b> — email, password and your car's VIN.
+            <span class="note">The VIN is in the Polestar app under your car's
+            details, if it isn't on hand. Polaris keeps itself up to date from
+            here.</span></li>
+        </ol>
+      </div>
+
+      <div class="way" id="pane-brew" role="tabpanel" aria-labelledby="way-brew" hidden>
+        <ol class="steps">
+          <li><b>Install</b> — one command; the tap is added for you.
+            <div class="cmd">
+              <code>brew install --cask simonbusborg/polaris/polaris</code>
+              <button type="button" data-copy>Copy</button>
+            </div></li>
+          <li><b>Launch</b> — Polaris lands in Applications like any other cask.
+            <span class="note">Same signed, notarized build as the disk image,
+            so it opens without a warning.</span></li>
+          <li><b>Sign in</b> — email, password and your car's VIN.
+            <span class="note">The VIN is in the Polestar app under your car's
+            details, if it isn't on hand. Polaris keeps itself up to date from
+            here.</span></li>
+        </ol>
+      </div>
+
+      <div class="way" id="pane-src" role="tabpanel" aria-labelledby="way-src" hidden>
+        <ol class="steps">
+          <li><b>Build</b> — clone it and run one make target.
+            <div class="cmd">
+              <code>git clone https://github.com/simonbusborg/polaris &amp;&amp; cd polaris &amp;&amp; make app</code>
+              <button type="button" data-copy>Copy</button>
+            </div>
+            <span class="note">Needs macOS 13+ and the Xcode Command Line Tools
+            (<code>xcode-select --install</code>).</span></li>
+          <li><b>Launch</b> — <code>open Polaris.app</code>, or move it to Applications first.
+            <span class="note">A local build isn't notarized, so the first
+            launch wants a right-click → Open.</span></li>
+          <li><b>Sign in</b> — email, password and your car's VIN.
+            <span class="note">The VIN is in the Polestar app under your car's
+            details, if it isn't on hand. Polaris keeps itself up to date from
+            here.</span></li>
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -687,6 +759,25 @@
     tabs.appendChild(b);
   });
   renderState(states[0]);
+
+  // Install methods. The panes are in the markup rather than built here, so
+  // the commands are still readable — and copyable — with JS off.
+  const ways = [...document.querySelectorAll('.ways button')];
+  ways.forEach(tab => tab.addEventListener('click', () => {
+    ways.forEach(other => {
+      const selected = other === tab;
+      other.setAttribute('aria-selected', String(selected));
+      document.getElementById(other.getAttribute('aria-controls')).hidden = !selected;
+    });
+  }));
+
+  document.querySelectorAll('.cmd [data-copy]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(btn.previousElementSibling.textContent.trim());
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1400);
+    });
+  });
 
   // Notification banners, dealt out over the pinned stage's scroll budget.
   // Each banner owns one slice of the progress; inside its slice it rises
