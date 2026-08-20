@@ -63,8 +63,18 @@ jobs:
           APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: |
           ditto -c -k --keepParent Polaris.app notarize.zip
-          xcrun notarytool submit notarize.zip \
-            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait
+          # --wait exits 0 even when the verdict is Invalid, and the verdict
+          # alone doesn't say what Apple objected to. Fetch the log and fail
+          # on it, or a rejection turns into a confusing stapler error.
+          ID=$(xcrun notarytool submit notarize.zip \
+                 --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" \
+                 --output-format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+          xcrun notarytool wait "$ID" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" || true
+          xcrun notarytool log "$ID" \
+            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" notary.json || true
+          cat notary.json
+          python3 -c 'import json,sys; d=json.load(open("notary.json")); sys.exit(0 if d.get("status")=="Accepted" else 1)'
           xcrun stapler staple Polaris.app
 
       - name: Package (dmg + zip)

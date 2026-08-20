@@ -173,8 +173,11 @@
   /* The dither field sits behind the pinned content and only there — it is
      a backdrop for this one section, not for the page. */
   .notify-field{
-    position:absolute;inset:0;width:100%;height:100%;
-    opacity:1;pointer-events:none;
+    /* The field is the width of the window, not of the text column: the
+       section sits inside .wrap, so it breaks out of the gutters. */
+    position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
+    width:100vw;height:100%;
+    opacity:.1;pointer-events:none;
     /* Fades into the paper at both ends so the field has no cut edge. */
     -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
     mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);

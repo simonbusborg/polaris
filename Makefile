@@ -10,6 +10,13 @@ IDENTITY ?= -
 # so it's found rather than hard-coded.
 SPARKLE = $(shell find .build/artifacts -type d -name Sparkle.framework -path '*macos*' | head -1)
 
+# Sparkle ships helpers that are separately-signed code in their own right:
+# two XPC services, an Updater.app and the Autoupdate tool. Every one of them
+# has to be signed before the framework is, and each has to actually exist —
+# an earlier version of this quietly skipped missing paths and the notary
+# service rejected the build for unsigned nested code.
+SIGN_NESTED = scripts/sign-sparkle.sh $(APP)
+
 .PHONY: build app dmg run test clean release
 
 ## Build the release binary
@@ -37,16 +44,18 @@ app: build
 	# invalidates them. --deep is Apple-discouraged and does the wrong thing
 	# with Sparkle's XPC services.
 ifeq ($(IDENTITY),-)
-	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/*.xpc 2>/dev/null || true
-	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app 2>/dev/null || true
+	@$(SIGN_NESTED) --force -s -
 	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework
 	codesign --force -s - $(APP)
 else
-	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/*.xpc 2>/dev/null || true
-	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app 2>/dev/null || true
+	@$(SIGN_NESTED) --force --options runtime --timestamp -s "$(IDENTITY)"
 	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework
 	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)
 endif
+	# Apple rejects the whole submission if one nested binary is unsigned, so
+	# prove the bundle is sound here rather than finding out from a notary
+	# verdict twenty minutes later.
+	codesign --verify --deep --strict --verbose=2 $(APP)
 	@echo "Done → open $(APP)  (or move it to /Applications)"
 
 ## Package the existing bundle as a drag-to-Applications disk image.
