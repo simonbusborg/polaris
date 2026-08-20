@@ -34,18 +34,18 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
             guard Preferences.notifyChargingStarted else { return }
             var body = String(format: "%.0f%%", new.batteryPercentage)
             if let minutes = new.estimatedChargingTimeToFullMinutes, minutes > 0 {
-                body += " · full in \(StatusItemController.shortDuration(minutes: minutes))"
+                body += " · " + String(format: L("full in %@"), StatusItemController.shortDuration(minutes: minutes))
             }
-            post(title: "Charging started", body: body)
+            post(title: L("Charging started"), body: body)
         } else if old.isCharging && !new.isCharging && done {
             guard Preferences.notifyChargingComplete else { return }
-            post(title: "Charging complete",
-                 body: String(format: "%.0f%% · %@ range", new.batteryPercentage,
+            post(title: L("Charging complete"),
+                 body: String(format: L("%.0f%% · %@ range"), new.batteryPercentage,
                               StatusItemController.distance(km: new.rangeKm)))
         } else if old.isCharging && trouble {
             guard Preferences.notifyChargingProblem else { return }
-            post(title: "Charging problem",
-                 body: String(format: "Charger reported an error at %.0f%%", new.batteryPercentage))
+            post(title: L("Charging problem"),
+                 body: String(format: L("Charger reported an error at %.0f%%"), new.batteryPercentage))
         }
     }
 

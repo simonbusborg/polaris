@@ -15,10 +15,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let vinField = NSTextField()
     private let displayPopup = NSPopUpButton()
     private let unitPopup = NSPopUpButton()
-    private let launchCheckbox = NSButton(checkboxWithTitle: "Launch at login", target: nil, action: nil)
-    private let notifyStartCheckbox = NSButton(checkboxWithTitle: "Charging started", target: nil, action: nil)
-    private let notifyDoneCheckbox = NSButton(checkboxWithTitle: "Charging complete", target: nil, action: nil)
-    private let notifyProblemCheckbox = NSButton(checkboxWithTitle: "Charging problems", target: nil, action: nil)
+    private let launchCheckbox = NSButton(checkboxWithTitle: L("Launch at login"), target: nil, action: nil)
+    private let notifyStartCheckbox = NSButton(checkboxWithTitle: L("Charging started"), target: nil, action: nil)
+    private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
+    private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
 
     private let onSave: () -> Void
 
@@ -31,7 +31,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Polaris Settings"
+        window.title = L("Polaris Settings")
         window.isReleasedWhenClosed = false
         super.init(window: window)
         window.delegate = self
@@ -53,8 +53,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         guard let content = window?.contentView else { return }
 
         emailField.placeholderString = "you@example.com"
-        passwordField.placeholderString = "Polestar password"
-        vinField.placeholderString = "Vehicle VIN"
+        passwordField.placeholderString = L("Polestar password")
+        vinField.placeholderString = L("Vehicle VIN")
         // Editable text fields have no useful intrinsic width; without one,
         // the grid hands the window's spare width to the label column and
         // the whole form ends up shoved against the right edge.
@@ -63,23 +63,25 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             field.widthAnchor.constraint(equalToConstant: 260).isActive = true
         }
 
+        // Selection travels by index, not by title: a translated title can no
+        // longer be fed back through init(rawValue:).
         displayPopup.removeAllItems()
         for option in DisplayOption.allCases {
-            displayPopup.addItem(withTitle: option.rawValue)
+            displayPopup.addItem(withTitle: option.title)
         }
         unitPopup.removeAllItems()
         for unit in DistanceUnit.allCases {
-            unitPopup.addItem(withTitle: unit.rawValue)
+            unitPopup.addItem(withTitle: unit.title)
         }
 
         let grid = NSGridView(views: [
-            [label("Email:"), emailField],
-            [label("Password:"), passwordField],
-            [label("VIN:"), vinField],
-            [label("Show in bar:"), displayPopup],
-            [label("Distances:"), unitPopup],
+            [label(L("Email:")), emailField],
+            [label(L("Password:")), passwordField],
+            [label(L("VIN:")), vinField],
+            [label(L("Show in bar:")), displayPopup],
+            [label(L("Distances:")), unitPopup],
             [NSGridCell.emptyContentView, launchCheckbox],
-            [label("Notify about:"), notifyStartCheckbox],
+            [label(L("Notify about:")), notifyStartCheckbox],
             [NSGridCell.emptyContentView, notifyDoneCheckbox],
             [NSGridCell.emptyContentView, notifyProblemCheckbox]
         ])
@@ -101,9 +103,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         grid.row(at: 8).topPadding = -6
         grid.translatesAutoresizingMaskIntoConstraints = false
 
-        let saveButton = NSButton(title: "Save", target: self, action: #selector(saveAction))
+        let saveButton = NSButton(title: L("Save"), target: self, action: #selector(saveAction))
         saveButton.keyEquivalent = "\r"
-        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelAction))
+        let cancelButton = NSButton(title: L("Cancel"), target: self, action: #selector(cancelAction))
         cancelButton.keyEquivalent = "\u{1b}"
 
         let buttons = NSStackView(views: [cancelButton, saveButton])
@@ -135,8 +137,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         emailField.stringValue = Preferences.email
         passwordField.stringValue = ((try? Keychain.readPassword()) ?? nil) ?? ""
         vinField.stringValue = Preferences.vin
-        displayPopup.selectItem(withTitle: Preferences.displayOption.rawValue)
-        unitPopup.selectItem(withTitle: Preferences.distanceUnit.rawValue)
+        displayPopup.selectItem(at: DisplayOption.allCases.firstIndex(of: Preferences.displayOption) ?? 0)
+        unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
         launchCheckbox.state = Preferences.launchAtLogin ? .on : .off
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
@@ -148,13 +150,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     @objc private func saveAction() {
         Preferences.email = emailField.stringValue.trimmingCharacters(in: .whitespaces)
         Preferences.vin = vinField.stringValue.trimmingCharacters(in: .whitespaces).uppercased()
-        if let title = displayPopup.titleOfSelectedItem,
-           let option = DisplayOption(rawValue: title) {
-            Preferences.displayOption = option
+        if displayPopup.indexOfSelectedItem >= 0 {
+            Preferences.displayOption = DisplayOption.allCases[displayPopup.indexOfSelectedItem]
         }
-        if let title = unitPopup.titleOfSelectedItem,
-           let unit = DistanceUnit(rawValue: title) {
-            Preferences.distanceUnit = unit
+        if unitPopup.indexOfSelectedItem >= 0 {
+            Preferences.distanceUnit = DistanceUnit.allCases[unitPopup.indexOfSelectedItem]
         }
         Preferences.launchAtLogin = (launchCheckbox.state == .on)
         Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
@@ -169,7 +169,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 try Keychain.savePassword(password)
             } catch {
                 let alert = NSAlert()
-                alert.messageText = "Couldn't save password to Keychain"
+                alert.messageText = L("Couldn't save password to Keychain")
                 alert.informativeText = error.localizedDescription
                 alert.runModal()
                 return

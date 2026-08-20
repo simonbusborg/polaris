@@ -19,6 +19,8 @@ app: build
 	cp $(BINARY) $(APP)/Contents/MacOS/Polaris
 	cp Resources/Info.plist $(APP)/Contents/Info.plist
 	cp Resources/Polaris.icns $(APP)/Contents/Resources/Polaris.icns
+	# The .lproj folders are what makes the app follow the system language.
+	cp -R Resources/*.lproj $(APP)/Contents/Resources/
 ifeq ($(IDENTITY),-)
 	codesign --force -s - $(APP)
 else

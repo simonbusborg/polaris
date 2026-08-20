@@ -8,15 +8,33 @@
 
 import Foundation
 
+/// The raw values are what sits in UserDefaults and must never be translated
+/// — a Danish user's stored setting has to still parse after they switch the
+/// system to German. `title` is the translated face of the same case.
 enum DisplayOption: String, CaseIterable {
     case batteryPercentage = "Battery Percentage"
     case rangeKm = "Range"
     case chargeTime = "Charge Time"
+
+    var title: String {
+        switch self {
+        case .batteryPercentage: return L("Battery Percentage")
+        case .rangeKm: return L("Range")
+        case .chargeTime: return L("Charge Time")
+        }
+    }
 }
 
 enum DistanceUnit: String, CaseIterable {
     case kilometers = "Kilometers (km)"
     case miles = "Miles (mi)"
+
+    var title: String {
+        switch self {
+        case .kilometers: return L("Kilometers (km)")
+        case .miles: return L("Miles (mi)")
+        }
+    }
 
     var suffix: String { self == .kilometers ? "km" : "mi" }
 

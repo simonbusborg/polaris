@@ -77,10 +77,10 @@ enum PolestarError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .http(let m): return "HTTP error: \(m)"
-        case .parse(let m): return "Parse error: \(m)"
-        case .authenticationFailed: return "Authentication failed — check email/password"
-        case .notConfigured: return "Not configured — open Settings"
+        case .http(let m): return String(format: L("HTTP error: %@"), m)
+        case .parse(let m): return String(format: L("Parse error: %@"), m)
+        case .authenticationFailed: return L("Authentication failed — check email/password")
+        case .notConfigured: return L("Not configured — open Settings")
         }
     }
 }

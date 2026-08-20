@@ -106,23 +106,23 @@ final class StatusItemController {
             // "Polestar 4 · 2026", so make and model would just repeat it, and
             // the raw pno34 means nothing to an owner.
             if let variant = data.spec?.variant {
-                menu.addItem(kvItem("Variant", variant))
+                menu.addItem(kvItem(L("Variant"), variant))
             }
             // `defaults write com.weareheavy.polaris debug_pno34 -bool YES`
             // brings the raw code back, copyable. It is how a car's pno34 gets
             // read off a running app in the first place, which is the only way
             // PNO34.variantsByPrefix will ever be filled in.
             if let spec = data.spec, UserDefaults.standard.bool(forKey: "debug_pno34") {
-                menu.addItem(kvItem("Product Code", spec.raw, copyable: true))
+                menu.addItem(kvItem(L("Product Code"), spec.raw, copyable: true))
             }
             if let plate = data.registrationNo, !plate.isEmpty {
-                menu.addItem(kvItem("Plate", plate, copyable: true))
+                menu.addItem(kvItem(L("Plate"), plate, copyable: true))
             }
             if let vin = data.vin, !vin.isEmpty {
-                menu.addItem(kvItem("VIN", vin, copyable: true))
+                menu.addItem(kvItem(L("VIN"), vin, copyable: true))
             }
             if cars.count > 1 {
-                let switcher = NSMenuItem(title: "Switch Car", action: nil, keyEquivalent: "")
+                let switcher = NSMenuItem(title: L("Switch Car"), action: nil, keyEquivalent: "")
                 let submenu = NSMenu()
                 for car in cars {
                     let item = NSMenuItem(title: car.title, action: #selector(selectCarAction(_:)),
@@ -139,19 +139,19 @@ final class StatusItemController {
             menu.addItem(.separator())
 
             // Live data
-            menu.addItem(kvItem("Battery", String(format: "%.0f%%", data.batteryPercentage)))
+            menu.addItem(kvItem(L("Battery"), String(format: "%.0f%%", data.batteryPercentage)))
             let barItem = NSMenuItem()
             barItem.view = BatteryBarView(
                 fraction: data.batteryPercentage / 100,
                 color: Self.batteryColor(percentage: data.batteryPercentage, charging: data.isCharging)
             )
             menu.addItem(barItem)
-            menu.addItem(kvItem("Range", Self.distance(km: data.rangeKm)))
-            menu.addItem(kvItem("Status", data.isDriving ? "In use" : Self.humanStatus(data.statusKey)))
+            menu.addItem(kvItem(L("Range"), Self.distance(km: data.rangeKm)))
+            menu.addItem(kvItem(L("Status"), data.isDriving ? L("In use") : Self.humanStatus(data.statusKey)))
             switch data.grpcExtras?.chargerConnectionStatus {
-            case "CONNECTED": menu.addItem(kvItem("Charger", "Connected"))
-            case "DISCONNECTED": menu.addItem(kvItem("Charger", "Disconnected"))
-            case "FAULT": menu.addItem(kvItem("Charger", "Fault", valueWarning: true))
+            case "CONNECTED": menu.addItem(kvItem(L("Charger"), L("Connected")))
+            case "DISCONNECTED": menu.addItem(kvItem(L("Charger"), L("Disconnected")))
+            case "FAULT": menu.addItem(kvItem(L("Charger"), L("Fault"), valueWarning: true))
             default: break
             }
             // `defaults write com.weareheavy.polaris debug_charging_type -string DC`
@@ -160,48 +160,48 @@ final class StatusItemController {
             // a parser fault as a working feature — if this row looks right, it
             // says the layout is right and nothing about the wire format.
             if let fake = UserDefaults.standard.string(forKey: "debug_charging_type"), !fake.isEmpty {
-                menu.addItem(kvItem("Power", "\(Self.kilowatts(watts: 11000)) · \(fake)"))
+                menu.addItem(kvItem(L("Power"), "\(Self.kilowatts(watts: 11000)) · \(fake)"))
             } else if data.isCharging, let watts = data.grpcExtras?.chargingPowerWatts, watts > 0 {
                 // The AC/DC distinction belongs with the power reading rather
                 // than on its own row — it is what makes 11 kW or 150 kW make
                 // sense. The car only reports it while it is actually charging.
                 var power = Self.kilowatts(watts: watts)
                 if let type = data.grpcExtras?.chargingType { power += " · \(type)" }
-                menu.addItem(kvItem("Power", power))
+                menu.addItem(kvItem(L("Power"), power))
             }
             if data.isCharging, let minutes = data.estimatedChargingTimeToFullMinutes, minutes > 0 {
                 let fullAt = data.lastUpdated.addingTimeInterval(TimeInterval(minutes * 60))
-                menu.addItem(kvItem("Full in",
+                menu.addItem(kvItem(L("Full in"),
                                     "\(Self.shortDuration(minutes: minutes)) · \(timeFormatter.string(from: fullAt))"))
             }
 
             // Car stats
             var stats: [(String, String)] = []
             if let km = data.odometerKm {
-                stats.append(("Odometer", Self.distance(km: km, grouped: true)))
+                stats.append((L("Odometer"), Self.distance(km: km, grouped: true)))
             }
             var serviceSoon = false
             if let days = data.daysToService {
-                var service = "in \(days) days"
+                var service = String(format: L(days == 1 ? "in %d day" : "in %d days"), days)
                 if let km = data.distanceToServiceKm { service += " / \(Self.distance(km: km))" }
                 serviceSoon = days < 30
-                stats.append(("Service", service))
+                stats.append((L("Service"), service))
             }
             if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty {
                 menu.addItem(.separator())
                 stats.forEach {
-                    menu.addItem(kvItem($0.0, $0.1, valueWarning: $0.0 == "Service" && serviceSoon))
+                    menu.addItem(kvItem($0.0, $0.1, valueWarning: $0.0 == L("Service") && serviceSoon))
                 }
                 if data.serviceWarning {
-                    menu.addItem(rowItem("⚠︎ Service warning", warning: true))
+                    menu.addItem(rowItem("⚠︎ " + L("Service warning"), warning: true))
                 }
                 data.fluidWarnings.forEach { menu.addItem(rowItem("⚠︎ \($0)", warning: true)) }
             }
 
             menu.addItem(.separator())
-            menu.addItem(kvItem("Updated", timeFormatter.string(from: data.lastUpdated)))
+            menu.addItem(kvItem(L("Updated"), timeFormatter.string(from: data.lastUpdated)))
         } else {
-            menu.addItem(Self.infoItem("No data yet"))
+            menu.addItem(Self.infoItem(L("No data yet")))
         }
 
         if let error {
@@ -212,22 +212,22 @@ final class StatusItemController {
         menu.addItem(.separator())
 
         if let updateVersion {
-            let update = NSMenuItem(title: "Update Available (v\(updateVersion))…",
+            let update = NSMenuItem(title: String(format: L("Update Available (v%@)…"), updateVersion),
                                     action: #selector(updateAction), keyEquivalent: "")
             update.target = self
             menu.addItem(update)
         }
 
-        let refresh = NSMenuItem(title: "Refresh Now", action: #selector(refreshAction), keyEquivalent: "r")
+        let refresh = NSMenuItem(title: L("Refresh Now"), action: #selector(refreshAction), keyEquivalent: "r")
         refresh.target = self
         menu.addItem(refresh)
 
-        let settings = NSMenuItem(title: "Settings…", action: #selector(settingsAction), keyEquivalent: ",")
+        let settings = NSMenuItem(title: L("Settings…"), action: #selector(settingsAction), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
 
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit Polaris", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: L("Quit Polaris"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
         return menu
     }
@@ -253,7 +253,7 @@ final class StatusItemController {
         let item = NSMenuItem()
         item.view = KVRowView(key: key, value: value, valueWarning: valueWarning,
                               copyText: copyable ? value : nil)
-        if copyable { item.toolTip = "Click to copy" }
+        if copyable { item.toolTip = L("Click to copy") }
         return item
     }
 
@@ -296,14 +296,14 @@ final class StatusItemController {
     /// Takes the already-normalized status key (prefixes stripped), e.g. "IDLE".
     private static func humanStatus(_ key: String) -> String {
         switch key {
-        case "CHARGING": return "Charging"
-        case "IDLE": return "Idle"
-        case "DONE": return "Done"
-        case "DISCHARGING": return "Discharging"
-        case "ERROR": return "Error"
-        case "FAULT": return "Fault"
-        case "SCHEDULED": return "Scheduled"
-        case "SMART_CHARGING": return "Smart charging"
+        case "CHARGING": return L("Charging")
+        case "IDLE": return L("Idle")
+        case "DONE": return L("Done")
+        case "DISCHARGING": return L("Discharging")
+        case "ERROR": return L("Error")
+        case "FAULT": return L("Fault")
+        case "SCHEDULED": return L("Scheduled")
+        case "SMART_CHARGING": return L("Smart charging")
         default:
             return key.replacingOccurrences(of: "_", with: " ").capitalized
         }
@@ -319,7 +319,12 @@ final class StatusItemController {
     /// need a decimal.
     static func kilowatts(watts: Int) -> String {
         let kw = Double(watts) / 1000
-        return kw >= 10 ? String(format: "%.0f kW", kw) : String(format: "%.1f kW", kw)
+        // The separator is locale's, not C's: 7,2 kW in Danish, 7.2 kW in English.
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.minimumFractionDigits = kw >= 10 ? 0 : 1
+        f.maximumFractionDigits = kw >= 10 ? 0 : 1
+        return "\(f.string(from: NSNumber(value: kw)) ?? "\(Int(kw))") kW"
     }
 
     /// "412 km" / "256 mi"; `grouped` adds thousands separators (odometer).

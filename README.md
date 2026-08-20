@@ -22,6 +22,9 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 - Odometer, service interval and fluid warnings
 - Notifications when charging starts, completes, or the charger reports a fault
 - Choose what the menu bar shows
+- Follows the system language: English, Danish, Swedish, Norwegian, German,
+  Spanish and Italian. Adding one is a single `Resources/<lang>.lproj/Localizable.strings`
+  file; a test fails the build if any language falls behind the others
 - Password and session stored in the macOS Keychain — never in plaintext, and
   the session is resumed on launch instead of logging in again
 - OAuth2/OIDC with PKCE against Polestar's official endpoints; no third parties, no analytics, no tracking
