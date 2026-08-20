@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let api = PolestarAPI()
     private let notifier = Notifier()
-    private let updateChecker = UpdateChecker()
+    private let updater = Updater()
     private var refreshTimer: Timer?
     private var latest: CarData?
     private var lastError: String?
@@ -27,14 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onSettings: { [weak self] in self?.showSettings() }
         )
         statusController.onSelectCar = { [weak self] vin in self?.switchCar(to: vin) }
+        if updater.isAvailable {
+            statusController.onCheckForUpdates = { [weak self] in self?.updater.checkForUpdates() }
+        }
         statusController.render(data: nil, error: nil, authenticated: false)
         notifier.requestAuthorizationIfNeeded()
-        updateChecker.checkIfDue { [weak self] version in
-            guard let self else { return }
-            self.statusController.updateVersion = version
-            self.statusController.render(data: self.latest, error: self.lastError,
-                                         authenticated: self.api.isAuthenticated)
-        }
 
         if hasCredentials {
             startSession()
@@ -186,7 +183,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettings() {
         if settingsController == nil {
-            settingsController = SettingsWindowController { [weak self] in
+            settingsController = SettingsWindowController(updater: updater) { [weak self] in
                 self?.applyLaunchAtLogin()
                 self?.startSession()
             }

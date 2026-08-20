@@ -142,12 +142,58 @@
   .panel .action:hover{background:var(--accent);color:#fff}
   .panel .action:hover .kbd{color:#fff}
   .panel .kbd{color:rgba(255,255,255,.45);font-size:.8rem}
-  .charging{color:var(--accent);display:inline-flex;align-items:center;gap:.4rem;font-weight:500}
-  .charging::before{
-    content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);
-    animation:pulse 2.4s ease-in-out infinite;
-  }
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  /* State switcher above the menu. Each tab is a snapshot of the same
+     menu the app draws in that state — same rows, same order. */
+  .states{
+    display:flex;gap:2px;margin:0 auto 1rem;width:fit-content;
+    background:var(--panel);border-radius:999px;padding:3px;
+  }
+  .states button{
+    appearance:none;border:0;background:transparent;color:var(--dim);
+    font:inherit;font-size:.82rem;padding:.42rem 1rem;border-radius:999px;
+    cursor:pointer;transition:background .2s,color .2s;
+  }
+  .states button:hover{color:var(--ink)}
+  .states button[aria-selected="true"]{background:var(--accent);color:#fff}
+  .panel .row .warn{color:#FF9F0A}
+  .panel .warnrow{padding:.22rem .6rem;color:#FF9F0A}
+  /* The status dot is the accent only while charging; other states get
+     their own colour so the tabs read apart at a glance. */
+  .dot{display:inline-flex;align-items:center;gap:.4rem;font-weight:500}
+  .dot::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .dot.live::before{animation:pulse 2.4s ease-in-out infinite}
+
+  /* notifications */
+  .notify{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;
+    display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+  .banners{display:grid;gap:.9rem;justify-items:end}
+  /* A macOS banner: icon, title, body, and the delivery time in the corner. */
+  .banner{
+    width:min(360px,100%);display:grid;grid-template-columns:auto 1fr auto;
+    gap:.75rem;align-items:start;
+    background:rgba(30,30,32,.72);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid rgba(255,255,255,.14);border-radius:14px;
+    box-shadow:0 18px 44px rgba(0,0,0,.45);padding:.75rem .85rem;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+    color:#f5f5f7;
+  }
+  .banner img{width:34px;height:34px;border-radius:8px}
+  .banner .t{font-size:.85rem;font-weight:600;line-height:1.25}
+  .banner .b{font-size:.82rem;color:rgba(255,255,255,.6);margin-top:.12rem;
+    font-variant-numeric:tabular-nums}
+  .banner .when{font-size:.75rem;color:rgba(255,255,255,.45);white-space:nowrap}
+  /* Banners arrive one after another, the way they would on the desktop. */
+  .banners .rv:nth-child(2){transition-delay:.12s}
+  .banners .rv:nth-child(3){transition-delay:.24s}
+  .toggles{margin-top:1.4rem;display:grid;gap:.45rem}
+  .toggles li{list-style:none;color:var(--dim);font-size:.9rem;
+    display:flex;align-items:center;gap:.55rem}
+  .toggles li::before{content:"";width:26px;height:15px;border-radius:999px;
+    background:var(--accent);flex:none;box-shadow:inset -11px 0 0 -8px #fff}
 
   /* features */
   .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
@@ -200,12 +246,14 @@
   .rv.in{opacity:1;transform:none}
   @media (prefers-reduced-motion:reduce){
     .rv{opacity:1;transform:none;transition:none}
-    .charging::before{animation:none}
+    .dot.live::before{animation:none}
   }
   @media (max-width:860px){
     nav{gap:1.1rem}
     nav a{font-size:.84rem}
     .real{grid-template-columns:1fr}
+    .notify{grid-template-columns:1fr}
+    .banners{justify-items:stretch}
     .get{grid-template-columns:1fr}
     .grid{grid-template-columns:1fr}
     /* Same 2px gap in both axes — a fat row gap next to hairline column
@@ -221,6 +269,7 @@
     <a class="mark" href="#">Polaris<span>.</span></a>
     <nav>
       <a href="#menu">The menu</a>
+      <a href="#notifications">Notifications</a>
       <a href="#features">Features</a>
       <a href="#get">Get started</a>
     </nav>
@@ -269,6 +318,7 @@
       moment the battery is full.</p>
     </div>
     <div class="mock rv">
+      <div class="states" role="tablist" id="states"></div>
       <div class="wallpaper">
       <div class="panel">
         <div class="greet">Hi, Simon</div>
@@ -277,22 +327,51 @@
         <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
         <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
         <hr>
-        <div class="row"><span class="k">Battery</span><span>82%</span></div>
-        <div class="bar"><i style="width:82%"></i></div>
-        <div class="row"><span class="k">Range</span><span>412 km</span></div>
-        <div class="row"><span class="k">Status</span><span class="charging">Charging</span></div>
-        <div class="row"><span class="k">Full in</span><span>1h05m · 15:37</span></div>
+        <div id="panelLive"></div>
         <hr>
-        <div class="row"><span class="k">Odometer</span><span>23.412 km</span></div>
-        <div class="row"><span class="k">Service</span><span>in 208 days / 17.500 km</span></div>
+        <div id="panelStats"></div>
         <hr>
-        <div class="row"><span class="k">Updated</span><span>14:32</span></div>
+        <div class="row"><span class="k">Updated</span><span id="panelUpdated">14:32</span></div>
         <hr>
         <div class="action"><span>Refresh Now</span><span class="kbd">⌘R</span></div>
         <div class="action"><span>Settings…</span><span class="kbd">⌘,</span></div>
         <hr>
         <div class="action"><span>Quit Polaris</span><span class="kbd">⌘Q</span></div>
       </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="notify" id="notifications">
+    <div class="side rv">
+      <div class="kicker">Notifications</div>
+      <h2>It tells you when it matters.</h2>
+      <p>Polaris compares each refresh with the last one, so a banner only
+      shows up when something actually changed — plugged in, finished, or
+      the charger threw an error. Nothing else pings you.</p>
+      <ul class="toggles">
+        <li>Charging started</li>
+        <li>Charging complete</li>
+        <li>Charging problems</li>
+      </ul>
+      <p class="buildnote" style="margin-top:1.2rem">Each one is its own
+      switch in Settings. Turn off the ones you don't want.</p>
+    </div>
+    <div class="banners">
+      <div class="banner rv">
+        <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+        <div><div class="t">Charging started</div><div class="b">54% · full in 2h10m</div></div>
+        <div class="when">now</div>
+      </div>
+      <div class="banner rv">
+        <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+        <div><div class="t">Charging complete</div><div class="b">100% · 560 km range</div></div>
+        <div class="when">2h ago</div>
+      </div>
+      <div class="banner rv">
+        <img src="assets/app-icon.png" alt="" width="1024" height="1024" loading="lazy">
+        <div><div class="t">Charging problem</div><div class="b">Charger reported an error at 43%</div></div>
+        <div class="when">yesterday</div>
       </div>
     </div>
   </section>
@@ -391,6 +470,82 @@
   // The mock menu is always dark, so it always gets the light-paint render.
   document.getElementById('panelCar').src = car.dark;
   document.querySelector('.panel .model').textContent = car.model;
+
+  // The four states worth showing: the rows the app draws differ per state,
+  // so each tab rebuilds the live block rather than just recolouring a word.
+  const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  const states = [
+    {
+      id: 'charging', tab: 'Charging', updated: '14:32',
+      battery: 82, barColor: '#30D158',
+      rows: [
+        ['Range', '412 km'],
+        ['Status', '<span class="dot live" style="color:' + ACCENT + '">Charging</span>'],
+        ['Charger', 'Connected'],
+        ['Power', '11 kW · AC'],
+        ['Full in', '1h05m · 15:37'],
+      ],
+      stats: [['Odometer', '23.412 km'], ['Service', 'in 208 days / 17.500 km']],
+    },
+    {
+      id: 'idle', tab: 'Idle', updated: '09:14',
+      battery: 64, barColor: '#0A84FF',
+      rows: [
+        ['Range', '318 km'],
+        ['Status', '<span class="dot" style="color:rgba(255,255,255,.55)">Idle</span>'],
+        ['Charger', 'Disconnected'],
+      ],
+      stats: [['Odometer', '23.401 km'], ['Service', 'in 208 days / 17.500 km']],
+    },
+    {
+      id: 'driving', tab: 'In use', updated: '17:48',
+      battery: 41, barColor: '#0A84FF',
+      rows: [
+        ['Range', '204 km'],
+        ['Status', '<span class="dot live" style="color:#30D158">In use</span>'],
+      ],
+      stats: [['Odometer', '23.455 km'], ['Service', 'in 206 days / 17.500 km']],
+    },
+    {
+      id: 'attention', tab: 'Needs attention', updated: '08:02',
+      battery: 17, barColor: '#FF9F0A',
+      rows: [
+        ['Range', '84 km'],
+        ['Status', '<span class="dot" style="color:rgba(255,255,255,.55)">Idle</span>'],
+        ['Charger', '<span class="warn">Fault</span>'],
+      ],
+      stats: [['Odometer', '29.980 km'], ['Service', '<span class="warn">in 11 days / 20 km</span>']],
+      warnings: ['Service warning', 'Washer fluid low'],
+    },
+  ];
+
+  const rowHTML = ([k, v]) => '<div class="row"><span class="k">' + k + '</span><span>' + v + '</span></div>';
+  const live = document.getElementById('panelLive');
+  const statsEl = document.getElementById('panelStats');
+  const updatedEl = document.getElementById('panelUpdated');
+  const tabs = document.getElementById('states');
+
+  function renderState(state) {
+    live.innerHTML =
+      rowHTML(['Battery', state.battery + '%']) +
+      '<div class="bar"><i style="width:' + state.battery + '%;background:' + state.barColor + '"></i></div>' +
+      state.rows.map(rowHTML).join('');
+    statsEl.innerHTML = state.stats.map(rowHTML).join('') +
+      (state.warnings || []).map(w => '<div class="warnrow">⚠︎ ' + w + '</div>').join('');
+    updatedEl.textContent = state.updated;
+    [...tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === state.id)));
+  }
+
+  states.forEach(state => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.role = 'tab';
+    b.dataset.id = state.id;
+    b.textContent = state.tab;
+    b.addEventListener('click', () => renderState(state));
+    tabs.appendChild(b);
+  });
+  renderState(states[0]);
 
   // Sticky nav: hairline + frosted bg only once content scrolls under it.
   const siteNav = document.getElementById('siteNav');

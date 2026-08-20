@@ -6,6 +6,10 @@ DMG     = Polaris.dmg
 # "Developer ID Application: …" identity for notarized releases.
 IDENTITY ?= -
 
+# Where SwiftPM unpacked Sparkle's xcframework. The version is in the path,
+# so it's found rather than hard-coded.
+SPARKLE = $(shell find .build/artifacts -type d -name Sparkle.framework -path '*macos*' | head -1)
+
 .PHONY: build app dmg run test clean release
 
 ## Build the release binary
@@ -21,9 +25,26 @@ app: build
 	cp Resources/Polaris.icns $(APP)/Contents/Resources/Polaris.icns
 	# The .lproj folders are what makes the app follow the system language.
 	cp -R Resources/*.lproj $(APP)/Contents/Resources/
+	# SwiftPM links Sparkle but won't embed it — an executable target has no
+	# bundle to embed into. The framework is copied by hand and the binary
+	# gets an rpath pointing at it, or the app dies at launch with "Library
+	# not loaded".
+	mkdir -p $(APP)/Contents/Frameworks
+	cp -R "$(SPARKLE)" $(APP)/Contents/Frameworks/
+	install_name_tool -add_rpath @executable_path/../Frameworks $(APP)/Contents/MacOS/Polaris
+	# Nested code is signed first and the outer bundle last: signing the app
+	# seals the frameworks' signatures, so doing it the other way round
+	# invalidates them. --deep is Apple-discouraged and does the wrong thing
+	# with Sparkle's XPC services.
 ifeq ($(IDENTITY),-)
+	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/*.xpc 2>/dev/null || true
+	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app 2>/dev/null || true
+	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework
 	codesign --force -s - $(APP)
 else
+	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/*.xpc 2>/dev/null || true
+	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app 2>/dev/null || true
+	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework
 	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)
 endif
 	@echo "Done → open $(APP)  (or move it to /Applications)"

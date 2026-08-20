@@ -22,7 +22,6 @@
 "Service warning" = "Servicevarning";
 "Updated" = "Uppdaterad";
 "No data yet" = "Ingen data ännu";
-"Update Available (v%@)…" = "Uppdatering tillgänglig (v%@)…";
 "Refresh Now" = "Uppdatera nu";
 "Settings…" = "Inställningar…";
 "Quit Polaris" = "Avsluta Polaris";
@@ -70,3 +69,7 @@
 "Parse error: %@" = "Tolkningsfel: %@";
 "Authentication failed — check email/password" = "Inloggningen misslyckades — kontrollera e-post/lösenord";
 "Not configured — open Settings" = "Inte konfigurerad — öppna Inställningar";
+"Check for Updates…" = "Sök efter uppdateringar…";
+"Check automatically" = "Sök automatiskt";
+"Download and install automatically" = "Hämta och installera automatiskt";
+"Updates:" = "Uppdateringar:";

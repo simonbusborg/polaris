@@ -19,10 +19,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyStartCheckbox = NSButton(checkboxWithTitle: L("Charging started"), target: nil, action: nil)
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
+    private let autoCheckCheckbox = NSButton(checkboxWithTitle: L("Check automatically"), target: nil, action: nil)
+    private let autoInstallCheckbox = NSButton(checkboxWithTitle: L("Download and install automatically"), target: nil, action: nil)
+
+    /// Sparkle isn't running under `swift run`, so the two update rows are
+    /// left out entirely rather than shown dead.
+    private let updater: Updater?
 
     private let onSave: () -> Void
 
-    init(onSave: @escaping () -> Void) {
+    init(updater: Updater? = nil, onSave: @escaping () -> Void) {
+        self.updater = (updater?.isAvailable == true) ? updater : nil
         self.onSave = onSave
 
         let window = NSWindow(
@@ -85,6 +92,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             [NSGridCell.emptyContentView, notifyDoneCheckbox],
             [NSGridCell.emptyContentView, notifyProblemCheckbox]
         ])
+        if updater != nil {
+            grid.addRow(with: [label(L("Updates:")), autoCheckCheckbox])
+            grid.addRow(with: [NSGridCell.emptyContentView, autoInstallCheckbox])
+        }
         grid.rowSpacing = 12
         grid.columnSpacing = 10
         grid.rowAlignment = .firstBaseline
@@ -92,7 +103,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Text fields stretch with the window; popups and checkboxes keep
         // their natural width.
         for control in [displayPopup, unitPopup, launchCheckbox, notifyStartCheckbox,
-                        notifyDoneCheckbox, notifyProblemCheckbox] {
+                        notifyDoneCheckbox, notifyProblemCheckbox,
+                        autoCheckCheckbox, autoInstallCheckbox] {
             grid.cell(for: control)?.xPlacement = .leading
         }
         // Extra air between the account fields and the app options, and
@@ -101,6 +113,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         grid.row(at: 6).topPadding = 10
         grid.row(at: 7).topPadding = -6
         grid.row(at: 8).topPadding = -6
+        if updater != nil {
+            grid.row(at: 9).topPadding = 10
+            grid.row(at: 10).topPadding = -6
+        }
         grid.translatesAutoresizingMaskIntoConstraints = false
 
         let saveButton = NSButton(title: L("Save"), target: self, action: #selector(saveAction))
@@ -143,6 +159,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
+        if let updater {
+            autoCheckCheckbox.state = updater.automaticallyChecks ? .on : .off
+            autoInstallCheckbox.state = updater.automaticallyDownloads ? .on : .off
+        }
     }
 
     // MARK: - Actions
@@ -160,6 +180,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
         Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
         Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
+        if let updater {
+            updater.automaticallyChecks = (autoCheckCheckbox.state == .on)
+            updater.automaticallyDownloads = (autoInstallCheckbox.state == .on)
+        }
 
         let password = passwordField.stringValue
         if password.isEmpty {

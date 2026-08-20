@@ -177,14 +177,6 @@ final class FormattingTests: XCTestCase {
         XCTAssertEqual(StatusItemController.icon(for: nil), "car")
     }
 
-    func testVersionComparison() {
-        XCTAssertTrue(UpdateChecker.isVersion("2.0.0", newerThan: "1.9.9"))
-        XCTAssertTrue(UpdateChecker.isVersion("1.10.0", newerThan: "1.9.1"))
-        XCTAssertTrue(UpdateChecker.isVersion("1.0.1", newerThan: "1.0"))
-        XCTAssertFalse(UpdateChecker.isVersion("1.0.0", newerThan: "1.0.0"))
-        XCTAssertFalse(UpdateChecker.isVersion("1.9.1", newerThan: "2.0.0"))
-    }
-
     func testGreetingUsesSystemLanguage() {
         XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: "da-DK"), "Hej, Simon")
         XCTAssertEqual(StatusItemController.greeting("Simon", languageCode: "en-US"), "Hi, Simon")

@@ -12,6 +12,7 @@ permissions:
 # them the release falls back to the old ad-hoc-signed build.
 env:
   HAS_SIGNING: ${{ secrets.MACOS_CERT_P12 != '' }}
+  HAS_SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
 
 jobs:
   build-and-release:
@@ -70,6 +71,28 @@ jobs:
         run: |
           make dmg
           ditto -c -k --keepParent Polaris.app Polaris.zip
+
+      # Sparkle only trusts an appcast entry it can verify against the EdDSA
+      # public key baked into Info.plist, so the zip is signed here and the
+      # feed regenerated from that signature. The commit goes to main, which
+      # is what GitHub Pages serves the feed from.
+      - name: Sign the build for Sparkle and publish the appcast
+        if: ${{ env.HAS_SPARKLE_KEY == 'true' }}
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          SIGN=$(find .build/artifacts -type f -name sign_update | head -1)
+          test -n "$SIGN" || { echo "sign_update missing from the Sparkle artifact"; exit 1; }
+          ATTRS=$("$SIGN" Polaris.zip -s "$SPARKLE_PRIVATE_KEY")
+          BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)
+          git fetch origin main
+          git checkout -B main origin/main
+          python3 scripts/update_appcast.py "$GITHUB_REF_NAME" "$BUILD" "$ATTRS"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/appcast.xml
+          git commit -m "Publish $GITHUB_REF_NAME to the Sparkle appcast"
+          git push origin main
 
       - name: Create GitHub release with assets
         uses: softprops/action-gh-release@v2

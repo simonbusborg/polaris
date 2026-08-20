@@ -22,7 +22,6 @@
 "Service warning" = "Aviso de revisión";
 "Updated" = "Actualizado";
 "No data yet" = "Aún no hay datos";
-"Update Available (v%@)…" = "Actualización disponible (v%@)…";
 "Refresh Now" = "Actualizar ahora";
 "Settings…" = "Ajustes…";
 "Quit Polaris" = "Salir de Polaris";
@@ -70,3 +69,7 @@
 "Parse error: %@" = "Error de análisis: %@";
 "Authentication failed — check email/password" = "Error de autenticación — comprueba el correo y la contraseña";
 "Not configured — open Settings" = "Sin configurar — abre los Ajustes";
+"Check for Updates…" = "Buscar actualizaciones…";
+"Check automatically" = "Buscar automáticamente";
+"Download and install automatically" = "Descargar e instalar automáticamente";
+"Updates:" = "Actualizaciones:";

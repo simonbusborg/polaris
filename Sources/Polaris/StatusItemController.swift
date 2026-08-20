@@ -15,7 +15,9 @@ final class StatusItemController {
     private let onSettings: () -> Void
 
     /// Set when a newer release exists; renders as a menu item.
-    var updateVersion: String?
+    /// Set only when Sparkle is running (a real .app bundle); the menu item
+    /// is hidden otherwise.
+    var onCheckForUpdates: (() -> Void)?
 
     /// Cars on the account; more than one adds a Switch Car submenu.
     var cars: [CarSummary] = []
@@ -211,8 +213,8 @@ final class StatusItemController {
 
         menu.addItem(.separator())
 
-        if let updateVersion {
-            let update = NSMenuItem(title: String(format: L("Update Available (v%@)…"), updateVersion),
+        if onCheckForUpdates != nil {
+            let update = NSMenuItem(title: L("Check for Updates…"),
                                     action: #selector(updateAction), keyEquivalent: "")
             update.target = self
             menu.addItem(update)
@@ -240,7 +242,7 @@ final class StatusItemController {
         guard let vin = sender.representedObject as? String, vin != activeVin else { return }
         onSelectCar?(vin)
     }
-    @objc private func updateAction() { NSWorkspace.shared.open(UpdateChecker.releasesPage) }
+    @objc private func updateAction() { onCheckForUpdates?() }
 
     // MARK: - Key/value rows (custom views: exact colors, exact width,
     // no system dimming, aligned with the car image)
