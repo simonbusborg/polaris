@@ -96,13 +96,21 @@ jobs:
       # public key baked into Info.plist, so the zip is signed here and the
       # feed regenerated from that signature. The commit goes to main, which
       # is what GitHub Pages serves the feed from.
+      # Never fatal: the release is already published by this point, and the
+      # feed can be regenerated from the released zip afterwards. It failed
+      # silently once, which is why it now traces what it does.
       - name: Sign the build for Sparkle and publish the appcast
         if: ${{ env.HAS_SPARKLE_KEY == 'true' }}
+        continue-on-error: true
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
+          set -x
+          ls -la .build/artifacts || echo "no artifacts directory"
+          find .build/artifacts -name 'sign_update*' || true
           SIGN=$(find .build/artifacts -type f -name sign_update | head -1)
           test -n "$SIGN" || { echo "sign_update missing from the Sparkle artifact"; exit 1; }
+          chmod +x "$SIGN"
           # -s is deprecated and now exits non-zero; the key goes in a file.
           printf '%s' "$SPARKLE_PRIVATE_KEY" > sparkle.key
           ATTRS=$("$SIGN" Polaris.zip --ed-key-file sparkle.key)
