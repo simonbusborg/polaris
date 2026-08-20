@@ -20,7 +20,8 @@ final class LocalizationTests: XCTestCase {
         .deletingLastPathComponent()   // Tests
         .deletingLastPathComponent()   // package root
 
-    private static let languages = ["en", "da", "sv", "nb", "de", "es", "it"]
+    private static let languages = ["en", "da", "sv", "nb", "de", "es", "it",
+                                    "nl", "fi", "fr", "pt", "pl"]
 
     private func keys(inLanguage lang: String) throws -> Set<String> {
         let url = Self.root

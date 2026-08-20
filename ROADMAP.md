@@ -31,9 +31,6 @@ comment describing where it now stands.
 - **[In-app updates](https://github.com/simonbusborg/polaris/issues/8)** — "Update now" and an automatic-updates toggle,
   via Sparkle. Today the app only tells you a new version exists and sends you
   to the browser. Now possible because releases are signed.
-- **[More languages](https://github.com/simonbusborg/polaris/issues/2)** — the seven below cover most of Polestar's European
-  markets, but not all of them. Dutch, Finnish, French, Portuguese and Polish
-  are the obvious next ones. One file per language; translators welcome.
 - **[A better "in use" signal](https://github.com/simonbusborg/polaris/issues/3)** — the API's charging status reads `IDLE`
   whether the car is parked or on the motorway, so driving is currently
   inferred from how fresh the odometer reading is. It works, but it can lag
@@ -60,7 +57,7 @@ can be promised before someone has tried it.
 
 - **Multiple cars** (v2.2.0) — a switcher appears in the menu when the
   account has more than one car.
-- **System language, 7 languages** (v2.5.0) — English, Danish,
+- **System language, 12 languages** (v2.5.0, extended in v2.6.0) — English, Danish,
   Swedish, Norwegian, German, Spanish and Italian. The app follows the macOS
   language setting; there is no language picker to find.
 - **"In use" while driving** (v2.5.0) — the charging status never says
