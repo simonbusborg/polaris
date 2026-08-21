@@ -129,8 +129,6 @@
   }
   .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
   .btn svg{width:14px;height:14px}
-  .btn.ghost{background:transparent;color:var(--paper);border:1px solid rgba(255,255,255,.28)}
-  .btn.ghost:hover{background:rgba(255,255,255,.1);color:var(--paper)}
   /* Shown only when the visitor is not on a Mac: the download is pointless
      there, so the card says so before the button does anything. */
   .not-mac{
@@ -860,9 +858,9 @@
     const note = document.getElementById('notMac');
     const pageURL = location.origin + location.pathname;
 
-    dl.className = 'btn ghost';
-    dl.href = 'https://github.com/simonbusborg/polaris';
-    dl.textContent = 'View on GitHub';
+    // The repo means nothing to most visitors here, so the download simply
+    // goes away rather than turning into a link to the source.
+    dl.remove();
 
     note.hidden = false;
     note.textContent = 'Polaris runs on macOS 13 or later — there is no version for this device. Open this page on your Mac to install it.';
@@ -884,7 +882,7 @@
         }
       } catch (e) { /* dismissed share sheet — nothing to report */ }
     });
-    row.insertBefore(share, dl);
+    row.appendChild(share);
 
     // The install section leads with the same promise, so it says it too.
     const get = document.querySelector('.get .side p');
