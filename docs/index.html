@@ -125,6 +125,8 @@
     background:var(--accent);color:#fff;text-decoration:none;
     padding:.9rem 1.6rem;border-radius:var(--r);
     display:inline-flex;align-items:center;gap:.7rem;width:100%;justify-content:center;
+    /* The share CTA is a <button>, which would otherwise wear the UA border. */
+    border:0;font-family:inherit;cursor:pointer;
     transition:background .25s,transform .25s,color .25s;
   }
   .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
@@ -137,6 +139,13 @@
   }
   .cta-row .btn + .btn{margin-top:.6rem}
   @media(max-width:900px){
+    /* The phone frame is texture, not subject — blurring it keeps the
+       headline and the card the only things in focus. The slight scale hides
+       the soft edge the blur leaves at the crop. */
+    .hero-media img{filter:blur(6px);transform:scale(1.06);object-position:50% 50%}
+    /* A phone has room for one claim, and the headline already makes it. */
+    .hero-copy .kicker,
+    .not-mac{display:none}
     .hero{min-height:0}
     .hero-inner{padding-top:clamp(3rem,10vh,5rem);gap:2.2rem}
     .hero-card{position:static;width:100%;max-width:420px}
@@ -163,7 +172,7 @@
     mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
   }
   .stats-inner{max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
   .stat{background:var(--panel);padding:1.6rem}
   .stat span{display:block;color:var(--dim);font-size:.88rem}
   .stat b{font-weight:600;font-size:1.7rem;letter-spacing:-.02em;line-height:1.2;color:var(--accent)}
@@ -434,6 +443,12 @@
        gaps reads as broken, not intentional. */
     .stats{grid-template-columns:repeat(2,1fr)}
   }
+
+  @media(max-width:600px){
+    /* One per row, like every other panel on a phone. */
+    .stats{grid-template-columns:1fr}
+    .stat p{max-width:none}
+  }
 </style>
 </head>
 <body>
@@ -454,7 +469,12 @@
 
   <section class="hero">
     <div class="hero-media">
-      <img src="assets/hero-polestar.jpg" alt="Close crop of the nose and emblem of a silver Polestar" width="2940" height="1960" fetchpriority="high">
+      <picture>
+        <!-- The landscape crop loses the car entirely on a phone, so narrow
+             screens get a portrait frame instead. -->
+        <source media="(max-width:900px)" srcset="assets/hero-polestar-mobile.jpg" width="1374" height="2060">
+        <img src="assets/hero-polestar.jpg" alt="Close crop of the nose and emblem of a silver Polestar" width="2940" height="1960" fetchpriority="high">
+      </picture>
     </div>
 
     <div class="hero-inner">
@@ -493,8 +513,6 @@
         <p>Once you plug in, Polaris checks every minute so the numbers keep up.</p></div>
       <div class="stat"><span>Trackers and third parties</span><b>0</b>
         <p>Your data travels between your Mac and Polestar — nowhere else.</p></div>
-      <div class="stat"><span>Small native binary</span><b>1</b>
-        <p>One tiny app, built for the Mac. Nothing running behind your back.</p></div>
     </div>
     </div>
   </section>
