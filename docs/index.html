@@ -589,6 +589,71 @@
     .stats{grid-template-columns:1fr}
     .stat p{max-width:none}
   }
+
+  /* phone — the bar is a burger, and the machine is gone */
+  .burger{
+    display:none;width:42px;height:42px;padding:0;border:0;border-radius:999px;
+    background:transparent;color:currentColor;cursor:pointer;
+    align-items:center;justify-content:center;
+  }
+  /* Three rules that fold into a cross. They are absolutely placed so the
+     middle one can fade in place while the outer two rotate through it. */
+  .burger i{
+    position:absolute;display:block;width:19px;height:1.5px;border-radius:2px;
+    background:currentColor;
+    transition:transform .3s cubic-bezier(.2,.6,.2,1),opacity .2s ease;
+  }
+  .burger i:nth-child(1){transform:translateY(-5.5px)}
+  .burger i:nth-child(3){transform:translateY(5.5px)}
+  header.open .burger i:nth-child(1){transform:rotate(45deg)}
+  header.open .burger i:nth-child(2){opacity:0}
+  header.open .burger i:nth-child(3){transform:rotate(-45deg)}
+
+  @media(max-width:760px){
+    .burger{display:inline-flex;position:relative}
+    /* The links leave the bar and become a sheet hanging under it. It is
+       its own surface — paper and ink in both header states — so it never
+       has to be legible against whatever the bar happens to be over. */
+    nav{
+      position:absolute;top:calc(100% + .5rem);left:clamp(1.25rem,4vw,3rem);right:clamp(1.25rem,4vw,3rem);
+      flex-direction:column;align-items:stretch;gap:0;
+      background:rgba(255,255,255,.86);
+      -webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);
+      border:1px solid var(--line);border-radius:1.4rem;
+      padding:.4rem;overflow:hidden;
+      /* Collapsed to nothing rather than display:none so it can animate,
+         and hidden from the tab order while it is shut. */
+      transform:translateY(-8px);opacity:0;visibility:hidden;
+      transition:transform .28s cubic-bezier(.2,.6,.2,1),opacity .22s ease,visibility .28s;
+      box-shadow:0 26px 60px rgba(20,20,20,.18);
+    }
+    header.open nav{transform:none;opacity:1;visibility:visible}
+    header:not(.scrolled) nav a{color:var(--ink)}
+    nav a{font-size:1rem;padding:.85rem 1rem;border-radius:1rem}
+    nav a + a{border-top:1px solid var(--line)}
+    /* Room for the CTA again now that the links are stacked. */
+    .nav-dl{
+      display:flex;justify-content:center;margin-top:.4rem;border-top:0;
+      padding:.85rem 1.2rem;font-size:.95rem;
+    }
+    header:not(.scrolled) .nav-dl{background:var(--accent);border-color:transparent}
+  }
+
+  @media(max-width:760px){
+    /* No lid, no menu bar, no wallpaper: on a phone the crop of a Mac is
+       smaller than the menu it is meant to frame, so the menu stands on
+       the paper by itself. */
+    .mac{position:static;width:100%;height:auto;margin-right:0}
+    .mac-desk,.mac-menubar{display:none}
+    .mac .panel{
+      position:static;width:100%;font-size:.86rem;
+      /* Nothing behind it to blur now, so the glass goes solid — the
+         translucent tint over paper washed the rows out. */
+      background:#1e1e20;
+      -webkit-backdrop-filter:none;backdrop-filter:none;
+      box-shadow:0 24px 60px rgba(20,20,20,.22);
+    }
+  }
 </style>
 </head>
 <body>
@@ -596,7 +661,8 @@
 <header id="siteNav">
   <div class="wrap nav-inner">
     <a class="mark" href="#">Polaris<span>.</span></a>
-    <nav>
+    <button class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="siteMenu"><i></i><i></i><i></i></button>
+    <nav id="siteMenu">
       <a href="#menu">The menu</a>
       <a href="#notifications">Notifications</a>
       <a href="#features">Features</a>
@@ -1469,6 +1535,26 @@ void main(){
   window.addEventListener('scroll', onScroll, {passive: true});
   window.addEventListener('resize', onScroll, {passive: true});
   onScroll();
+
+  // Burger: the sheet is opened by class on the header, so the CSS owns
+  // every state. It shuts on a link, on Escape and on a tap outside — and
+  // on a resize back to the wide bar, where a left-over .open would leave
+  // aria-expanded lying about a menu that is no longer a menu.
+  const burger = document.getElementById('burger');
+  const siteMenu = document.getElementById('siteMenu');
+  const setMenu = open => {
+    siteNav.classList.toggle('open', open);
+    burger.setAttribute('aria-expanded', String(open));
+  };
+  burger.addEventListener('click', () => setMenu(!siteNav.classList.contains('open')));
+  siteMenu.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+  document.addEventListener('click', e => {
+    if (siteNav.classList.contains('open') && !e.target.closest('#siteNav')) setMenu(false);
+  });
+  window.matchMedia('(max-width: 760px)').addEventListener('change', e => {
+    if (!e.matches) setMenu(false);
+  });
 
   // Reveal on scroll
   const io = new IntersectionObserver(es => es.forEach(e => {
