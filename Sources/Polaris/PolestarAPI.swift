@@ -51,13 +51,22 @@ struct CarData {
         statusKey == "CHARGING" || statusKey == "SMART_CHARGING"
     }
 
+    /// Resolved in `driving(comparedTo:)` when a reading is applied, because
+    /// movement can only be seen by comparing two readings.
+    var isDriving = false
+
     /// The charging status stays IDLE while driving (confirmed on a PS4 2026),
-    /// so "in use" has to be inferred: a fresh odometer report from a car that
-    /// isn't charging or plugged in means it's out on the road. Stale by at
-    /// most one refresh cycle after parking.
-    var isDriving: Bool {
-        guard !isCharging, isPluggedIn != true, let odometerReportedAt else { return false }
-        return Date().timeIntervalSince(odometerReportedAt) < 600
+    /// so "in use" has to be inferred. A parked car keeps re-reporting its
+    /// odometer with a fresh timestamp, which is why timestamp freshness alone
+    /// left the car stuck "in use" forever — the number itself has to move.
+    /// With no previous reading to compare (first poll after launch or a car
+    /// switch) we fall back to freshness, and the next poll corrects it.
+    func driving(comparedTo previous: CarData?) -> Bool {
+        guard !isCharging, isPluggedIn != true, let odometerReportedAt,
+              Date().timeIntervalSince(odometerReportedAt) < 600 else { return false }
+        guard let previous, let now = odometerKm, let before = previous.odometerKm
+        else { return true }
+        return now != before
     }
 
     var isPluggedIn: Bool? {

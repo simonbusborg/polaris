@@ -147,6 +147,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func apply(_ data: CarData) {
+        var data = data
+        data.isDriving = data.driving(comparedTo: latest)
         notifier.carDataDidUpdate(old: latest, new: data)
         latest = data
         lastError = nil
