@@ -109,12 +109,13 @@ final class FormattingTests: XCTestCase {
     }
 
     func testIsDriving() {
-        func car(status: String, connection: String?, odometerAge: TimeInterval?) -> CarData {
+        func car(status: String, connection: String?, odometerAge: TimeInterval?,
+                 odometerKm: Int? = nil) -> CarData {
             CarData(batteryPercentage: 50, rangeKm: 200,
                     chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
-                    odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                    odometerKm: odometerKm, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil,
                     odometerReportedAt: odometerAge.map { Date(timeIntervalSinceNow: -$0) },
@@ -124,23 +125,32 @@ final class FormattingTests: XCTestCase {
                                           chargingType: nil)
                     })
         }
-        // A fresh odometer report from an unplugged car is the only sign of use.
+        // With nothing to compare against, a fresh report is the best guess.
         XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
-                          odometerAge: 60).isDriving)
+                          odometerAge: 60).driving(comparedTo: nil))
         // Unknown plug state (no gRPC) still counts — it isn't a "yes".
         XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: nil,
-                          odometerAge: 60).isDriving)
+                          odometerAge: 60).driving(comparedTo: nil))
         // Parked long enough for the report to go stale.
         XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
-                           odometerAge: 3600).isDriving)
+                           odometerAge: 3600).driving(comparedTo: nil))
         // Sitting on the charger, however recent the odometer.
         XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "CONNECTED",
-                           odometerAge: 60).isDriving)
+                           odometerAge: 60).driving(comparedTo: nil))
         XCTAssertFalse(car(status: "CHARGING_STATUS_CHARGING", connection: "CONNECTED",
-                           odometerAge: 60).isDriving)
+                           odometerAge: 60).driving(comparedTo: nil))
         // No odometer timestamp at all.
         XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
-                           odometerAge: nil).isDriving)
+                           odometerAge: nil).driving(comparedTo: nil))
+
+        // The regression: a parked car keeps re-reporting a fresh timestamp,
+        // so an unchanged odometer between two polls means it isn't moving.
+        let parked = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                         odometerAge: 60, odometerKm: 12_000)
+        XCTAssertFalse(parked.driving(comparedTo: parked))
+        let moved = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                        odometerAge: 60, odometerKm: 12_007)
+        XCTAssertTrue(moved.driving(comparedTo: parked))
     }
 
     func testMenuBarIcon() {
