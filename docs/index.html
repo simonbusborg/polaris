@@ -42,24 +42,64 @@
      the swap lands exactly as the photo leaves. */
   header{
     position:sticky;top:0;z-index:100;
-    background:transparent;color:var(--paper);
-    border-bottom:1px solid transparent;
-    transition:background .3s ease,color .3s ease,border-color .3s ease;
+    /* The gutter moves to the header: .wrap's own padding is what the pill
+       overrides to get its inner spacing, so the inset has to come from
+       outside it. */
+    padding:.75rem clamp(1.25rem,4vw,3rem);color:var(--paper);
+    transition:color .3s ease;
+  }
+  /* The bar is a floating panel, same shape as the footer: a pill inside
+     the gutters rather than a band across the window. It is translucent
+     over a blur in both states — a dark tint while it sits on the
+     photograph, a light one once it is over the paper — so what is behind
+     it stays visible instead of being covered. */
+  .nav-inner{
+    display:flex;justify-content:space-between;align-items:center;height:60px;
+    border-radius:999px;padding:0 .7rem 0 1.5rem;
+    background:rgba(12,12,12,.34);border:1px solid rgba(255,255,255,.16);
+    -webkit-backdrop-filter:blur(20px) saturate(1.5);
+    backdrop-filter:blur(20px) saturate(1.5);
+    transition:background .3s ease,border-color .3s ease;
+  }
+  header.scrolled .nav-inner{
+    background:rgba(255,255,255,.72);border-color:var(--line);
   }
   header:not(.scrolled) .mark,
   header:not(.scrolled) nav a{color:var(--paper)}
   /* The emblem dot keeps the accent, but on the photo it needs to be the
      brighter end of it to survive the silver bodywork behind. */
   header:not(.scrolled) .mark span{color:var(--accent)}
-  header.scrolled{background:var(--paper);color:var(--ink);border-bottom-color:var(--line)}
-  .nav-inner{display:flex;justify-content:space-between;align-items:center;height:72px}
+  header.scrolled{color:var(--ink)}
   .mark{font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
   .mark span{color:var(--accent)}
   nav{display:flex;align-items:center;gap:2.2rem}
   nav a{color:var(--ink);text-decoration:none;font-size:.95rem;transition:opacity .25s}
   nav a:hover{opacity:.6}
+  /* The download follows you past the hero: once the photograph — and the
+     card it carried — has scrolled away, the bar takes the CTA over. It
+     keeps its slot in the layout the whole time so the nav links do not
+     shuffle sideways the moment it appears. */
+  .nav-dl{
+    background:var(--accent);color:#fff!important;text-decoration:none;
+    /* Rounded to match the bar it sits in — a square button inside a pill
+       leaves a crescent of track around its corners. */
+    font-size:.88rem;font-weight:500;padding:.6rem 1.2rem;border-radius:999px;
+    display:inline-flex;align-items:center;gap:.5rem;
+    border:1px solid transparent;
+    transition:background .3s ease,border-color .3s ease;
+  }
+  .nav-dl svg{width:13px;height:13px}
+  /* Over the photograph the hero card already carries the loud CTA, so the
+     one in the bar is only a quiet echo of it: glass and a hairline, no
+     accent. It fills in once the card has scrolled away and the bar is the
+     only place left to download from. */
+  header:not(.scrolled) .nav-dl{
+    background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.30);
+  }
+  header:not(.scrolled) .nav-dl:hover{background:rgba(255,255,255,.22)}
+  header.scrolled .nav-dl:hover{background:var(--ink)}
   /* Anchor targets land clear of the sticky bar. */
-  section[id]{scroll-margin-top:88px}
+  section[id]{scroll-margin-top:96px}
 
   /* hero — full-bleed photograph, headline sitting on it bottom-left and a
      glass card top-right, the way a product page leads with the object
@@ -68,11 +108,11 @@
   .hero{
     position:relative;isolation:isolate;
     margin-inline:calc(50% - 50vw);width:100vw;
-    min-height:min(94vh,900px);display:flex;
+    min-height:min(94vh,1024px);display:flex;
     background:#0d0d0d;color:var(--paper);
     /* Pulled up under the transparent sticky bar so the photo runs to the
        top of the window rather than starting below a 72px gap. */
-    margin-top:-72px;padding-top:72px;
+    margin-top:-84px;padding-top:84px;
   }
   .hero-media{position:absolute;inset:0;z-index:-2;overflow:hidden}
   .hero-media img{
@@ -110,7 +150,7 @@
   /* The card floats top-right on desktop and falls back into the flow on
      narrow screens, where there is no room beside the headline. */
   .hero-card{
-    position:absolute;top:calc(72px + 2rem);right:clamp(1.25rem,4vw,3rem);
+    position:absolute;top:calc(84px + 2rem);right:clamp(1.25rem,4vw,3rem);
     width:min(330px,32vw);padding:1.5rem;
     background:rgba(15,15,15,.52);border:1px solid rgba(255,255,255,.18);
     border-radius:var(--r);backdrop-filter:blur(18px) saturate(1.2);
@@ -178,8 +218,23 @@
   .stat b{font-weight:600;font-size:1.7rem;letter-spacing:-.02em;line-height:1.2;color:var(--accent)}
   .stat p{margin-top:.55rem;color:var(--dim);font-size:.82rem;line-height:1.45;max-width:26ch}
 
-  /* real menu section */
-  .real{padding:clamp(5rem,12vh,8rem) 0;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
+  /* real menu section — a pinned stage, like the notifications one. The
+     stage height is the scroll budget the four menu states are dealt out
+     over, so you scroll through them instead of clicking a tab. */
+  .real-stage{height:400vh;position:relative}
+  .real-sticky{
+    position:sticky;top:0;min-height:100vh;
+    display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;
+  }
+  /* The paper warms up towards the machine rather than meeting it at an
+     edge. It has to be a full-bleed layer of its own: painted on the
+     sticky box, the glow was clipped at the content edge and left a seam
+     running the height of the window beside the lid. */
+  .real-sticky::before{
+    content:'';position:absolute;z-index:-1;pointer-events:none;
+    top:0;bottom:0;left:50%;transform:translateX(-50%);width:100vw;
+    background:radial-gradient(60% 70% at 72% 50%, rgba(231,100,39,.09), transparent 70%);
+  }
   .real h2,.features h2,.get h2{
     font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
     line-height:1.1;letter-spacing:-.02em;max-width:18ch;margin-top:.8rem;
@@ -187,18 +242,66 @@
   .real .side p{color:var(--dim);margin-top:1.2rem;max-width:42ch}
   .real .side p b{color:var(--ink);font-weight:500}
 
-  .mock{width:min(420px,100%);margin:0 auto}
-  /* The menu is always shown as the real thing: a dark, translucent
-     macOS menu floating over a wallpaper. */
-  .wallpaper{
-    border-radius:18px;padding:clamp(1rem,4vw,1.8rem);
-    /* Muted charcoal wallpaper with a faint warm glow (accent) up top and
-       a cooler falloff below — enough tint for the translucent menu to
-       read as real, without shouting over it. */
+  /* The crop is built in two layers on purpose: the machine — lid, bezel,
+     wallpaper — is what the radial mask eats into, while the menu bar and
+     the menu sit above it unmasked. The app is the subject, so it never
+     fades; only the desktop it is standing on does.
+     It also bleeds past the wrap's right gutter so the crop reads as a
+     machine standing beyond the page, not a picture of one. */
+  .mac{
+    position:relative;align-self:center;justify-self:end;
+    width:min(720px,calc(50vw + 3rem));margin-right:calc(-1 * clamp(1.25rem,4vw,3rem));
+    height:min(70vh,620px);
+  }
+  .mac-desk{
+    position:absolute;inset:0;
+    padding:9px 9px 0;border-radius:16px 16px 0 0;
+    background:linear-gradient(180deg,#3a3a3d,#232326);
+    box-shadow:0 40px 90px rgba(20,20,20,.28),0 2px 0 rgba(255,255,255,.16) inset;
+    /* Not a whole laptop but a pool of light around the menu: one radial
+       mask centred on the menu bar extra, so the machine falls off softly
+       in every direction instead of ending on a straight edge. */
+    -webkit-mask-image:radial-gradient(88% 80% at 88% 18%,#000 18%,rgba(0,0,0,.55) 48%,transparent 78%);
+    mask-image:radial-gradient(88% 80% at 88% 18%,#000 18%,rgba(0,0,0,.55) 48%,transparent 78%);
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  }
+  .mac-screen{
+    height:100%;border-radius:9px 9px 0 0;
+    /* Muted charcoal wallpaper with a faint warm glow up top and a cooler
+       falloff below — enough tint for the translucent menu to read as real. */
     background:
-      radial-gradient(130% 90% at 15% 0%, rgba(231,100,39,.30), transparent 58%),
-      radial-gradient(120% 80% at 90% 105%, rgba(110,118,168,.22), transparent 55%),
-      linear-gradient(180deg, #232019 0%, #151517 100%);
+      radial-gradient(90% 70% at 78% 0%, rgba(231,100,39,.34), transparent 60%),
+      radial-gradient(120% 80% at 10% 105%, rgba(110,118,168,.22), transparent 58%),
+      linear-gradient(180deg,#232019 0%,#151517 100%);
+  }
+  /* macOS menu bar: translucent strip, extras right-aligned, the Polaris
+     one wearing the highlight it gets while its menu is open. */
+  .mac-menubar{
+    position:absolute;top:9px;left:9px;right:9px;z-index:1;
+    display:flex;align-items:center;justify-content:flex-end;gap:.85rem;
+    height:26px;padding:0 .7rem;border-radius:9px 9px 0 0;
+    background:rgba(255,255,255,.10);
+    -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+    color:rgba(255,255,255,.9);font-size:.72rem;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+  }
+  /* Each extra keeps its own aspect: the battery is wide, the rest square.
+     They are drawn white and flat, the way the real bar draws them. */
+  .mac-menubar svg{display:block;color:#fff}
+  .mb-batt{width:27px;height:12.6px}
+  .mb-wifi{width:17px;height:12.8px}
+  .mb-moon,.mb-cc{width:15px;height:15px}
+  .mb-item{display:inline-flex;align-items:center;gap:.3rem;padding:.12rem .35rem;border-radius:4px}
+  .mb-item img{width:14px;height:14px;border-radius:3px}
+  .mb-item b{font-weight:500;font-variant-numeric:tabular-nums}
+  .mb-on{background:rgba(255,255,255,.22)}
+  /* Date and time are one item with a wide gap between them, not two. */
+  .mb-clock{display:inline-flex;gap:.55rem;color:#fff;font-variant-numeric:tabular-nums}
+  .mock{width:min(420px,100%);margin:0 auto}
+  /* The menu hangs from its menu bar extra, near the right edge. */
+  .mac .panel{
+    position:absolute;top:41px;right:19px;z-index:2;width:min(300px,44%);
+    font-size:.72rem;
   }
   .panel{
     background:rgba(30,30,32,.72);
@@ -235,17 +338,26 @@
 
   /* State switcher above the menu. Each tab is a snapshot of the same
      menu the app draws in that state — same rows, same order. */
+  /* No longer a switcher you operate — the scroll does that. It stays as
+     the legend for where you are, and clicking still works for anyone who
+     would rather not scroll (and for reduced motion, where it is all there
+     is). */
   .states{
-    display:flex;gap:2px;margin:0 auto 1rem;width:fit-content;
+    position:relative;display:flex;gap:2px;margin:2rem 0 0;width:fit-content;
     background:var(--panel);border-radius:999px;padding:3px;
   }
   .states button{
+    position:relative;z-index:1;
     appearance:none;border:0;background:transparent;color:var(--dim);
     font:inherit;font-size:.82rem;padding:.42rem 1rem;border-radius:999px;
-    cursor:pointer;transition:background .2s,color .2s;
+    cursor:pointer;transition:color .2s;white-space:nowrap;
   }
   .states button:hover{color:var(--ink)}
-  .states button[aria-selected="true"]{background:var(--accent);color:#fff}
+  .states button[aria-selected="true"]{color:#fff}
+  /* The rows are rebuilt on each state, so the swap gets a beat of motion
+     rather than snapping from one set of numbers to another. */
+  @keyframes swapIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .panel.swap #panelLive,.panel.swap #panelStats{animation:swapIn .34s cubic-bezier(.2,.6,.2,1)}
   .panel .row .warn{color:#FF9F0A}
   .panel .warnrow{padding:.22rem .6rem;color:#FF9F0A}
   /* The status dot is the accent only while charging; other states get
@@ -372,16 +484,32 @@
      aligned above the steps — each method gets its own numbered list, since
      what you do second depends on what you chose first. */
   .ways{
-    display:flex;gap:2px;margin:0 0 1.6rem;width:fit-content;
+    position:relative;display:flex;gap:2px;margin:0 0 1.6rem;width:fit-content;
     background:var(--panel);border-radius:999px;padding:3px;
   }
   .ways button{
+    position:relative;z-index:1;
     appearance:none;border:0;background:transparent;color:var(--dim);
     font:inherit;font-size:.82rem;padding:.42rem 1rem;border-radius:999px;
-    cursor:pointer;transition:background .2s,color .2s;
+    cursor:pointer;transition:color .2s;white-space:nowrap;
   }
   .ways button:hover{color:var(--ink)}
-  .ways button[aria-selected="true"]{background:var(--accent);color:#fff}
+  .ways button[aria-selected="true"]{color:#fff}
+
+  /* One pill that slides between the options instead of the selected
+     option lighting up in place: the selection is a single object moving
+     along the track, so the eye follows it from one label to the next.
+     It is measured in JS because the labels are different widths — there
+     is no CSS length that would land on all four. */
+  .pill{
+    position:absolute;top:3px;bottom:3px;left:0;width:0;
+    background:var(--accent);border-radius:999px;pointer-events:none;
+    transition:transform .42s cubic-bezier(.32,.72,0,1),width .42s cubic-bezier(.32,.72,0,1);
+  }
+  /* The first placement is where the pill already is, not a slide in from
+     the left edge. */
+  .pill.placed{opacity:1}
+  .pill:not(.placed){transition:none}
   .way[hidden]{display:none}
   .way .steps{margin-top:0}
   .way .steps code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
@@ -428,13 +556,25 @@
     .notify-sticky{position:static;height:auto;padding:clamp(4rem,10vh,7rem) 0}
     .notify-cards{position:static;height:auto;display:grid;gap:2.4rem}
     .deal{position:static;opacity:1!important;transform:none!important}
+    .real-stage{height:auto}
+    .real-sticky{position:static;min-height:0;padding:clamp(4rem,10vh,7rem) 0}
+    .panel.swap #panelLive,.panel.swap #panelStats{animation:none}
+    .pill{transition:none}
     .sign{opacity:1!important;transform:none!important}
     .dot.live::before{animation:none}
   }
   @media (max-width:860px){
     nav{gap:1.1rem}
     nav a{font-size:.84rem}
-    .real{grid-template-columns:1fr}
+    /* No room for a fifth item beside four links on a narrow bar. */
+    .nav-dl{display:none}
+    /* No room to pin a laptop beside the copy: the stage collapses and the
+       pills go back to being the way you switch state. */
+    .real-stage{height:auto}
+    .real-sticky{position:static;min-height:0;grid-template-columns:1fr;padding:clamp(4rem,10vh,7rem) 0}
+    .mac{width:100%;justify-self:stretch;margin-right:0;height:min(64vh,520px)}
+    .mac .panel{width:min(300px,58%)}
+    .states{margin-inline:auto}
     .notify-stage{height:340vh}
     .notify-cards{width:100%}
     .get{grid-template-columns:1fr}
@@ -461,6 +601,10 @@
       <a href="#notifications">Notifications</a>
       <a href="#features">Features</a>
       <a href="#get">Get started</a>
+      <a class="nav-dl" id="navDownload" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
+        Download
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+      </a>
     </nav>
   </div>
 </header>
@@ -518,36 +662,81 @@
   </section>
 
   <section class="real" id="menu">
-    <div class="side rv">
-      <div class="kicker">The real thing</div>
-      <h2>No concept shots. This is the menu.</h2>
-      <p>Every row below is rendered by the app from the live Polestar API —
-      battery, range, charging state, odometer and service data, topped by a
-      studio image of <b>your exact car</b>. Click the plate or VIN to copy them.</p>
-      <p>While charging, Polaris polls every minute and can notify you the
-      moment the battery is full.</p>
-    </div>
-    <div class="mock rv">
-      <div class="states" role="tablist" id="states"></div>
-      <div class="wallpaper">
-      <div class="panel">
-        <div class="greet">Hi, Simon</div>
-        <img class="car" id="panelCar" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
-        <div class="model">Polestar 4 · 2025</div>
-        <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
-        <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
-        <hr>
-        <div id="panelLive"></div>
-        <hr>
-        <div id="panelStats"></div>
-        <hr>
-        <div class="row"><span class="k">Updated</span><span id="panelUpdated">14:32</span></div>
-        <hr>
-        <div class="action"><span>Refresh Now</span><span class="kbd">⌘R</span></div>
-        <div class="action"><span>Settings…</span><span class="kbd">⌘,</span></div>
-        <hr>
-        <div class="action"><span>Quit Polaris</span><span class="kbd">⌘Q</span></div>
-      </div>
+    <div class="real-stage" id="realStage">
+      <div class="real-sticky">
+        <div class="side rv">
+          <div class="kicker">The real thing</div>
+          <h2>No concept shots. This is the menu.</h2>
+          <p>Every row is rendered by the app from the live Polestar API —
+          battery, range, charging state, odometer and service data, topped by a
+          studio image of <b>your exact car</b>. Click the plate or VIN to copy them.</p>
+          <p>Keep scrolling and the menu moves through the states it actually
+          shows: charging, idle, in use, and the one you want to know about.</p>
+          <div class="states" role="tablist" id="states"></div>
+        </div>
+        <!-- A crop of the top-right of a Mac display: the menu bar, the
+             Polaris extra lit up, and its menu hanging under it. The lid is
+             cut off at the bottom rather than drawn whole — the subject is
+             the menu, not the hardware. -->
+        <div class="mac">
+          <div class="mac-desk"><div class="mac-screen"></div></div>
+          <div class="mac-menubar">
+              <!-- The extras the real bar carries, in the order macOS puts
+                   them: the app's own item, then battery, Wi-Fi, Focus and
+                   Control Centre, with the clock last. -->
+              <span class="mb-item mb-on"><img src="assets/app-icon.png" alt="" width="1024" height="1024"><b id="mbPct">82%</b></span>
+              <svg class="mb-batt" viewBox="0 0 30 14" aria-hidden="true">
+                <rect x=".6" y=".6" width="24" height="12.8" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".55"/>
+                <path d="M26.4 4.6c1.3.5 1.3 4.3 0 4.8V4.6z" fill="currentColor" opacity=".55"/>
+                <!-- The bolt is knocked out of the fill rather than painted
+                     over it: on the real bar the wallpaper shows through. -->
+                <mask id="mbBolt">
+                  <rect x="0" y="0" width="30" height="14" fill="#fff"/>
+                  <path d="M15.6 1.5 9.5 8.2h3.5l-1.3 5 6.4-7h-3.8z" fill="#000" stroke="#000" stroke-width="1.5" stroke-linejoin="round"/>
+                </mask>
+                <rect x="2.2" y="2.2" width="20.8" height="9.6" rx="2.6" fill="currentColor" mask="url(#mbBolt)"/>
+              </svg>
+              <svg class="mb-wifi" viewBox="0 0 24 18" aria-hidden="true">
+                <circle cx="12" cy="13.6" r="1.75" fill="currentColor"/>
+                <path d="M7.7 10.4a6.4 6.4 0 0 1 8.6 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M4.2 6.6a11.5 11.5 0 0 1 15.6 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+              </svg>
+              <svg class="mb-moon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M16.4 12.6A7.1 7.1 0 0 1 8.2 3.4a7.3 7.3 0 1 0 8.2 9.2z" fill="currentColor"/>
+              </svg>
+              <svg class="mb-cc" viewBox="0 0 20 20" aria-hidden="true">
+                <!-- Same knockout for the two knobs. -->
+                <mask id="mbKnobs">
+                  <rect x="0" y="0" width="20" height="20" fill="#fff"/>
+                  <circle cx="12.6" cy="5.7" r="2.1" fill="#000"/>
+                  <circle cx="7.4" cy="14.3" r="2.1" fill="#000"/>
+                </mask>
+                <g mask="url(#mbKnobs)">
+                  <rect x="4" y="2.4" width="12" height="6.6" rx="3.3" fill="currentColor"/>
+                  <rect x="4" y="11" width="12" height="6.6" rx="3.3" fill="currentColor"/>
+                </g>
+              </svg>
+              <span class="mb-clock"><span id="mbDate">Fri 21 Aug</span><span id="mbTime">10.38</span></span>
+          </div>
+          <div class="panel" id="panel">
+              <div class="greet">Hi, Simon</div>
+              <img class="car" id="panelCar" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="model">Polestar 4 · 2025</div>
+              <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
+              <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
+              <hr>
+              <div id="panelLive"></div>
+              <hr>
+              <div id="panelStats"></div>
+              <hr>
+              <div class="row"><span class="k">Updated</span><span id="panelUpdated">14:32</span></div>
+              <hr>
+              <div class="action"><span>Refresh Now</span><span class="kbd">⌘R</span></div>
+              <div class="action"><span>Settings…</span><span class="kbd">⌘,</span></div>
+              <hr>
+            <div class="action"><span>Quit Polaris</span><span class="kbd">⌘Q</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -826,11 +1015,51 @@
     },
   ];
 
+  // The sliding selection pill, shared by both switchers on the page. The
+  // track owns one pill; selecting an option measures that button and moves
+  // the pill onto it.
+  function pillFor(track) {
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    track.prepend(pill);
+    const move = () => {
+      const on = track.querySelector('[aria-selected="true"]');
+      if (!on) return;
+      pill.style.width = on.offsetWidth + 'px';
+      pill.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+      // Placed on the next frame, so the first move is a jump rather than a
+      // slide in from the track's left edge.
+      requestAnimationFrame(() => pill.classList.add('placed'));
+    };
+    window.addEventListener('resize', move, {passive: true});
+    if (document.fonts) document.fonts.ready.then(move);
+    return move;
+  }
+
   const rowHTML = ([k, v]) => '<div class="row"><span class="k">' + k + '</span><span>' + v + '</span></div>';
   const live = document.getElementById('panelLive');
   const statsEl = document.getElementById('panelStats');
   const updatedEl = document.getElementById('panelUpdated');
   const tabs = document.getElementById('states');
+  const panel = document.getElementById('panel');
+  let moveStatePill = null;
+  const mbPct = document.getElementById('mbPct');
+  const mbDate = document.getElementById('mbDate');
+  const mbTime = document.getElementById('mbTime');
+
+  // The bar shows the visitor's own clock — it is their menu bar the crop
+  // is standing in, so a frozen fake time is the one thing that would give
+  // the mock away. Locale formatting, then macOS's dot between the hours
+  // and the minutes.
+  function tickClock() {
+    const now = new Date();
+    mbDate.textContent = now.toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'})
+      .replace(/,/g, '');
+    mbTime.textContent = now.toLocaleTimeString(undefined, {hour: '2-digit', minute: '2-digit'})
+      .replace(':', '.');
+  }
+  tickClock();
+  setInterval(tickClock, 20000);
 
   function renderState(state) {
     live.innerHTML =
@@ -840,7 +1069,15 @@
     statsEl.innerHTML = state.stats.map(rowHTML).join('') +
       (state.warnings || []).map(w => '<div class="warnrow">⚠︎ ' + w + '</div>').join('');
     updatedEl.textContent = state.updated;
-    [...tabs.children].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === state.id)));
+    // The menu bar extra reads the same battery as the menu it opened.
+    mbPct.textContent = state.battery + '%';
+    [...tabs.querySelectorAll('button')].forEach(b => b.setAttribute('aria-selected', String(b.dataset.id === state.id)));
+    if (moveStatePill) moveStatePill();
+    // Restart the swap animation — re-adding the class on the same frame
+    // would not retrigger it.
+    panel.classList.remove('swap');
+    void panel.offsetWidth;
+    panel.classList.add('swap');
   }
 
   states.forEach(state => {
@@ -852,17 +1089,53 @@
     b.addEventListener('click', () => renderState(state));
     tabs.appendChild(b);
   });
+  moveStatePill = pillFor(tabs);
   renderState(states[0]);
+
+  // Scrolling the pinned stage is what moves through the states: the
+  // budget is split evenly, and each slice snaps to its state rather than
+  // interpolating — the menu is a snapshot, not a dial.
+  const realStage = document.getElementById('realStage');
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const stacked = window.matchMedia('(max-width: 860px)');
+  let shown = 0;
+
+  function driveStates() {
+    if (calm.matches || stacked.matches) return;
+    const rect = realStage.getBoundingClientRect();
+    const travel = rect.height - window.innerHeight;
+    if (travel <= 0) return;
+    const p = Math.min(1, Math.max(0, -rect.top / travel));
+    // The last slice would only be reached at exactly p === 1, so clamp
+    // the index rather than letting the final state flash by.
+    const i = Math.min(states.length - 1, Math.floor(p * states.length));
+    if (i === shown) return;
+    shown = i;
+    renderState(states[i]);
+  }
+
+  let stateQueued = false;
+  const onStateScroll = () => {
+    if (stateQueued) return;
+    stateQueued = true;
+    requestAnimationFrame(() => { stateQueued = false; driveStates(); });
+  };
+  window.addEventListener('scroll', onStateScroll, {passive: true});
+  window.addEventListener('resize', onStateScroll, {passive: true});
+  driveStates();
 
   // Install methods. The panes are in the markup rather than built here, so
   // the commands are still readable — and copyable — with JS off.
   const ways = [...document.querySelectorAll('.ways button')];
+  const moveWayPill = pillFor(document.querySelector('.ways'));
+  moveWayPill();
   ways.forEach(tab => tab.addEventListener('click', () => {
     ways.forEach(other => {
       const selected = other === tab;
       other.setAttribute('aria-selected', String(selected));
       document.getElementById(other.getAttribute('aria-controls')).hidden = !selected;
     });
+    moveWayPill();
   }));
 
   // Polaris is a Mac app, so on anything else the download button is a dead
@@ -879,6 +1152,8 @@
     // The repo means nothing to most visitors here, so the download simply
     // goes away rather than turning into a link to the source.
     dl.remove();
+    // Same dead end in the bar as in the hero card.
+    document.getElementById('navDownload').remove();
 
     note.hidden = false;
     note.textContent = 'Polaris runs on macOS 13 or later — there is no version for this device. Open this page on your Mac to install it.';
@@ -937,7 +1212,10 @@
       const u = (p - i * slice) / slice;
       const ease = x => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
       const RAMP = 0.26;                       // enter and leave; the rest holds
-      const inP = ease(u / RAMP);
+      // The first one has no entrance: it is already on screen when the
+      // stage pins, so arriving at the section shows a banner rather than
+      // an empty frame under the heading.
+      const inP = i === 0 ? 1 : ease(u / RAMP);
       // The last one never leaves: it holds while the section scrolls away,
       // so the stage doesn't end on an empty frame.
       const outP = i === deals.length - 1 ? 1 : ease((1 - u) / RAMP);
