@@ -6,6 +6,17 @@
 <title>Polaris — Your Polestar, in the menu bar</title>
 <meta name="description" content="Polaris is a tiny native macOS menu bar app for monitoring your Polestar: battery, range, and charging status. Open source, MIT licensed.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230A0A0A'/%3E%3Cpath d='M32 12c1 15 4 17 15 20-11 3-14 5-15 20-1-15-4-17-15-20 11-3 14-5 15-20z' fill='%23F5F2EC'/%3E%3Ccircle cx='45' cy='46' r='4' fill='%23FF4D00'/%3E%3C/svg%3E">
+<script>
+  // Inline and blocking on purpose: a stored theme has to be on <html>
+  // before the first paint, otherwise a dark visitor gets a white flash.
+  try {
+    var t = localStorage.getItem('polaris-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {
+    // Safari in private mode throws on localStorage; the system preference
+    // still applies, so there is nothing to recover from.
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
@@ -17,8 +28,43 @@
     --line:rgba(20,20,20,.14);
     --panel:#F6F5F3;
     --accent:#FF4D00;
+    /* The bar over the scrolled page is frosted paper, not a flat fill —
+       tokenised because it inverts with the theme while the glass over the
+       photograph does not. */
+    --glass:rgba(255,255,255,.72);
+    /* Fixed in both themes. The hero photograph and the Mac mockup are dark
+       whichever way the page is set, so anything sitting on them keeps a
+       white foreground rather than following --paper, which flips. */
+    --on-photo:#FFFFFF;
+    --on-photo-ink:#141414;
     --r:2px;
     --sans:'Figtree',system-ui,sans-serif;
+  }
+  /* Dark is the same six surface tokens inverted. The accent lifts a little
+     — #FF4D00 is mixed for white paper and reads muddy as small text on a
+     dark ground — but it stays the same orange, because it is the one colour
+     tying the page to the app icon. */
+  html[data-theme="dark"]{
+    --paper:#121212;
+    --ink:#F2F0ED;
+    --dim:rgba(242,240,237,.56);
+    --line:rgba(242,240,237,.14);
+    --panel:#1C1C1E;
+    --accent:#FF5F22;
+    --glass:rgba(26,26,28,.72);
+  }
+  /* Follow the system until the visitor says otherwise: an explicit
+     data-theme="light" opts back out of this. */
+  @media (prefers-color-scheme:dark){
+    html:not([data-theme="light"]){
+      --paper:#121212;
+      --ink:#F2F0ED;
+      --dim:rgba(242,240,237,.56);
+      --line:rgba(242,240,237,.14);
+      --panel:#1C1C1E;
+      --accent:#FF5F22;
+      --glass:rgba(26,26,28,.72);
+    }
   }
   *{margin:0;padding:0;box-sizing:border-box}
   /* clip, not hidden: overflow-x:hidden makes body a scroll container,
@@ -45,7 +91,7 @@
     /* The gutter moves to the header: .wrap's own padding is what the pill
        overrides to get its inner spacing, so the inset has to come from
        outside it. */
-    padding:.75rem clamp(1.25rem,4vw,3rem);color:var(--paper);
+    padding:.75rem clamp(1.25rem,4vw,3rem);color:var(--on-photo);
     transition:color .3s ease;
   }
   /* The bar is a floating panel, same shape as the footer: a pill inside
@@ -62,10 +108,10 @@
     transition:background .3s ease,border-color .3s ease;
   }
   header.scrolled .nav-inner{
-    background:rgba(255,255,255,.72);border-color:var(--line);
+    background:var(--glass);border-color:var(--line);
   }
   header:not(.scrolled) .mark,
-  header:not(.scrolled) nav a{color:var(--paper)}
+  header:not(.scrolled) nav a{color:var(--on-photo)}
   /* The emblem dot keeps the accent, but on the photo it needs to be the
      brighter end of it to survive the silver bodywork behind. */
   header:not(.scrolled) .mark span{color:var(--accent)}
@@ -89,6 +135,31 @@
     transition:background .3s ease,border-color .3s ease;
   }
   .nav-dl svg{width:13px;height:13px}
+  /* Sits between the links and the CTA, sized to the pill's height so it
+     reads as part of the bar rather than a badge stuck onto it. */
+  .theme-dl{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:999px;flex:0 0 auto;
+    background:transparent;border:1px solid var(--line);color:inherit;
+    cursor:pointer;padding:0;
+    transition:background .25s ease,border-color .3s ease,color .3s ease;
+  }
+  .theme-dl svg{width:16px;height:16px;display:block}
+  .theme-dl:hover{background:var(--panel)}
+  /* Over the photograph the bar is glass on a dark image, so the hairline
+     and hover follow the white foreground instead of the theme. */
+  header:not(.scrolled) .theme-dl{border-color:rgba(255,255,255,.30)}
+  header:not(.scrolled) .theme-dl:hover{background:rgba(255,255,255,.16)}
+  /* One icon is shown at a time: the sun offers the way out of dark, the
+     moon the way in. Swapped by the theme rather than by the button, so a
+     system-set dark page shows the right one before anything is clicked. */
+  .theme-dl .sun{display:none}
+  html[data-theme="dark"] .theme-dl .sun{display:block}
+  html[data-theme="dark"] .theme-dl .moon{display:none}
+  @media (prefers-color-scheme:dark){
+    html:not([data-theme="light"]) .theme-dl .sun{display:block}
+    html:not([data-theme="light"]) .theme-dl .moon{display:none}
+  }
   /* Over the photograph the hero card already carries the loud CTA, so the
      one in the bar is only a quiet echo of it: glass and a hairline, no
      accent. It fills in once the card has scrolled away and the bar is the
@@ -97,7 +168,7 @@
     background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.30);
   }
   header:not(.scrolled) .nav-dl:hover{background:rgba(255,255,255,.22)}
-  header.scrolled .nav-dl:hover{background:var(--ink)}
+  header.scrolled .nav-dl:hover{background:var(--ink);color:var(--paper)!important}
   /* Anchor targets land clear of the sticky bar. */
   section[id]{scroll-margin-top:96px}
 
@@ -109,7 +180,7 @@
     position:relative;isolation:isolate;
     margin-inline:calc(50% - 50vw);width:100vw;
     min-height:min(94vh,1024px);display:flex;
-    background:#0d0d0d;color:var(--paper);
+    background:#0d0d0d;color:var(--on-photo);
     /* Pulled up under the transparent sticky bar so the photo runs to the
        top of the window rather than starting below a 72px gap. */
     margin-top:-84px;padding-top:84px;
@@ -169,7 +240,7 @@
     border:0;font-family:inherit;cursor:pointer;
     transition:background .25s,transform .25s,color .25s;
   }
-  .btn:hover{background:var(--paper);color:var(--ink);transform:translateY(-2px)}
+  .btn:hover{background:var(--on-photo);color:var(--on-photo-ink);transform:translateY(-2px)}
   .btn svg{width:14px;height:14px}
   /* Shown only when the visitor is not on a Mac: the download is pointless
      there, so the card says so before the button does anything. */
@@ -667,6 +738,10 @@
       <a href="#notifications">Notifications</a>
       <a href="#features">Features</a>
       <a href="#get">Get started</a>
+      <button class="theme-dl" id="themeToggle" type="button" aria-label="Switch between light and dark">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M4.2 12H2M22 12h-2.2M6.05 6.05L4.5 4.5M19.5 19.5l-1.55-1.55M17.95 6.05L19.5 4.5M4.5 19.5l1.55-1.55"/></svg>
+      </button>
       <a class="nav-dl" id="navDownload" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
         Download
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
@@ -1535,6 +1610,20 @@ void main(){
   window.addEventListener('scroll', onScroll, {passive: true});
   window.addEventListener('resize', onScroll, {passive: true});
   onScroll();
+
+  // Theme: the button flips the page and remembers the choice. Until it is
+  // pressed the page has no data-theme at all, which is what lets the
+  // prefers-color-scheme rule stay in charge — so the first press has to
+  // resolve what the visitor is actually looking at, not what is stored.
+  const themeToggle = document.getElementById('themeToggle');
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+  themeToggle.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme
+      || (systemDark.matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('polaris-theme', next); } catch (e) {}
+  });
 
   // Burger: the sheet is opened by class on the header, so the CSS owns
   // every state. It shuts on a link, on Escape and on a tap outside — and
