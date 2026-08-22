@@ -40,6 +40,11 @@
        the photograph as often as over the page, so it carries a fixed
        backdrop of its own rather than borrowing --paper. */
     --sheet:rgba(255,255,255,.86);
+    /* Cast by surfaces that float above the page. Tuned to white paper, so
+       on a dark ground they need real black and far more of it — a 18% ink
+       shadow over #121212 is a shadow nobody can see. */
+    --shadow:rgba(20,20,20,.18);
+    --shadow-strong:rgba(20,20,20,.22);
     /* Fixed in both themes. The hero photograph and the Mac mockup are dark
        whichever way the page is set, so anything sitting on them keeps a
        white foreground rather than following --paper, which flips. */
@@ -62,6 +67,8 @@
     --glass:rgba(26,26,28,.72);
     --wordmark:rgba(242,240,237,.085);
     --sheet:rgba(22,22,24,.92);
+    --shadow:rgba(0,0,0,.62);
+    --shadow-strong:rgba(0,0,0,.7);
   }
   /* Follow the system until the visitor says otherwise: an explicit
      data-theme="light" opts back out of this. */
@@ -76,6 +83,8 @@
       --glass:rgba(26,26,28,.72);
       --wordmark:rgba(242,240,237,.085);
       --sheet:rgba(22,22,24,.92);
+      --shadow:rgba(0,0,0,.62);
+      --shadow-strong:rgba(0,0,0,.7);
     }
   }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -709,7 +718,7 @@
          and hidden from the tab order while it is shut. */
       transform:translateY(-8px);opacity:0;visibility:hidden;
       transition:transform .28s cubic-bezier(.2,.6,.2,1),opacity .22s ease,visibility .28s;
-      box-shadow:0 26px 60px rgba(20,20,20,.18);
+      box-shadow:0 26px 60px var(--shadow);
     }
     header.open nav{transform:none;opacity:1;visibility:visible}
     header:not(.scrolled) nav a{color:var(--ink)}
@@ -748,7 +757,7 @@
          translucent tint over paper washed the rows out. */
       background:#1e1e20;
       -webkit-backdrop-filter:none;backdrop-filter:none;
-      box-shadow:0 24px 60px rgba(20,20,20,.22);
+      box-shadow:0 24px 60px var(--shadow-strong);
     }
   }
 </style>
