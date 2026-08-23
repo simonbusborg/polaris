@@ -77,3 +77,10 @@
 "Remove Car" = "Quitar coche";
 "Sign out and forget this car?" = "¿Cerrar sesión y olvidar este coche?";
 "Polaris will forget the login for %@." = "Polaris olvidará el inicio de sesión de %@.";
+
+/* Settings groups */
+"Account" = "Cuenta";
+"Menu Bar" = "Barra de menús";
+"General" = "General";
+"Notifications" = "Notificaciones";
+"Updates" = "Actualizaciones";

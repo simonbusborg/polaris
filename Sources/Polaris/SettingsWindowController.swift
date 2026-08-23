@@ -88,22 +88,45 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             unitPopup.addItem(withTitle: unit.title)
         }
 
-        let grid = NSGridView(views: [
-            [label(L("Email:")), emailField],
-            [label(L("Password:")), passwordField],
-            [label(L("VIN:")), vinField],
+        // Grouped like a System Settings pane: a header per group, with the
+        // label column still carrying the per-row names. Rows are added one
+        // at a time because the header rows have to be merged across both
+        // columns as they go.
+        let grid = NSGridView(views: [[sectionHeader(L("Account"))]])
+        var headerRows: [Int] = [0]
+
+        func addSection(_ title: String, _ rows: [[NSView]]) {
+            let row = grid.addRow(with: [sectionHeader(title)])
+            headerRows.append(grid.index(of: row))
+            rows.forEach { grid.addRow(with: $0) }
+        }
+
+        grid.addRow(with: [label(L("Email:")), emailField])
+        grid.addRow(with: [label(L("Password:")), passwordField])
+        grid.addRow(with: [label(L("VIN:")), vinField])
+        addSection(L("Menu Bar"), [
             [label(L("Show in bar:")), displayPopup],
-            [label(L("Distances:")), unitPopup],
-            [NSGridCell.emptyContentView, launchCheckbox],
-            [label(L("Notify about:")), notifyStartCheckbox],
+            [label(L("Distances:")), unitPopup]
+        ])
+        addSection(L("General"), [
+            [NSGridCell.emptyContentView, launchCheckbox]
+        ])
+        addSection(L("Notifications"), [
+            [NSGridCell.emptyContentView, notifyStartCheckbox],
             [NSGridCell.emptyContentView, notifyDoneCheckbox],
             [NSGridCell.emptyContentView, notifyProblemCheckbox]
         ])
         if updater != nil {
-            grid.addRow(with: [label(L("Updates:")), autoCheckCheckbox])
-            grid.addRow(with: [NSGridCell.emptyContentView, autoInstallCheckbox])
+            addSection(L("Updates"), [
+                [NSGridCell.emptyContentView, autoCheckCheckbox],
+                [NSGridCell.emptyContentView, autoInstallCheckbox]
+            ])
         }
-        grid.rowSpacing = 12
+        // The version has to be readable somewhere, and this is the only
+        // window the app has — there is no About box to put it in.
+        grid.addRow(with: [NSGridCell.emptyContentView, versionLabel()])
+
+        grid.rowSpacing = 8
         grid.columnSpacing = 10
         grid.rowAlignment = .firstBaseline
         grid.column(at: 0).xPlacement = .trailing
@@ -114,16 +137,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                         autoCheckCheckbox, autoInstallCheckbox] {
             grid.cell(for: control)?.xPlacement = .leading
         }
-        // Extra air between the account fields and the app options, and
-        // before the notification group. Tighter rows inside that group.
-        grid.row(at: 3).topPadding = 10
-        grid.row(at: 6).topPadding = 10
-        grid.row(at: 7).topPadding = -6
-        grid.row(at: 8).topPadding = -6
-        if updater != nil {
-            grid.row(at: 9).topPadding = 10
-            grid.row(at: 10).topPadding = -6
+        // Air above each group, except the first one at the top of the window.
+        for row in headerRows.dropFirst() {
+            grid.row(at: row).topPadding = 14
         }
+        for row in headerRows {
+            grid.row(at: row).bottomPadding = 2
+            grid.mergeCells(inHorizontalRange: NSRange(location: 0, length: grid.numberOfColumns),
+                            verticalRange: NSRange(location: row, length: 1))
+            grid.cell(atColumnIndex: 0, rowIndex: row).xPlacement = .leading
+        }
+        grid.row(at: grid.numberOfRows - 1).topPadding = 14
         grid.translatesAutoresizingMaskIntoConstraints = false
 
         let saveButton = NSButton(title: L("Save"), target: self, action: #selector(saveAction))
@@ -161,6 +185,25 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         ])
 
         window?.setContentSize(NSSize(width: 420, height: content.fittingSize.height))
+    }
+
+    /// A group title: the same weight System Settings uses for its section
+    /// headings, so the groups read as groups without drawing boxes.
+    private func sectionHeader(_ text: String) -> NSTextField {
+        let l = NSTextField(labelWithString: text)
+        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
+        l.textColor = .secondaryLabelColor
+        return l
+    }
+
+    private func versionLabel() -> NSTextField {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        let l = NSTextField(labelWithString: "Polaris \(short) (\(build))")
+        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        l.textColor = .tertiaryLabelColor
+        return l
     }
 
     private func label(_ text: String) -> NSTextField {

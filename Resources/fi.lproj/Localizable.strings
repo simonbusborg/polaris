@@ -77,3 +77,10 @@
 "Remove Car" = "Poista auto";
 "Sign out and forget this car?" = "Kirjaudutaanko ulos ja unohdetaan tämä auto?";
 "Polaris will forget the login for %@." = "Polaris unohtaa kirjautumisen %@.";
+
+/* Settings groups */
+"Account" = "Tili";
+"Menu Bar" = "Valikkorivi";
+"General" = "Yleiset";
+"Notifications" = "Ilmoitukset";
+"Updates" = "Päivitykset";

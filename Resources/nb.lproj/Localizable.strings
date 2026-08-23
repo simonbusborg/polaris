@@ -77,3 +77,10 @@
 "Remove Car" = "Fjern bil";
 "Sign out and forget this car?" = "Logg ut og glem denne bilen?";
 "Polaris will forget the login for %@." = "Polaris glemmer innloggingen for %@.";
+
+/* Settings groups */
+"Account" = "Konto";
+"Menu Bar" = "Menylinje";
+"General" = "Generelt";
+"Notifications" = "Varsler";
+"Updates" = "Oppdateringer";

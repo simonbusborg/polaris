@@ -213,20 +213,22 @@ final class StatusItemController {
 
         menu.addItem(.separator())
 
+        let settings = NSMenuItem(title: L("Settings…"), action: #selector(settingsAction), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
+
+        // Refreshing and updating are both "housekeeping" next to the car
+        // itself, so they sit under Settings rather than above it.
+        let refresh = NSMenuItem(title: L("Refresh Now"), action: #selector(refreshAction), keyEquivalent: "r")
+        refresh.target = self
+        menu.addItem(refresh)
+
         if onCheckForUpdates != nil {
             let update = NSMenuItem(title: L("Check for Updates…"),
                                     action: #selector(updateAction), keyEquivalent: "")
             update.target = self
             menu.addItem(update)
         }
-
-        let refresh = NSMenuItem(title: L("Refresh Now"), action: #selector(refreshAction), keyEquivalent: "r")
-        refresh.target = self
-        menu.addItem(refresh)
-
-        let settings = NSMenuItem(title: L("Settings…"), action: #selector(settingsAction), keyEquivalent: ",")
-        settings.target = self
-        menu.addItem(settings)
 
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: L("Quit Polaris"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
