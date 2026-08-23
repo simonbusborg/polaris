@@ -116,6 +116,13 @@ jobs:
           printf '%s' "$SPARKLE_PRIVATE_KEY" > sparkle.key
           ATTRS=$("$SIGN" Polaris.zip --ed-key-file sparkle.key)
           rm -f sparkle.key
+          # sign_update prints its errors on stdout, so a bad key ends up
+          # inside ATTRS and gets written into the appcast as garbage
+          # attributes. Refuse anything that isn't a signature.
+          case "$ATTRS" in
+            sparkle:edSignature=*) ;;
+            *) echo "sign_update did not return a signature: $ATTRS"; exit 1 ;;
+          esac
           BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)
           git fetch origin main
           git checkout -B main origin/main
