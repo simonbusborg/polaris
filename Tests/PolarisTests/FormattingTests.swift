@@ -3,6 +3,11 @@ import XCTest
 
 final class FormattingTests: XCTestCase {
 
+    /// Number formatting follows the machine's locale, so every assertion
+    /// spelled with a decimal point is pinned here rather than passing only
+    /// on an English Mac.
+    private let enUS = Locale(identifier: "en_US")
+
     func testShortDuration() {
         XCTAssertEqual(StatusItemController.shortDuration(minutes: 45), "45min")
         XCTAssertEqual(StatusItemController.shortDuration(minutes: 60), "1h")
@@ -24,11 +29,11 @@ final class FormattingTests: XCTestCase {
     func testDistanceFormatting() {
         XCTAssertEqual(StatusItemController.distance(km: 412, unit: .kilometers), "412 km")
         XCTAssertEqual(StatusItemController.distance(km: 412, unit: .miles), "256 mi")
-        // Grouped output is locale-dependent; assert on the pieces instead.
-        let grouped = StatusItemController.distance(km: 23412, grouped: true, unit: .kilometers)
-        XCTAssertTrue(grouped.hasSuffix(" km"))
-        XCTAssertTrue(grouped.contains("23"))
-        XCTAssertTrue(grouped.contains("412"))
+        // Pinned to en_US so the thousands separator is asserted exactly
+        // rather than probed for substrings.
+        XCTAssertEqual(StatusItemController.distance(km: 23412, grouped: true,
+                                                     unit: .kilometers, locale: enUS),
+                       "23,412 km")
     }
 
     func testLegacyRangeDisplayOptionStillResolves() {
@@ -38,10 +43,10 @@ final class FormattingTests: XCTestCase {
     }
 
     func testKilowattsFormatting() {
-        XCTAssertEqual(StatusItemController.kilowatts(watts: 7200), "7.2 kW")
-        XCTAssertEqual(StatusItemController.kilowatts(watts: 11000), "11 kW")
-        XCTAssertEqual(StatusItemController.kilowatts(watts: 150000), "150 kW")
-        XCTAssertEqual(StatusItemController.kilowatts(watts: 900), "0.9 kW")
+        XCTAssertEqual(StatusItemController.kilowatts(watts: 7200, locale: enUS), "7.2 kW")
+        XCTAssertEqual(StatusItemController.kilowatts(watts: 11000, locale: enUS), "11 kW")
+        XCTAssertEqual(StatusItemController.kilowatts(watts: 150000, locale: enUS), "150 kW")
+        XCTAssertEqual(StatusItemController.kilowatts(watts: 900, locale: enUS), "0.9 kW")
     }
 
     func testProtobufVarintRoundTrip() {
