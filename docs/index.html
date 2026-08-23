@@ -648,6 +648,31 @@
     text-decoration:none;border-bottom:1px solid var(--accent);
   }
 
+  /* questions */
+  .faq{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
+  .faq > *{min-width:0}
+  .faq details{border-bottom:1px solid var(--line)}
+  .faq details:first-of-type{border-top:1px solid var(--line)}
+  .faq summary{
+    list-style:none;cursor:pointer;position:relative;
+    padding:1.15rem 2.6rem 1.15rem 0;font-size:1.02rem;
+  }
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary:hover{color:var(--accent)}
+  /* A chevron drawn from two borders, so it inherits the ink and needs no
+     asset. Open flips it up, and the corner it pivots on moves with it. */
+  .faq summary::after{
+    content:'';position:absolute;right:.5rem;top:50%;
+    width:.6rem;height:.6rem;margin-top:-.42rem;
+    border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);
+    transform:rotate(45deg);transition:transform .2s ease;
+  }
+  .faq details[open] summary::after{transform:rotate(-135deg);margin-top:-.14rem}
+  .faq details p{
+    color:var(--dim);font-size:.95rem;max-width:58ch;
+    padding:0 2.6rem 1.3rem 0;
+  }
+
   /* A panel rather than a ruled-off strip: it closes the page instead of
      reading as one more section. The pill radius only holds while it's a
      single row — once the two halves stack, half the height is far too much. */
@@ -694,7 +719,7 @@
     .states{margin-inline:auto}
     .notify-stage{height:340vh}
     .notify-cards{width:100%}
-    .get{grid-template-columns:1fr}
+    .get,.faq{grid-template-columns:1fr}
     .grid{grid-template-columns:1fr}
     /* Same 2px gap in both axes — a fat row gap next to hairline column
        gaps reads as broken, not intentional. */
@@ -1041,9 +1066,9 @@
     <div class="side rv">
       <div class="kicker">Get started</div>
       <h2>Running in a minute.</h2>
-      <p>No terminal, no Xcode — every release is a ready-built app that
-      opens like any other. Sign in with your Polestar account and Polaris
-      is in the menu bar.</p>
+      <p>Every release is a finished app that opens like any other. Drag it
+      to Applications, sign in with your Polestar account, and Polaris is in
+      the menu bar.</p>
     </div>
     <div class="rv">
       <div class="ways" role="tablist" aria-label="Install method">
@@ -1056,13 +1081,8 @@
         <ol class="steps">
           <li><b>Download</b> — the disk image from the latest release.
             <a class="dl" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">Polaris.dmg</a></li>
-          <li><b>Install</b> — open it, drag Polaris to Applications, launch it.
-            <span class="note">No security warning to click past: the build is
-            signed with a Developer ID and notarized by Apple.</span></li>
-          <li><b>Sign in</b> — email, password and your car's VIN.
-            <span class="note">The VIN is in the Polestar app under your car's
-            details, if it isn't on hand. Polaris keeps itself up to date from
-            here.</span></li>
+          <li><b>Install</b> — open it, drag Polaris to Applications, launch it.</li>
+          <li><b>Sign in</b> — email, password and your car's VIN.</li>
         </ol>
       </div>
 
@@ -1073,13 +1093,8 @@
               <code>brew install --cask simonbusborg/polaris/polaris</code>
               <button type="button" data-copy>Copy</button>
             </div></li>
-          <li><b>Launch</b> — Polaris lands in Applications like any other cask.
-            <span class="note">Same signed, notarized build as the disk image,
-            so it opens without a warning.</span></li>
-          <li><b>Sign in</b> — email, password and your car's VIN.
-            <span class="note">The VIN is in the Polestar app under your car's
-            details, if it isn't on hand. Polaris keeps itself up to date from
-            here.</span></li>
+          <li><b>Launch</b> — Polaris lands in Applications like any other cask.</li>
+          <li><b>Sign in</b> — email, password and your car's VIN.</li>
         </ol>
       </div>
 
@@ -1101,6 +1116,42 @@
             here.</span></li>
         </ol>
       </div>
+    </div>
+  </section>
+
+  <!-- What the install steps used to carry as small print. The answers are
+       the same; a question only costs the reader who has it. -->
+  <section class="faq" id="faq">
+    <div class="side rv">
+      <div class="kicker">Questions</div>
+      <h2>The usual four.</h2>
+    </div>
+    <div class="rv">
+      <details>
+        <summary>Will my Mac warn me when I open it?</summary>
+        <p>No. Apple has checked and approved every release, so Polaris opens
+        straight away like anything from the App Store. Building it yourself
+        from source is the one exception — that first launch wants a
+        right-click → Open.</p>
+      </details>
+      <details>
+        <summary>Where do I find my VIN?</summary>
+        <p>In the Polestar app, under your car's details. It's also on the
+        registration papers, and stamped in the corner of the windscreen on
+        the driver's side.</p>
+      </details>
+      <details>
+        <summary>Where do my Polestar details go?</summary>
+        <p>Your password goes into your Mac's keychain and to Polestar when
+        Polaris signs in — nowhere else. There's no Polaris account and
+        nothing in between: the app talks to Polestar directly, from your
+        machine.</p>
+      </details>
+      <details>
+        <summary>How does it stay up to date?</summary>
+        <p>Polaris looks for new versions on its own and offers them when they
+        land. You never have to come back here for a newer copy.</p>
+      </details>
     </div>
   </section>
 
