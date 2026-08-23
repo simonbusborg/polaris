@@ -18,7 +18,7 @@
       <sparkle:version>17</sparkle:version>
       <sparkle:shortVersionString>2.7.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/simonbusborg/polaris/releases/tag/v2.7.0</sparkle:releaseNotesLink>
+      <sparkle:releaseNotesLink>https://simonbusborg.github.io/polaris/notes/v2.7.0.html</sparkle:releaseNotesLink>
       <enclosure url="https://github.com/simonbusborg/polaris/releases/download/v2.7.0/Polaris.zip"
                  type="application/octet-stream" sparkle:edSignature="4bBxuWOFbodUGVjG9Te9z15GPhUqsIAaRPuo5wo9GFjY9SdnT/OcXVrzvJ7PPOEDjEq6HI2lWLx3QIKDU5Z+Bw==" length="1450799" />
     </item>

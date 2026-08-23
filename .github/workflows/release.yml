@@ -19,7 +19,32 @@ jobs:
   build-and-release:
     runs-on: macos-14
     steps:
+      # Full history and tags: the release notes are built from the commits
+      # since the previous tag, which a shallow clone doesn't have.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # A release is one thing, not five that might each have happened: the
+      # DMG, the notarization, the appcast entry and the cask all have to
+      # land, or users see a version that half exists. Every secret is
+      # checked before anything is published, so a missing one costs a red
+      # run at second ten instead of a shipped build nobody can update to.
+      # Forks have none of these secrets and are left to the per-step
+      # guards below, which still produce an unsigned local build.
+      - name: Preflight — every release secret is present
+        if: github.repository == 'simonbusborg/polaris'
+        run: |
+          missing=""
+          for name in HAS_SIGNING HAS_SPARKLE_KEY HAS_TAP_TOKEN; do
+            eval "value=\$$name"
+            [ "$value" = "true" ] || missing="$missing $name"
+          done
+          test -z "$missing" || {
+            echo "Refusing to release: missing secrets for$missing"
+            echo "Add them under Settings → Secrets → Actions, then re-run this tag."
+            exit 1
+          }
 
       # The update checker compares Info.plist's version against the
       # latest release tag — a mismatch would nag every user forever.
@@ -97,12 +122,11 @@ jobs:
       # public key baked into Info.plist, so the zip is signed here and the
       # feed regenerated from that signature. The commit goes to main, which
       # is what GitHub Pages serves the feed from.
-      # Never fatal: the release is already published by this point, and the
-      # feed can be regenerated from the released zip afterwards. It failed
-      # silently once, which is why it now traces what it does.
+      # Fatal on purpose: a release users can't update to is worse than a
+      # red run. It failed silently once, which is why it now traces what it
+      # does and why the run goes red when it doesn't finish.
       - name: Sign the build for Sparkle and publish the appcast
         if: ${{ env.HAS_SPARKLE_KEY == 'true' }}
-        continue-on-error: true
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
@@ -126,20 +150,21 @@ jobs:
           BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)
           git fetch origin main
           git checkout -B main origin/main
+          python3 scripts/release_notes.py "$GITHUB_REF_NAME"
           python3 scripts/update_appcast.py "$GITHUB_REF_NAME" "$BUILD" "$ATTRS"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/appcast.xml
+          git add docs/appcast.xml docs/notes
           git commit -m "Publish $GITHUB_REF_NAME to the Sparkle appcast"
           git push origin main
 
       # The cask lives in simonbusborg/homebrew-polaris and points at this
       # release's DMG, so it can only be written once the release exists.
-      # Like the appcast, a failure here doesn't unship the build — the cask
-      # can be corrected by hand afterwards.
+      # Like the appcast, this is part of the release rather than a nicety:
+      # `brew upgrade` pointing at an older version is a bug report waiting
+      # to happen.
       - name: Update the Homebrew cask
         if: ${{ env.HAS_TAP_TOKEN == 'true' }}
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
@@ -155,3 +180,28 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "Update the cask to $VERSION"
           git push origin main
+
+      # Reads back what the world can actually see. Everything above could
+      # succeed while the feed or the cask still points somewhere else — a
+      # stale gh-pages deploy, a race with another push — and only this
+      # step would notice.
+      - name: Verify the published release is complete
+        if: github.repository == 'simonbusborg/polaris'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          gh release view "$GITHUB_REF_NAME" --json assets \
+            --jq '.assets[].name' | sort > assets.txt
+          grep -qx Polaris.dmg assets.txt || { echo "release is missing Polaris.dmg"; exit 1; }
+          grep -qx Polaris.zip assets.txt || { echo "release is missing Polaris.zip"; exit 1; }
+          git fetch origin main
+          git show origin/main:docs/appcast.xml > feed.xml
+          grep -q "<sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>" feed.xml \
+            || { echo "appcast has no entry for $VERSION"; exit 1; }
+          grep -q 'sparkle:edSignature="' feed.xml \
+            || { echo "appcast entry for $VERSION carries no signature"; exit 1; }
+          CASK=$(curl -fsSL https://raw.githubusercontent.com/simonbusborg/homebrew-polaris/main/Casks/polaris.rb)
+          echo "$CASK" | grep -q "version \"$VERSION\"" \
+            || { echo "the Homebrew cask is not on $VERSION"; exit 1; }
+          echo "release $VERSION is complete: assets, appcast and cask all agree"
