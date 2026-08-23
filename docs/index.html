@@ -222,6 +222,30 @@
       linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.08) 75%),
       linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 30%);
   }
+  /* Dark only: the bottom of the photograph dissolves into the page colour
+     instead of ending on a hard edge against it. Blur as well as gradient —
+     a plain wash still leaves the photo's detail legible right up to the
+     seam, where the blur makes the last strip read as fog. In light mode
+     the same fade would bleach the dark photo to white, so it stays off. */
+  .hero::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;
+    height:clamp(120px,20vh,260px);z-index:-1;pointer-events:none;
+    /* display, not opacity: an opacity:0 layer that carries backdrop-filter
+       keeps blurring the photo behind it in WebKit, so the fade stayed on
+       screen after a switch to light. Taking the box out of the render tree
+       is the only way it reliably leaves. */
+    display:none;
+    background:linear-gradient(to bottom,rgba(18,18,18,0) 0%,var(--paper) 92%);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    /* Masking the blur too, so it ramps in with the wash rather than
+       smearing the whole strip evenly. */
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 65%);
+    mask-image:linear-gradient(to bottom,transparent,#000 65%);
+  }
+  html[data-theme="dark"] .hero::after{display:block}
+  @media (prefers-color-scheme:dark){
+    html:not([data-theme="light"]) .hero::after{display:block}
+  }
   .hero-inner{
     max-width:1200px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(2.5rem,6vh,4rem);
     width:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:2rem;
@@ -1085,7 +1109,6 @@
       Not affiliated with Polestar.</div>
     <div>
       <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
-      <a href="https://simonbusborg.github.io/teslaris/">Teslaris — the same app for Tesla</a> ·
       <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photo via Unsplash</a>
     </div>
   </footer>
