@@ -38,6 +38,7 @@
 "Charging complete" = "Ricarica completata";
 "%.0f%% · %@ range" = "%.0f%% · %@ di autonomia";
 "Charging problem" = "Problema di ricarica";
+"%.0f%% left — time to plug in" = "%.0f%% rimanente — è ora di collegarla";
 "Charger reported an error at %.0f%%" = "Il caricatore ha segnalato un errore al %.0f%%";
 "Edit" = "Modifica";
 "Undo" = "Annulla";
@@ -53,6 +54,7 @@
 "Miles (mi)" = "Miglia (mi)";
 "Launch at login" = "Apri al login";
 "Charging problems" = "Problemi di ricarica";
+"Low battery" = "Batteria scarica";
 "Polaris Settings" = "Impostazioni di Polaris";
 "Polestar password" = "Password Polestar";
 "Vehicle VIN" = "VIN del veicolo";

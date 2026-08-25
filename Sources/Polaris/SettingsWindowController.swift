@@ -19,6 +19,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyStartCheckbox = NSButton(checkboxWithTitle: L("Charging started"), target: nil, action: nil)
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
+    private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
+    private let lowThresholdPopup = NSPopUpButton()
+    private lazy var lowBatteryRowView: NSView = lowBatteryRow()
     private let autoCheckCheckbox = NSButton(checkboxWithTitle: L("Check automatically"), target: nil, action: nil)
     private let autoInstallCheckbox = NSButton(checkboxWithTitle: L("Download and install automatically"), target: nil, action: nil)
 
@@ -114,7 +117,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         addSection(L("Notifications"), [
             [NSGridCell.emptyContentView, notifyStartCheckbox],
             [NSGridCell.emptyContentView, notifyDoneCheckbox],
-            [NSGridCell.emptyContentView, notifyProblemCheckbox]
+            [NSGridCell.emptyContentView, notifyProblemCheckbox],
+            [NSGridCell.emptyContentView, lowBatteryRowView]
         ])
         if updater != nil {
             addSection(L("Updates"), [
@@ -137,6 +141,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                         autoCheckCheckbox, autoInstallCheckbox] {
             grid.cell(for: control)?.xPlacement = .leading
         }
+        grid.cell(for: lowBatteryRowView)?.xPlacement = .leading
         // Air above each group, except the first one at the top of the window.
         for row in headerRows.dropFirst() {
             grid.row(at: row).topPadding = 14
@@ -212,6 +217,24 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return l
     }
 
+    /// The threshold belongs to the checkbox, so the two share a row rather
+    /// than the popup floating a line below with a label of its own.
+    private func lowBatteryRow() -> NSView {
+        lowThresholdPopup.removeAllItems()
+        lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
+        notifyLowCheckbox.target = self
+        notifyLowCheckbox.action = #selector(lowBatteryToggled)
+        let row = NSStackView(views: [notifyLowCheckbox, lowThresholdPopup])
+        row.orientation = .horizontal
+        row.spacing = 8
+        row.alignment = .firstBaseline
+        return row
+    }
+
+    @objc private func lowBatteryToggled() {
+        lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
+    }
+
     private func loadValues() {
         isAddingCar = false
         // Nothing to remove until there's a second car to fall back to.
@@ -225,6 +248,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
+        notifyLowCheckbox.state = Preferences.notifyLowBattery ? .on : .off
+        lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
+            .firstIndex(of: Preferences.lowBatteryThreshold) ?? 0)
+        lowBatteryToggled()
         if let updater {
             autoCheckCheckbox.state = updater.automaticallyChecks ? .on : .off
             autoInstallCheckbox.state = updater.automaticallyDownloads ? .on : .off
@@ -255,6 +282,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
         Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
         Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
+        Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
+        if lowThresholdPopup.indexOfSelectedItem >= 0 {
+            Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
+        }
         if let updater {
             updater.automaticallyChecks = (autoCheckCheckbox.state == .on)
             updater.automaticallyDownloads = (autoInstallCheckbox.state == .on)

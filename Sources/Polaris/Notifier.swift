@@ -25,7 +25,15 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func carDataDidUpdate(old: CarData?, new: CarData) {
-        guard available, authorized, let old else { return }
+        guard available, authorized else { return }
+
+        // Runs before the `old` guard: a reminder that only fired on a
+        // comparison would stay silent through the first refresh after
+        // launch, which is exactly when the app is catching up on a car
+        // that drained while it wasn't running.
+        checkLowBattery(new)
+
+        guard let old else { return }
 
         let done = new.statusKey == "DONE" || new.batteryPercentage >= 99.5
         let trouble = new.statusKey == "ERROR" || new.statusKey == "FAULT"
@@ -47,6 +55,24 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
             post(title: L("Charging problem"),
                  body: String(format: L("Charger reported an error at %.0f%%"), new.batteryPercentage))
         }
+    }
+
+    private func checkLowBattery(_ new: CarData) {
+        let vin = new.vin ?? Preferences.vin
+        let warned = Preferences.lowBatteryWarned(vin: vin)
+        let outcome = LowBatteryWatch.evaluate(percentage: new.batteryPercentage,
+                                               isCharging: new.isCharging,
+                                               threshold: Preferences.lowBatteryThreshold,
+                                               warned: warned)
+        // The armed/disarmed state is tracked even with the reminder switched
+        // off, so turning it on mid-drive doesn't fire for a crossing that
+        // happened while it was off.
+        if outcome.warned != warned {
+            Preferences.setLowBatteryWarned(outcome.warned, vin: vin)
+        }
+        guard outcome.notify, Preferences.notifyLowBattery else { return }
+        post(title: L("Low battery"),
+             body: String(format: L("%.0f%% left — time to plug in"), new.batteryPercentage))
     }
 
     private func post(title: String, body: String) {

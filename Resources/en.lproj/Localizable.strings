@@ -38,6 +38,7 @@
 "Charging complete" = "Charging complete";
 "%.0f%% · %@ range" = "%.0f%% · %@ range";
 "Charging problem" = "Charging problem";
+"%.0f%% left — time to plug in" = "%.0f%% left — time to plug in";
 "Charger reported an error at %.0f%%" = "Charger reported an error at %.0f%%";
 "Edit" = "Edit";
 "Undo" = "Undo";
@@ -53,6 +54,7 @@
 "Miles (mi)" = "Miles (mi)";
 "Launch at login" = "Launch at login";
 "Charging problems" = "Charging problems";
+"Low battery" = "Low battery";
 "Polaris Settings" = "Polaris Settings";
 "Polestar password" = "Polestar password";
 "Vehicle VIN" = "Vehicle VIN";

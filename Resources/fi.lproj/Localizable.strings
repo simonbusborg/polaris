@@ -38,6 +38,7 @@
 "Charging complete" = "Lataus valmis";
 "%.0f%% · %@ range" = "%.0f%% · %@ toimintamatka";
 "Charging problem" = "Latausongelma";
+"%.0f%% left — time to plug in" = "%.0f%% jäljellä — aika kytkeä lataukseen";
 "Charger reported an error at %.0f%%" = "Laturi ilmoitti virheestä %.0f%%:ssa";
 "Edit" = "Muokkaa";
 "Undo" = "Kumoa";
@@ -53,6 +54,7 @@
 "Miles (mi)" = "Mailit (mi)";
 "Launch at login" = "Avaa kirjautuessa";
 "Charging problems" = "Latausongelmat";
+"Low battery" = "Akku vähissä";
 "Polaris Settings" = "Polaris-asetukset";
 "Polestar password" = "Polestar-salasana";
 "Vehicle VIN" = "Ajoneuvon VIN";

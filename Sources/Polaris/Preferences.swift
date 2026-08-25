@@ -101,6 +101,33 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_charging_problem") }
     }
 
+    static var notifyLowBattery: Bool {
+        get { boolDefaultTrue("notify_low_battery") }
+        set { d.set(newValue, forKey: "notify_low_battery") }
+    }
+
+    static var lowBatteryThreshold: Int {
+        get {
+            guard let stored = d.object(forKey: "low_battery_threshold") as? Int,
+                  LowBatteryWatch.thresholds.contains(stored) else {
+                return LowBatteryWatch.defaultThreshold
+            }
+            return stored
+        }
+        set { d.set(newValue, forKey: "low_battery_threshold") }
+    }
+
+    /// Whether the low-battery reminder has already fired for this car's
+    /// current discharge. Kept per VIN and on disk so quitting the app
+    /// doesn't re-arm it, and so one car's level can't warn for the other.
+    static func lowBatteryWarned(vin: String) -> Bool {
+        d.bool(forKey: "low_battery_warned_" + vin)
+    }
+
+    static func setLowBatteryWarned(_ warned: Bool, vin: String) {
+        d.set(warned, forKey: "low_battery_warned_" + vin)
+    }
+
     /// One-time migration from the original Polaris, which kept the
     /// password in UserDefaults. If found, move it into the Keychain
     /// and delete the plaintext copy.

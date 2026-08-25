@@ -38,6 +38,7 @@
 "Charging complete" = "Laddning klar";
 "%.0f%% · %@ range" = "%.0f%% · %@ räckvidd";
 "Charging problem" = "Laddningsproblem";
+"%.0f%% left — time to plug in" = "%.0f%% kvar — dags att ladda";
 "Charger reported an error at %.0f%%" = "Laddaren rapporterade ett fel vid %.0f%%";
 "Edit" = "Redigera";
 "Undo" = "Ångra";
@@ -53,6 +54,7 @@
 "Miles (mi)" = "Miles (mi)";
 "Launch at login" = "Starta vid inloggning";
 "Charging problems" = "Laddningsproblem";
+"Low battery" = "Lågt batteri";
 "Polaris Settings" = "Polaris-inställningar";
 "Polestar password" = "Polestar-lösenord";
 "Vehicle VIN" = "Bilens chassinummer";
