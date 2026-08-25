@@ -45,9 +45,10 @@
        shadow over #121212 is a shadow nobody can see. */
     --shadow:rgba(20,20,20,.18);
     --shadow-strong:rgba(20,20,20,.22);
-    /* Fixed in both themes. The hero photograph and the Mac mockup are dark
-       whichever way the page is set, so anything sitting on them keeps a
-       white foreground rather than following --paper, which flips. */
+    /* Fixed in both themes. Each theme's hero photograph carries a scrim
+       heavy enough to sit white type on, and the Mac mockup is dark whichever
+       way the page is set, so anything on them keeps a white foreground
+       rather than following --paper, which flips. */
     --on-photo:#FFFFFF;
     --on-photo-ink:#141414;
     --r:2px;
@@ -208,6 +209,16 @@
     margin-top:-84px;padding-top:84px;
   }
   .hero-media{position:absolute;inset:0;z-index:-2;overflow:hidden}
+  .hero-media .shot{position:absolute;inset:0;display:block}
+  /* Light is the default so a page with no stored theme and no OS preference
+     still gets the photograph that suits white paper. */
+  .hero-media .shot-dark{display:none}
+  html[data-theme="dark"] .hero-media .shot-dark{display:block}
+  html[data-theme="dark"] .hero-media .shot-light{display:none}
+  @media (prefers-color-scheme:dark){
+    html:not([data-theme="light"]) .hero-media .shot-dark{display:block}
+    html:not([data-theme="light"]) .hero-media .shot-light{display:none}
+  }
   .hero-media img{
     width:100%;height:100%;object-fit:cover;
     /* Landscape 3:2. Anchored slightly low so the nose and the emblem stay
@@ -221,6 +232,25 @@
     background:
       linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.08) 75%),
       linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 30%);
+  }
+  /* The light shot is a white car against a white wall — near-blown across
+     the whole frame — so the white headline and the white nav marks need
+     more ink under them than the dark shot ever did. Same two scrims,
+     turned up, rather than a different recipe. */
+  html[data-theme="light"] .hero-media::after,
+  html:not([data-theme="dark"]) .hero-media::after{
+    background:
+      linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 45%,rgba(0,0,0,.26) 100%),
+      linear-gradient(to bottom,rgba(0,0,0,.5),rgba(0,0,0,.12) 30%);
+  }
+  @media (prefers-color-scheme:dark){
+    /* Undo the blanket :not([data-theme="dark"]) above for the untoggled
+       dark case, where the dark shot is the one on screen. */
+    html:not([data-theme="light"]) .hero-media::after{
+      background:
+        linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.08) 75%),
+        linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 30%);
+    }
   }
   /* Dark only: the bottom of the photograph dissolves into the page colour
      instead of ending on a hard edge against it. Blur as well as gradient —
@@ -839,9 +869,16 @@
 
   <section class="hero">
     <div class="hero-media">
-      <picture>
-        <!-- The landscape crop loses the car entirely on a phone, so narrow
-             screens get a portrait frame instead. -->
+      <!-- Two photographs, one per theme: the dark shot goes muddy behind a
+           white page and the light one glares behind a dark one. Which is
+           shown is CSS, so the theme toggle swaps them with everything else.
+           The landscape crops lose the car entirely on a phone, so narrow
+           screens get a portrait frame instead. -->
+      <picture class="shot shot-light">
+        <source media="(max-width:900px)" srcset="assets/hero-light-mobile.jpg" width="1374" height="2060">
+        <img src="assets/hero-light.jpg" alt="Close crop of the rear light bar and badge of a white Polestar 2" width="2940" height="1960" fetchpriority="high">
+      </picture>
+      <picture class="shot shot-dark">
         <source media="(max-width:900px)" srcset="assets/hero-polestar-mobile.jpg" width="1374" height="2060">
         <img src="assets/hero-polestar.jpg" alt="Close crop of the nose and emblem of a silver Polestar" width="2940" height="1960" fetchpriority="high">
       </picture>
@@ -1160,7 +1197,7 @@
       Not affiliated with Polestar.</div>
     <div>
       <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
-      <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photo via Unsplash</a>
+      <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photos via Unsplash</a>
     </div>
   </footer>
 </div>
