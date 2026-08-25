@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Polaris 2.7.1</title>
+<style>
+  /* Sparkle renders this in a small WebView that follows the system
+     appearance, so the page has to work in both and stay legible at
+     roughly 500 points wide. */
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font: 13px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: #1d1d1f;
+    background: #fff;
+  }
+  h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  .date { margin: 2px 0 16px; font-size: 12px; color: #6e6e73; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 7px; }
+  a { color: #0a6cff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { margin-top: 18px; font-size: 12px; color: #6e6e73; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #f2f2f7; background: #1e1e1e; }
+    .date, footer { color: #9a9aa0; }
+    a { color: #6cb1ff; }
+  }
+</style>
+</head>
+<body>
+  <h1>Polaris 2.7.1</h1>
+  <p class="date">August 25, 2026</p>
+  <ul>
+      <li>Remind you to plug in before the battery gets low</li>
+      <li>Pin the formatting tests to a locale instead of a machine</li>
+  </ul>
+  <footer><a href="https://github.com/simonbusborg/polaris/compare/v2.7.0...v2.7.1">All changes on GitHub</a></footer>
+</body>
+</html>
