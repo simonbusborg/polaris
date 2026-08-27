@@ -48,7 +48,8 @@ open it, and drag Polaris to Applications (a `Polaris.zip` is also
 attached for scripted installs). However you install it, the app keeps itself
 up to date through Sparkle. Releases are built by GitHub Actions,
 signed with a Developer ID and notarized by Apple, so it opens like any
-other app — no security warning to click past.
+other app — no security warning to click past. The build is universal, so
+it runs on both Apple silicon and Intel Macs.
 
 Then click the menu bar icon → Settings… → enter your Polestar email, password,
 and VIN.

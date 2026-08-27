@@ -1,5 +1,6 @@
 APP     = Polaris.app
-BINARY  = .build/release/Polaris
+# Universal builds land under .build/apple, not .build/release.
+BINARY  = .build/apple/Products/Release/Polaris
 DMG     = Polaris.dmg
 
 # Code-signing identity. Default "-" is ad-hoc (local builds); CI passes a
@@ -19,9 +20,12 @@ SIGN_NESTED = scripts/sign-sparkle.sh $(APP)
 
 .PHONY: build app dmg run test clean release
 
-## Build the release binary
+## Build the release binary as a universal (Apple silicon + Intel) binary.
+## CI runs on an arm64 runner, so a plain `swift build` ships an arm64-only
+## app that Intel Macs refuse to launch — the icon gets the prohibitory
+## overlay and looks like a Gatekeeper block. Sparkle already ships fat.
 build:
-	swift build -c release
+	swift build -c release --arch arm64 --arch x86_64
 
 ## Assemble a proper .app bundle (needed for launch-at-login) and sign it
 app: build
