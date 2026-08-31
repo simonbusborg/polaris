@@ -118,10 +118,35 @@ public enum SharedStore {
         return d
     }
 
+    /// Why the widget has nothing to draw. An empty widget with one face for
+    /// four different causes is what made the first round of this a guessing
+    /// game, so the reason travels with the failure.
+    public enum SnapshotState {
+        case ok(WidgetSnapshot)
+        /// No App Group at all — built without a Team ID.
+        case noContainer
+        /// The container is there but the app has never written to it.
+        case noFile
+        /// Written, but this build can't read it: a format the app and the
+        /// widget disagree about, or a sandbox refusing the read.
+        case unreadable(String)
+    }
+
+    public static func snapshotState() -> SnapshotState {
+        guard let url = containerURL?.appendingPathComponent(snapshotName) else {
+            return .noContainer
+        }
+        guard FileManager.default.fileExists(atPath: url.path) else { return .noFile }
+        do {
+            return .ok(try decoder.decode(WidgetSnapshot.self, from: Data(contentsOf: url)))
+        } catch {
+            return .unreadable(String(describing: error).prefix(120).description)
+        }
+    }
+
     public static func loadSnapshot() -> WidgetSnapshot? {
-        guard let url = containerURL?.appendingPathComponent(snapshotName),
-              let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(WidgetSnapshot.self, from: data)
+        if case .ok(let snapshot) = snapshotState() { return snapshot }
+        return nil
     }
 
     /// Atomic because the widget can wake up mid-write; a half-written file

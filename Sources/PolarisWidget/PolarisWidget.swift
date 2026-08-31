@@ -20,14 +20,20 @@ import PolarisShared
 
 // MARK: - Timeline
 
+/// Why there's nothing to draw. Only the first of these is a state a user
+/// can be in; the other two mean the build or the container is wrong, and
+/// saying so is faster than reading logs.
+enum WidgetProblem {
+    case nothingPolledYet
+    case noAppGroup
+    case unreadable(String)
+}
+
 struct CarEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
     let carImage: Image?
-    /// Whether the shared container resolved at all. Without it there is
-    /// nowhere to read from, which is a different problem from an app that
-    /// simply hasn't polled yet — and the two used to render identically.
-    let hasContainer: Bool
+    let problem: WidgetProblem?
 }
 
 struct CarProvider: TimelineProvider {
@@ -36,11 +42,19 @@ struct CarProvider: TimelineProvider {
     /// real snapshot loads. Plausible numbers rather than zeroes, because a
     /// widget showing 0% in the picker looks broken.
     private var placeholderEntry: CarEntry {
-        CarEntry(date: Date(), snapshot: .placeholder, carImage: nil, hasContainer: true)
+        CarEntry(date: Date(), snapshot: .placeholder, carImage: nil, problem: nil)
     }
 
     private func currentEntry(family: WidgetFamily) -> CarEntry {
-        let snapshot = SharedStore.loadSnapshot()
+        let snapshot: WidgetSnapshot?
+        let problem: WidgetProblem?
+        switch SharedStore.snapshotState() {
+        case .ok(let value): snapshot = value; problem = nil
+        case .noFile: snapshot = nil; problem = .nothingPolledYet
+        case .noContainer: snapshot = nil; problem = .noAppGroup
+        case .unreadable(let why): snapshot = nil; problem = .unreadable(why)
+        }
+
         var image: Image?
         // Only the large widget draws the car, and only it pays for loading
         // it: an extension has a hard memory ceiling, and a studio render is
@@ -48,8 +62,7 @@ struct CarProvider: TimelineProvider {
         if family != .systemSmall, snapshot?.hasImage == true {
             image = Self.carImage()
         }
-        return CarEntry(date: Date(), snapshot: snapshot, carImage: image,
-                        hasContainer: SharedStore.containerURL != nil)
+        return CarEntry(date: Date(), snapshot: snapshot, carImage: image, problem: problem)
     }
 
     /// Decoded straight to the size it's drawn at. ImageIO reads the header
@@ -170,32 +183,44 @@ private struct Field: View, Identifiable {
 }
 
 private struct NoData: View {
-    let hasContainer: Bool
+    let problem: WidgetProblem
+
+    private var isNormal: Bool {
+        if case .nothingPolledYet = problem { return true }
+        return false
+    }
+
+    // Only the first case is translated. The other two cannot happen in a
+    // released build — they mean the app was built or installed wrong — and
+    // they are addressed to whoever built it, not to anyone driving the car.
+    private var title: String {
+        switch problem {
+        case .nothingPolledYet: return L("No data yet")
+        case .noAppGroup: return "No App Group"
+        case .unreadable: return "Can't read the snapshot"
+        }
+    }
+
+    private var detail: String {
+        switch problem {
+        case .nothingPolledYet: return L("Open Polaris to sign in")
+        case .noAppGroup: return "Built without a Team ID"
+        case .unreadable(let why): return why
+        }
+    }
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: hasContainer ? "bolt.car" : "exclamationmark.triangle")
+            Image(systemName: isNormal ? "bolt.car" : "exclamationmark.triangle")
                 .font(.title)
                 .foregroundStyle(.secondary)
-            if hasContainer {
-                Text(L("No data yet"))
-                    .font(.headline)
-                Text(L("Open Polaris to sign in"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            } else {
-                // Deliberately not translated: no released build can show
-                // this — it means the app was built without a Team ID, so
-                // there is no App Group to read through. It is a message to
-                // whoever built it, not to a user.
-                Text("No App Group")
-                    .font(.headline)
-                Text("Built without a Team ID")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            Text(title)
+                .font(.headline)
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -353,7 +378,7 @@ struct PolarisWidgetEntryView: View {
                 default: LargeCarView(snapshot: snapshot, carImage: entry.carImage)
                 }
             } else {
-                NoData(hasContainer: entry.hasContainer)
+                NoData(problem: entry.problem ?? .nothingPolledYet)
             }
         }
         .widgetURL(URL(string: "polaris://open"))
