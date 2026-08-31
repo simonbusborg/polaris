@@ -583,6 +583,17 @@
      one render of the car works in both themes. */
   .widgets{border-top:1px solid var(--line)}
   .w-stage{height:320vh;position:relative}
+  /* The same dither field as the notifications section, but gathered around
+     the card instead of following the pointer: the widget is the subject
+     here, so the raster thickens where it sits. */
+  .w-field{
+    position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
+    width:100vw;height:100%;
+    opacity:.16;pointer-events:none;
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+    mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+  }
+  .w-copy,.w-frame,.w-caption{position:relative;z-index:1}
   .w-sticky{
     position:sticky;top:0;min-height:100vh;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1142,6 +1153,7 @@
   <section class="widgets" id="widgets">
     <div class="w-stage" id="wStage">
       <div class="w-sticky">
+        <canvas class="w-field" id="wField" aria-hidden="true"></canvas>
         <div class="w-copy rv">
           <div class="kicker">On the desktop</div>
           <h2>The same car, without the click.</h2>
@@ -1949,9 +1961,14 @@ void main(){
     // Two GL contexts on one page is two rAF loops; neither needs to run
     // while its section is off screen.
     let onScreen = true;
+    // The bloom: reach opens from nothing to its full radius the first time
+    // the field comes into view, so the raster gathers around the subject
+    // rather than being already gathered when you arrive.
+    let bloomStart = 0;
     new IntersectionObserver(([e]) => {
       const was = onScreen;
       onScreen = e.isIntersecting;
+      if (onScreen && !bloomStart) bloomStart = performance.now();
       if (onScreen && !was && !still.matches) requestAnimationFrame(draw);
     }, {rootMargin: '120px'}).observe(canvas);
 
@@ -1962,10 +1979,24 @@ void main(){
       const t = (now - start) / 1000;
       gl.uniform1f(uTime, t);
       const rect = canvas.getBoundingClientRect();
-      // With no mouse an invisible target walks a slow round, so the field
-      // still lives on a phone.
-      const px = hasMouse ? mouseX - rect.left : rect.width * (0.5 + 0.34 * Math.cos(t * 0.31));
-      const py = hasMouse ? mouseY - rect.top : rect.height * (0.5 + 0.28 * Math.sin(t * 0.47));
+      const focus = opts.focus && opts.focus();
+      let px, py;
+      if (focus) {
+        // Centred on the element, with a breath of drift so a still card
+        // doesn't leave the field looking frozen around it.
+        const box = focus.getBoundingClientRect();
+        px = box.left + box.width / 2 - rect.left + Math.cos(t * 0.31) * 26;
+        py = box.top + box.height / 2 - rect.top + Math.sin(t * 0.47) * 20;
+        const full = Math.min(320, rect.width * 0.3);
+        // Eased over a second and a bit, from a reach too small to see.
+        const k = bloomStart ? Math.min(1, (now - bloomStart) / 1200) : 0;
+        gl.uniform1f(uReach, Math.max(1, full * (1 - Math.pow(1 - k, 3))));
+      } else {
+        // With no mouse an invisible target walks a slow round, so the field
+        // still lives on a phone.
+        px = hasMouse ? mouseX - rect.left : rect.width * (0.5 + 0.34 * Math.cos(t * 0.31));
+        py = hasMouse ? mouseY - rect.top : rect.height * (0.5 + 0.28 * Math.sin(t * 0.47));
+      }
       // gl_FragCoord counts from the bottom edge, the pointer from the top.
       gl.uniform2f(uPointer, px, rect.height - py);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -1977,6 +2008,7 @@ void main(){
   };
 
   makeDitherField('notifyField', {gradient: true});
+  makeDitherField('wField', {gradient: true, focus: () => document.getElementById('wCard')});
   makeDitherField('statsField', {gradient: true});
 
   // Sticky nav: inverted and transparent while it sits on the hero photo,
