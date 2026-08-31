@@ -50,6 +50,11 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Desktop widget** (v2.8.0) — small, medium and large. It reads what the app
+  last fetched rather than polling on its own, so adding one doesn't add a
+  request to your car, and clicking it drops the menu. The large size carries
+  the studio render of your exact car.
+
 - **Appcast published by CI** (v2.7.0) — the update feed is signed and
   committed by the release workflow. The v2.6.0 entry was the last one made
   by hand.
