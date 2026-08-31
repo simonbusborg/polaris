@@ -1,0 +1,130 @@
+name: Widget spike
+
+# Spike branches only. The question this answers is narrow: does a build
+# that embeds a widget extension and claims an App Group still assemble,
+# sign and notarize? It publishes nothing — no tag, no release, no appcast.
+#
+# CI can only answer half of it. Notarization checks the signature and the
+# hardened runtime, not whether an entitlement is authorised; whether the
+# sandboxed extension can actually reach the shared container shows up at
+# runtime, on a Mac, in what the probe widget renders.
+on:
+  push:
+    branches:
+      - "spike/**"
+
+env:
+  HAS_SIGNING: ${{ secrets.MACOS_CERT_P12 != '' }}
+  HAS_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID != '' }}
+  HAS_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE != '' }}
+
+jobs:
+  spike:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test
+        run: |
+          swift build
+          swift test
+
+      # No secrets needed. Proves the .appex is assembled and signed in the
+      # right order, which is the part a fork can also verify.
+      - name: Assemble ad-hoc, without an App Group
+        run: |
+          make app
+          test -x Polaris.app/Contents/PlugIns/PolarisWidget.appex/Contents/MacOS/PolarisWidget \
+            || { echo "no widget binary in the bundle"; exit 1; }
+          codesign --verify --deep --strict --verbose=2 Polaris.app
+
+      - name: Import Developer ID certificate
+        if: env.HAS_SIGNING == 'true'
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PASS=$(uuidgen)
+          echo "$CERT_P12" | base64 --decode > cert.p12
+          security create-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security set-keychain-settings -lut 1800 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASS" build.keychain
+          security list-keychains -d user -s build.keychain login.keychain
+          rm cert.p12
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | awk -F'"' '/Developer ID Application/ {print $2; exit}')
+          echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
+      # The cheap answer first: if Apple accepts the group entitlement on a
+      # Developer ID build with no profile at all, none of the provisioning
+      # work is needed. Allowed to fail — a rejection here is a result, not
+      # an accident, and the profile attempt below still has to run.
+      - name: Notarize with an App Group and no profile
+        id: no_profile
+        if: env.HAS_SIGNING == 'true' && env.HAS_TEAM_ID == 'true'
+        continue-on-error: true
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+        run: |
+          make app IDENTITY="$IDENTITY" TEAM_ID="$TEAM_ID"
+          codesign -d --entitlements - Polaris.app
+          codesign -d --entitlements - Polaris.app/Contents/PlugIns/PolarisWidget.appex
+          scripts/notarize.sh
+          xcrun stapler staple Polaris.app
+          spctl -a -vvv --type exec Polaris.app
+
+      - name: Notarize with an App Group and an embedded profile
+        id: with_profile
+        if: env.HAS_SIGNING == 'true' && env.HAS_PROFILE == 'true'
+        continue-on-error: true
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+          PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
+        run: |
+          echo "$PROVISIONING_PROFILE" | base64 --decode > polaris.provisionprofile
+          make app IDENTITY="$IDENTITY" TEAM_ID="$TEAM_ID" PROFILE=polaris.provisionprofile
+          test -f Polaris.app/Contents/embedded.provisionprofile \
+            || { echo "profile was not embedded"; exit 1; }
+          scripts/notarize.sh
+          xcrun stapler staple Polaris.app
+          spctl -a -vvv --type exec Polaris.app
+
+      # A zip of the notarized build, so the runtime half of the question can
+      # be answered on a real Mac: install it, add the widget, read what the
+      # probe says about the container. ditto rather than the action's own
+      # zipping, which doesn't preserve the symlinks inside Sparkle.framework
+      # or the signature that depends on them.
+      - name: Zip the signed build
+        if: env.HAS_SIGNING == 'true'
+        run: ditto -c -k --keepParent Polaris.app Polaris-spike.zip
+
+      - name: Upload the signed build
+        if: env.HAS_SIGNING == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polaris-widget-spike
+          path: Polaris-spike.zip
+          if-no-files-found: warn
+
+      - name: Verdict
+        if: always()
+        run: |
+          {
+            echo "## Widget spike"
+            echo ""
+            echo "| Attempt | Result |"
+            echo "| --- | --- |"
+            echo "| Ad-hoc assembly, no group | passed (the job got this far) |"
+            echo "| Notarized, group, no profile | ${{ steps.no_profile.outcome }} |"
+            echo "| Notarized, group, with profile | ${{ steps.with_profile.outcome }} |"
+            echo ""
+            echo "\`skipped\` means the secret for that attempt isn't set yet."
+            echo "Notarization passing does not prove the entitlement is"
+            echo "authorised — install the artifact and read the widget."
+          } >> "$GITHUB_STEP_SUMMARY"

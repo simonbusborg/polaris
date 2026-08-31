@@ -7,6 +7,24 @@ DMG     = Polaris.dmg
 # "Developer ID Application: …" identity for notarized releases.
 IDENTITY ?= -
 
+# Team ID, used only to prefix the App Group identifier — on macOS a group
+# has to be <TEAM>.group.…, unlike iOS. It's a secret in CI. A build without
+# it still assembles and signs; it simply carries no group, and the widget
+# says so on its face instead of resolving something plausible and wrong.
+TEAM_ID ?=
+APP_GROUP = $(if $(TEAM_ID),$(TEAM_ID).group.com.weareheavy.polaris,)
+
+# A Developer ID build that claims an App Group needs that entitlement
+# authorised by a provisioning profile embedded in the bundle. Point this at
+# a .provisionprofile to embed one. Whether it is genuinely required outside
+# the App Store is the question this whole branch exists to answer.
+PROFILE ?=
+
+# The widget extension, hand-assembled like the app bundle around it.
+WIDGET  = $(APP)/Contents/PlugIns/PolarisWidget.appex
+WIDGET_BINARY = .build/apple/Products/Release/PolarisWidget
+ENT     = build
+
 # Where SwiftPM unpacked Sparkle's xcframework. The version is in the path,
 # so it's found rather than hard-coded.
 SPARKLE = $(shell find .build/artifacts -type d -name Sparkle.framework -path '*macos*' | head -1)
@@ -18,7 +36,7 @@ SPARKLE = $(shell find .build/artifacts -type d -name Sparkle.framework -path '*
 # service rejected the build for unsigned nested code.
 SIGN_NESTED = scripts/sign-sparkle.sh $(APP)
 
-.PHONY: build app dmg run test clean release
+.PHONY: build app dmg run test clean release entitlements
 
 ## Build the release binary as a universal (Apple silicon + Intel) binary.
 ## CI runs on an arm64 runner, so a plain `swift build` ships an arm64-only
@@ -28,7 +46,7 @@ build:
 	swift build -c release --arch arm64 --arch x86_64
 
 ## Assemble a proper .app bundle (needed for launch-at-login) and sign it
-app: build
+app: build entitlements
 	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp $(BINARY) $(APP)/Contents/MacOS/Polaris
@@ -36,6 +54,17 @@ app: build
 	cp Resources/Polaris.icns $(APP)/Contents/Resources/Polaris.icns
 	# The .lproj folders are what makes the app follow the system language.
 	cp -R Resources/*.lproj $(APP)/Contents/Resources/
+	# The widget is a second executable dropped into PlugIns as an .appex.
+	# Its Info.plist carries the assembled App Group so the extension can
+	# read back the identifier it was signed with rather than hard-coding a
+	# Team ID into source.
+	mkdir -p $(WIDGET)/Contents/MacOS
+	cp $(WIDGET_BINARY) $(WIDGET)/Contents/MacOS/PolarisWidget
+	sed -e 's|__APP_GROUP__|$(APP_GROUP)|' \
+		Resources/PolarisWidget-Info.plist > $(WIDGET)/Contents/Info.plist
+ifneq ($(PROFILE),)
+	cp "$(PROFILE)" $(APP)/Contents/embedded.provisionprofile
+endif
 	# SwiftPM links Sparkle but won't embed it — an executable target has no
 	# bundle to embed into. The framework is copied by hand and the binary
 	# gets an rpath pointing at it, or the app dies at launch with "Library
@@ -47,14 +76,19 @@ app: build
 	# seals the frameworks' signatures, so doing it the other way round
 	# invalidates them. --deep is Apple-discouraged and does the wrong thing
 	# with Sparkle's XPC services.
+	# The .appex is nested code too, so it is signed before the app that
+	# contains it — and with its own entitlements, because the extension is
+	# sandboxed while Polaris is not.
 ifeq ($(IDENTITY),-)
+	codesign --force --entitlements $(ENT)/PolarisWidget.entitlements -s - $(WIDGET)
 	@$(SIGN_NESTED) --force -s -
 	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework
-	codesign --force -s - $(APP)
+	codesign --force --entitlements $(ENT)/Polaris.entitlements -s - $(APP)
 else
+	codesign --force --options runtime --timestamp --entitlements $(ENT)/PolarisWidget.entitlements -s "$(IDENTITY)" $(WIDGET)
 	@$(SIGN_NESTED) --force --options runtime --timestamp -s "$(IDENTITY)"
 	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework
-	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)
+	codesign --force --options runtime --timestamp --entitlements $(ENT)/Polaris.entitlements -s "$(IDENTITY)" $(APP)
 endif
 	# Apple rejects the whole submission if one nested binary is unsigned, so
 	# prove the bundle is sound here rather than finding out from a notary
@@ -75,15 +109,21 @@ dmg:
 	rm -rf dmg-staging
 	@echo "Done → $(DMG)"
 
-## Quick run without a bundle (launch-at-login disabled in this mode)
+## Write the entitlements both binaries are signed with.
+entitlements:
+	@scripts/make-entitlements.sh $(ENT) "$(APP_GROUP)"
+
+## Quick run without a bundle (launch-at-login disabled in this mode).
+## Named explicitly: the package has two executables now, and `swift run`
+## with no argument no longer knows which one is meant.
 run:
-	swift run
+	swift run Polaris
 
 test:
 	swift test
 
 clean:
-	rm -rf .build $(APP) $(DMG) dmg-staging
+	rm -rf .build $(APP) $(DMG) dmg-staging $(ENT)
 
 ## Cut a release: make release VERSION=2.5.0
 ## Bumps Info.plist, commits, tags v2.5.0, pushes — GitHub Actions then

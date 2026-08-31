@@ -5,3 +5,6 @@
 .DS_Store
 xcuserdata/
 DerivedData/
+
+# Generated entitlements
+/build/

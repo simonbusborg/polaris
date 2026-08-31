@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.weareheavy.polaris.widget</string>
+	<key>CFBundleName</key>
+	<string>PolarisWidget</string>
+	<key>CFBundleDisplayName</key>
+	<string>Polaris</string>
+	<key>CFBundleExecutable</key>
+	<string>PolarisWidget</string>
+	<!-- An .appex is an XPC bundle, not an application. Getting this wrong
+	     is one of the ways the extension is silently never loaded. -->
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.7.2</string>
+	<key>CFBundleVersion</key>
+	<string>19</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<!-- Substituted by the Makefile from TEAM_ID; empty in a build that has
+	     no Team ID to prefix it with. See scripts/make-entitlements.sh. -->
+	<key>PolarisAppGroup</key>
+	<string>__APP_GROUP__</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+</dict>
+</plist>
