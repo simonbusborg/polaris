@@ -25,7 +25,7 @@ import PolarisShared
 /// saying so is faster than reading logs.
 enum WidgetProblem {
     case nothingPolledYet
-    case noAppGroup
+    case noContainer
     case unreadable(String)
 }
 
@@ -51,7 +51,7 @@ struct CarProvider: TimelineProvider {
         switch SharedStore.snapshotState() {
         case .ok(let value): snapshot = value; problem = nil
         case .noFile: snapshot = nil; problem = .nothingPolledYet
-        case .noContainer: snapshot = nil; problem = .noAppGroup
+        case .noContainer: snapshot = nil; problem = .noContainer
         case .unreadable(let why): snapshot = nil; problem = .unreadable(why)
         }
 
@@ -196,7 +196,7 @@ private struct NoData: View {
     private var title: String {
         switch problem {
         case .nothingPolledYet: return L("No data yet")
-        case .noAppGroup: return "No App Group"
+        case .noContainer: return "No container"
         case .unreadable: return "Can't read the snapshot"
         }
     }
@@ -204,7 +204,7 @@ private struct NoData: View {
     private var detail: String {
         switch problem {
         case .nothingPolledYet: return L("Open Polaris to sign in")
-        case .noAppGroup: return "Built without a Team ID"
+        case .noContainer: return "The App Group didn't resolve"
         case .unreadable(let why): return why
         }
     }

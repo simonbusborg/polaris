@@ -101,9 +101,36 @@ public enum SharedStore {
         return (value?.isEmpty ?? true) ? nil : value
     }
 
+    /// Where the app and the widget meet.
+    ///
+    /// A signed build uses the App Group container. A local build can't:
+    /// macOS validates an app group against the team in the signature, and an
+    /// ad-hoc build has no team, so the container URL resolves and every read
+    /// is then denied — which looks precisely like a bug in this file and
+    /// isn't one. Such a build gets no group and no sandbox either (see
+    /// scripts/make-entitlements.sh), which leaves both processes free to
+    /// meet in a plain folder instead. Same code, working widget, no
+    /// certificate needed to see it run.
     public static var containerURL: URL? {
-        guard let group = appGroup else { return nil }
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
+        if let group = appGroup {
+            // Deliberately no fallback here: a build that asked for a group
+            // and didn't get one is broken, and should say so rather than
+            // quietly write somewhere the other half won't look.
+            return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
+        }
+        return localURL
+    }
+
+    /// True when the two processes are talking through a real App Group,
+    /// which is the only arrangement a released build ever uses.
+    public static var isSharedGroup: Bool { appGroup != nil }
+
+    private static var localURL: URL? {
+        guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                  in: .userDomainMask).first else { return nil }
+        let directory = base.appendingPathComponent("Polaris", isDirectory: true)
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
     }
 
     private static var encoder: JSONEncoder {

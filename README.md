@@ -74,18 +74,25 @@ open Polaris.app
 notifications and the widget are unavailable in that mode). `make test` (or
 `swift test`) runs the test suite.
 
-The widget reaches the app's data through an App Group, and on macOS a group
-identifier has to carry the Team ID prefix. A plain `make app` has no Team ID
-to prefix it with, so it builds a widget with no container — it still installs
-and renders, it just has nothing to show. Pass your own to get a working one:
+`make install` replaces the copy in `/Applications`, restarts the app and the
+widget host, and reopens it — the loop for working on the widget, and less
+error-prone than copying the bundle by hand.
 
-```bash
-make app TEAM_ID=ABCDE12345
-```
+The widget reads what the app writes, and how they share it depends on how the
+build is signed:
 
-No provisioning profile is needed, and the App Group does not have to be
-registered in the developer portal — a Developer ID build carrying the
-entitlement notarizes and the container resolves at runtime.
+- **A release** shares an App Group container. On macOS the identifier carries
+  the Team ID prefix, so pass `TEAM_ID=ABCDE12345` to reproduce that locally
+  (the release workflow passes it from `NOTARY_TEAM_ID`). No provisioning
+  profile is needed and the group doesn't have to be registered in the
+  developer portal — a Developer ID build carrying the entitlement notarizes
+  and the container resolves at runtime.
+- **A plain `make app`** shares `~/Library/Application Support/Polaris`
+  instead, and the widget is built without the sandbox so it can read there.
+  This isn't a shortcut: macOS validates an app group against the team in the
+  signature, and an ad-hoc build has none, so it would be handed a container
+  URL and then denied every read. The fallback is what makes the widget
+  testable without a certificate.
 
 ## Releasing
 

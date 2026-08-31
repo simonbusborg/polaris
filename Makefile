@@ -36,7 +36,7 @@ SPARKLE = $(shell find .build/artifacts -type d -name Sparkle.framework -path '*
 # service rejected the build for unsigned nested code.
 SIGN_NESTED = scripts/sign-sparkle.sh $(APP)
 
-.PHONY: build app dmg run test clean release entitlements
+.PHONY: build app dmg run test clean release entitlements install
 
 ## Build the release binary as a universal (Apple silicon + Intel) binary.
 ## CI runs on an arm64 runner, so a plain `swift build` ships an arm64-only
@@ -103,6 +103,18 @@ endif
 	# verdict twenty minutes later.
 	codesign --verify --deep --strict --verbose=2 $(APP)
 	@echo "Done → open $(APP)  (or move it to /Applications)"
+
+## Replace the copy in /Applications and restart what needs restarting.
+## Copying by hand is how you end up with Polaris.app nested inside itself,
+## and the widget host caches an extension until chronod is restarted — so
+## the loop that actually tests a widget change is one command.
+install: app
+	rm -rf /Applications/Polaris.app
+	ditto $(APP) /Applications/Polaris.app
+	killall Polaris 2>/dev/null || true
+	killall chronod 2>/dev/null || true
+	open /Applications/Polaris.app
+	@echo "Installed → add the widget, or wait for the next poll"
 
 ## Package the existing bundle as a drag-to-Applications disk image.
 ## Deliberately NOT dependent on `app`: that target is phony, and re-running
