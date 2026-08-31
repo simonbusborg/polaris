@@ -32,8 +32,6 @@ comment describing where it now stands.
 
 ## Next
 
-- **[Appcast publishing fails in CI](https://github.com/simonbusborg/polaris/issues/9)** — the update feed had to be signed and
-  committed by hand for v2.6.0. Doesn't affect the released app.
 - **[A better "in use" signal](https://github.com/simonbusborg/polaris/issues/3)** — the API's charging status reads `IDLE`
   whether the car is parked or on the motorway, so driving is currently
   inferred from how fresh the odometer reading is. It works, but it can lag
@@ -51,6 +49,10 @@ can be promised before someone has tried it.
 - **[Multiple accounts](https://github.com/simonbusborg/polaris/issues/7)** — distinct from multiple cars, which already works.
 
 ## Shipped
+
+- **Appcast published by CI** (v2.7.0) — the update feed is signed and
+  committed by the release workflow. The v2.6.0 entry was the last one made
+  by hand.
 
 - **Homebrew cask** (v2.6.0) — `brew install --cask simonbusborg/polaris/polaris`,
   kept current by the release workflow.
