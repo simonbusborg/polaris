@@ -125,10 +125,19 @@ public enum SharedStore {
     /// which is the only arrangement a released build ever uses.
     public static var isSharedGroup: Bool { appGroup != nil }
 
+    /// Built from the real home directory rather than from FileManager or
+    /// NSHomeDirectory, both of which answer with the sandbox container for a
+    /// sandboxed process — so the widget would look inside its own container
+    /// while the app wrote to the actual one, and each would be certain it
+    /// was right. getpwuid reports the account's home either way, which is
+    /// also the path the sandbox exception in make-entitlements.sh names.
     private static var localURL: URL? {
-        guard let base = FileManager.default.urls(for: .applicationSupportDirectory,
-                                                  in: .userDomainMask).first else { return nil }
-        let directory = base.appendingPathComponent("Polaris", isDirectory: true)
+        var home = NSHomeDirectory()
+        if let pw = getpwuid(getuid()), let dir = pw.pointee.pw_dir {
+            home = String(cString: dir)
+        }
+        let directory = URL(fileURLWithPath: home)
+            .appendingPathComponent("Library/Application Support/Polaris", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory
     }
