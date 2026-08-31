@@ -109,8 +109,9 @@ private extension WidgetSnapshot {
         carReportedAt: nil, writtenAt: Date(), unit: .kilometers, hasImage: false
     )
 
-    /// Green while charging, orange when it's time to worry — the same three
-    /// states the menu bar icon uses.
+    /// Green while charging, orange when it's time to worry, and otherwise
+    /// the accent the user chose in System Settings — the same three states
+    /// the menu reads by.
     var tint: Color {
         if isCharging { return .green }
         if batteryPercentage <= 20 { return .orange }
@@ -119,6 +120,13 @@ private extension WidgetSnapshot {
 
     var percentText: String {
         String(format: "%.0f%%", batteryPercentage)
+    }
+
+    /// "Polestar 4 · 2026" when the car said so; the app writes an empty
+    /// string when it knows neither.
+    var displayTitle: String {
+        if let carTitle, !carTitle.isEmpty { return carTitle }
+        return "Polaris"
     }
 
     /// What the car itself last said, falling back to when we wrote the file.
@@ -158,7 +166,7 @@ private struct StatusLabel: View {
         Label(snapshot.statusText, systemImage: symbol)
             .labelStyle(.titleAndIcon)
             .font(.caption)
-            .foregroundStyle(snapshot.isCharging ? Color.green : .secondary)
+            .foregroundStyle(snapshot.isCharging ? Color.green : Color.secondary)
     }
 }
 
@@ -271,6 +279,63 @@ struct SmallCarView: View {
     }
 }
 
+// MARK: - Medium
+
+/// The size most people actually keep on a desktop: the car beside the
+/// numbers rather than above them. Everything the small one shows, with room
+/// for the render and no scrolling of the eye.
+struct MediumCarView: View {
+    let snapshot: WidgetSnapshot
+    let carImage: Image?
+
+    var body: some View {
+        HStack(spacing: 14) {
+            if let carImage {
+                carImage
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: 150, maxHeight: 104)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(snapshot.displayTitle)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .lineLimit(1)
+
+                Spacer(minLength: 2)
+
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(snapshot.percentText)
+                        .font(.system(size: 30, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    Text(snapshot.rangeText)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+
+                BatteryBar(fraction: snapshot.batteryPercentage / 100, tint: snapshot.tint)
+                    .padding(.vertical, 3)
+
+                Spacer(minLength: 2)
+
+                HStack(spacing: 4) {
+                    StatusLabel(snapshot: snapshot)
+                    Spacer(minLength: 0)
+                    Text(snapshot.asOf, format: .relative(presentation: .numeric,
+                                                          unitsStyle: .narrow))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 // MARK: - Large
 
 struct LargeCarView: View {
@@ -303,18 +368,11 @@ struct LargeCarView: View {
         return rows
     }
 
-    /// "Polestar 4 · 2026" when the car said so; the app writes an empty
-    /// string when it knows neither.
-    private var title: String {
-        if let title = snapshot.carTitle, !title.isEmpty { return title }
-        return "Polaris"
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
+                    Text(snapshot.displayTitle)
                         .font(.headline)
                         .lineLimit(1)
                     if let plate = snapshot.registrationNo, !plate.isEmpty {
@@ -378,8 +436,12 @@ struct PolarisWidgetEntryView: View {
         Group {
             if let snapshot = entry.snapshot {
                 switch family {
-                case .systemSmall: SmallCarView(snapshot: snapshot)
-                default: LargeCarView(snapshot: snapshot, carImage: entry.carImage)
+                case .systemSmall:
+                    SmallCarView(snapshot: snapshot)
+                case .systemMedium:
+                    MediumCarView(snapshot: snapshot, carImage: entry.carImage)
+                default:
+                    LargeCarView(snapshot: snapshot, carImage: entry.carImage)
                 }
             } else {
                 NoData(problem: entry.problem ?? .nothingPolledYet)
@@ -410,7 +472,7 @@ struct PolarisCarWidget: Widget {
         }
         .configurationDisplayName("Polaris")
         .description(L("Battery, range and charging status for your Polestar."))
-        .supportedFamilies([.systemSmall, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
