@@ -122,7 +122,6 @@ private extension WidgetSnapshot {
     }
 
     /// What the car itself last said, falling back to when we wrote the file.
-    /// Shown as a relative date so it keeps counting without a reload.
     var asOf: Date { carReportedAt ?? writtenAt }
 }
 
@@ -258,7 +257,11 @@ struct SmallCarView: View {
             HStack(spacing: 4) {
                 StatusLabel(snapshot: snapshot)
                 Spacer(minLength: 0)
-                Text(snapshot.asOf, style: .relative)
+                // .relative(presentation:) rather than the .relative *style*,
+                // which renders "5 hrs, 31 min" — indistinguishable from a
+                // time to full on a car that happens to be charging.
+                Text(snapshot.asOf, format: .relative(presentation: .numeric,
+                                                      unitsStyle: .narrow))
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
@@ -276,11 +279,11 @@ struct LargeCarView: View {
 
     /// Everything the car actually reported, in the order it matters. Rows
     /// the car said nothing about are left out rather than shown empty.
+    /// Range and status are already on the face of the widget, above this
+    /// grid — repeating them here filled two of the four slots with things
+    /// the eye had just read.
     private var fields: [Field] {
-        var rows = [
-            Field(key: L("Range"), value: snapshot.rangeText),
-            Field(key: L("Status"), value: snapshot.statusText)
-        ]
+        var rows: [Field] = []
         if snapshot.isCharging, let minutes = snapshot.fullInMinutes {
             rows.append(Field(key: L("Full in"),
                               value: CarFormat.shortDuration(minutes: minutes)))
@@ -331,7 +334,7 @@ struct LargeCarView: View {
                 carImage
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 96)
+                    .frame(maxWidth: .infinity, maxHeight: 128)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -355,7 +358,8 @@ struct LargeCarView: View {
 
             HStack(spacing: 4) {
                 Text(L("Updated"))
-                Text(snapshot.asOf, style: .relative)
+                Text(snapshot.asOf, format: .relative(presentation: .numeric,
+                                                      unitsStyle: .abbreviated))
             }
             .font(.caption2)
             .foregroundStyle(.tertiary)
