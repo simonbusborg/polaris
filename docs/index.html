@@ -571,6 +571,74 @@
     max-width:34ch;margin-inline:auto;will-change:transform,opacity}
 
   /* features */
+  /* The widgets, rebuilt in HTML for the same reason the menu is: a
+     screenshot goes stale the moment the layout moves. The cards carry the
+     real point sizes — 155 square, 329 by 155, 329 by 345 — so the
+     proportions on the page are the proportions on a desktop.
+
+     Always dark, like the mock menu above, and for the same reason: it means
+     one render of the car (the light-painted one) works in both themes. */
+  .widgets{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
+  .widgets h2{
+    font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
+    line-height:1.1;letter-spacing:-.02em;max-width:18ch;margin-top:.8rem;
+  }
+  .widgets .wlead{color:var(--dim);margin-top:1.2rem;max-width:52ch}
+  .widgets .wlead b{color:var(--ink);font-weight:500}
+  .widgets .wnote{color:var(--dim);font-size:.9rem;margin-top:1.6rem;max-width:52ch}
+  .wdesk{
+    display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;
+    margin-top:2.6rem;
+  }
+  .wg{
+    background:rgba(30,30,32,.86);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:20px;box-shadow:0 22px 60px var(--shadow-strong);
+    padding:14px;color:#f5f5f7;box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
+    display:flex;flex-direction:column;
+  }
+  .wg-s{width:155px;height:155px}
+  .wg-m{width:329px;height:155px;flex-direction:row;gap:12px;align-items:center}
+  .wg-l{width:329px;height:345px}
+  .wg-model{font-size:11px;color:rgba(255,255,255,.6)}
+  .wg-title{font-size:13px;font-weight:600;line-height:1.2}
+  .wg-plate{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px}
+  .wg-pct{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.05}
+  .wg-m .wg-pct,.wg-l .wg-pct{font-size:30px}
+  .wg-range{font-size:13px;font-weight:600}
+  .wg-figs{display:flex;align-items:baseline;gap:7px;margin-top:2px}
+  .wg-figs .wg-range{font-weight:400;color:rgba(255,255,255,.6)}
+  /* The bar takes the Mac's accent colour, which on the page is the site's. */
+  .wg-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.16);margin:7px 0 0}
+  .wg-bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+  .wg-foot{
+    display:flex;justify-content:space-between;align-items:center;gap:6px;
+    font-size:10px;color:rgba(255,255,255,.55);margin-top:auto;
+  }
+  .wg-state{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .wg-ico{width:11px;height:11px;flex:none}
+  .wg-ago{color:rgba(255,255,255,.4);white-space:nowrap}
+  .wg-car{display:block;width:100%;height:auto}
+  .wg-m .wg-car{width:140px;flex:none}
+  .wg-l .wg-car{margin:6px 0 2px}
+  .wg-col{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
+  .wg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .wg-head .wg-state{font-size:10px}
+  .wg-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;margin-top:11px;
+  }
+  .wg-k{display:block;font-size:10px;color:rgba(255,255,255,.4)}
+  .wg-v{display:block;font-size:12px;font-weight:500;margin-top:1px}
+  .wg-updated{font-size:10px;color:rgba(255,255,255,.4);margin-top:auto}
+  @media (max-width:420px){
+    /* Below the medium card's own width the row would overflow, so the
+       cards scale together rather than one of them being cropped. */
+    .wdesk{transform:scale(.86);transform-origin:top left}
+  }
+
   .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
   .grid{
     margin-top:3rem;display:grid;grid-template-columns:repeat(3,1fr);
@@ -850,6 +918,7 @@
     <nav id="siteMenu">
       <a href="#menu">The menu</a>
       <a href="#notifications">Notifications</a>
+      <a href="#widgets">Widgets</a>
       <a href="#features">Features</a>
       <a href="#get">Get started</a>
       <button class="theme-dl" id="themeToggle" type="button" aria-label="Switch between light and dark">
@@ -1046,6 +1115,71 @@
     </div>
   </section>
 
+  <section class="widgets" id="widgets">
+    <div class="wrap">
+      <div class="kicker rv">On the desktop</div>
+      <h2 class="rv">The same car, without the click.</h2>
+      <p class="wlead rv">Three sizes. Small is the state of charge, range and
+      what the car is doing. Medium adds the studio render of <b>your exact
+      car</b>. Large adds everything else the menu knows — charger, odometer,
+      and the time to full while it's charging.</p>
+      <div class="wdesk rv">
+
+        <div class="wg wg-s">
+          <div class="wg-model">Polestar 4</div>
+          <div class="wg-pct">77%</div>
+          <div class="wg-bar"><i style="width:77%"></i></div>
+          <div class="wg-range">381 km</div>
+          <div class="wg-foot">
+            <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+            <span class="wg-ago">5h ago</span>
+          </div>
+        </div>
+
+        <div class="wg wg-m">
+          <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+          <div class="wg-col">
+            <div class="wg-title">Polestar 4 · 2025</div>
+            <div class="wg-figs">
+              <span class="wg-pct">77%</span>
+              <span class="wg-range">381 km</span>
+            </div>
+            <div class="wg-bar"><i style="width:77%"></i></div>
+            <div class="wg-foot">
+              <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+              <span class="wg-ago">5h ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="wg wg-l">
+          <div class="wg-head">
+            <div>
+              <div class="wg-title">Polestar 4 · 2025</div>
+              <div class="wg-plate">CX 41 927</div>
+            </div>
+            <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+          </div>
+          <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+          <div class="wg-figs">
+            <span class="wg-pct">77%</span>
+            <span class="wg-range">381 km</span>
+          </div>
+          <div class="wg-bar"><i style="width:77%"></i></div>
+          <div class="wg-grid">
+            <div><span class="wg-k">Charger</span><span class="wg-v">Disconnected</span></div>
+            <div><span class="wg-k">Odometer</span><span class="wg-v">3.097 km</span></div>
+          </div>
+          <div class="wg-updated">Updated 5 hr ago</div>
+        </div>
+
+      </div>
+      <p class="wnote rv">The widget never talks to Polestar. It reads what the
+      app last fetched, so putting one on the desktop doesn't add a single
+      request to your car. The bar follows your Mac's accent colour.</p>
+    </div>
+  </section>
+
   <section class="features" id="features">
     <div class="kicker rv">Why Polaris</div>
     <h2 class="rv">Small. Native. Yours.</h2>
@@ -1213,6 +1347,8 @@
   document.querySelectorAll('img.car-light').forEach(img => img.src = car.light);
   // The mock menu is always dark, so it always gets the light-paint render.
   document.getElementById('panelCar').src = car.dark;
+  // The widget cards are dark too, so they take the same light-painted car.
+  document.querySelectorAll('img.wg-car').forEach(img => img.src = car.dark);
   document.querySelector('.panel .model').textContent = car.model;
   // Without the year: behind the render it reads as a wordmark, not a spec.
   // The strip is filled with as many copies as the viewport needs plus one,

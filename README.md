@@ -22,10 +22,10 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   the gRPC battery service the GraphQL API doesn't cover
 - Odometer, service interval and fluid warnings
 - Notifications when charging starts, completes, or the charger reports a fault
-- A desktop widget in two sizes: small for battery, range and state, large for
-  the studio render of your actual car and everything the menu shows about it.
-  It reads what the app last fetched rather than polling on its own, so adding
-  it doesn't double the traffic to Polestar
+- A desktop widget in three sizes: small for battery, range and state, medium
+  for those beside the studio render of your actual car, large for everything
+  the menu shows about it. It reads what the app last fetched rather than
+  polling on its own, so adding one doesn't add a request to your car
 - Choose what the menu bar shows
 - Follows the system language in twelve languages: English, Danish, Swedish,
   Norwegian, German, Spanish, Italian, Dutch, Finnish, French, Portuguese and
