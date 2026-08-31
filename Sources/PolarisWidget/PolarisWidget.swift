@@ -23,6 +23,10 @@ struct CarEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
     let carImage: Image?
+    /// Whether the shared container resolved at all. Without it there is
+    /// nowhere to read from, which is a different problem from an app that
+    /// simply hasn't polled yet — and the two used to render identically.
+    let hasContainer: Bool
 }
 
 struct CarProvider: TimelineProvider {
@@ -31,7 +35,7 @@ struct CarProvider: TimelineProvider {
     /// real snapshot loads. Plausible numbers rather than zeroes, because a
     /// widget showing 0% in the picker looks broken.
     private var placeholderEntry: CarEntry {
-        CarEntry(date: Date(), snapshot: .placeholder, carImage: nil)
+        CarEntry(date: Date(), snapshot: .placeholder, carImage: nil, hasContainer: true)
     }
 
     private func currentEntry() -> CarEntry {
@@ -41,7 +45,8 @@ struct CarProvider: TimelineProvider {
            let nsImage = NSImage(data: data) {
             image = Image(nsImage: nsImage)
         }
-        return CarEntry(date: Date(), snapshot: snapshot, carImage: image)
+        return CarEntry(date: Date(), snapshot: snapshot, carImage: image,
+                        hasContainer: SharedStore.containerURL != nil)
     }
 
     func placeholder(in context: Context) -> CarEntry { placeholderEntry }
@@ -144,17 +149,32 @@ private struct Field: View, Identifiable {
 }
 
 private struct NoData: View {
+    let hasContainer: Bool
+
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: "bolt.car")
+            Image(systemName: hasContainer ? "bolt.car" : "exclamationmark.triangle")
                 .font(.title)
                 .foregroundStyle(.secondary)
-            Text(L("No data yet"))
-                .font(.headline)
-            Text(L("Open Polaris to sign in"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            if hasContainer {
+                Text(L("No data yet"))
+                    .font(.headline)
+                Text(L("Open Polaris to sign in"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            } else {
+                // Deliberately not translated: no released build can show
+                // this — it means the app was built without a Team ID, so
+                // there is no App Group to read through. It is a message to
+                // whoever built it, not to a user.
+                Text("No App Group")
+                    .font(.headline)
+                Text("Built without a Team ID")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -312,7 +332,7 @@ struct PolarisWidgetEntryView: View {
                 default: LargeCarView(snapshot: snapshot, carImage: entry.carImage)
                 }
             } else {
-                NoData()
+                NoData(hasContainer: entry.hasContainer)
             }
         }
         .widgetURL(URL(string: "polaris://open"))
