@@ -16,10 +16,14 @@
 	     is one of the ways the extension is silently never loaded. -->
 	<key>CFBundlePackageType</key>
 	<string>XPC!</string>
+	<!-- Substituted by the Makefile from the app's own Info.plist. Hardcoded,
+	     these drifted the moment a release was cut: `make release` bumps the
+	     app and knew nothing about the extension beside it, so the appex kept
+	     claiming whatever version it was written with. -->
 	<key>CFBundleShortVersionString</key>
-	<string>2.7.2</string>
+	<string>__VERSION__</string>
 	<key>CFBundleVersion</key>
-	<string>19</string>
+	<string>__BUILD__</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>13.0</string>
 	<!-- Substituted by the Makefile from TEAM_ID; empty in a build that has

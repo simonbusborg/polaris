@@ -20,6 +20,11 @@ APP_GROUP = $(if $(TEAM_ID),$(TEAM_ID).group.com.weareheavy.polaris,)
 # the App Store is the question this whole branch exists to answer.
 PROFILE ?=
 
+# Read from the app's Info.plist so the extension can never claim a different
+# version from the app containing it — `make release` bumps one file.
+VERSION = $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)
+BUILD   = $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/Info.plist)
+
 # The widget extension, hand-assembled like the app bundle around it.
 WIDGET  = $(APP)/Contents/PlugIns/PolarisWidget.appex
 WIDGET_BINARY = .build/apple/Products/Release/PolarisWidget
@@ -64,6 +69,8 @@ app: build entitlements
 	mkdir -p $(WIDGET)/Contents/MacOS
 	cp $(WIDGET_BINARY) $(WIDGET)/Contents/MacOS/PolarisWidget
 	sed -e 's|__APP_GROUP__|$(APP_GROUP)|' \
+		-e 's|__VERSION__|$(VERSION)|' \
+		-e 's|__BUILD__|$(BUILD)|' \
 		Resources/PolarisWidget-Info.plist > $(WIDGET)/Contents/Info.plist
 	# NSLocalizedString resolves against Bundle.main, which for the widget is
 	# the .appex — so it needs its own copy of the translations or it renders
