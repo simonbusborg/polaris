@@ -88,11 +88,12 @@ build is signed:
   developer portal — a Developer ID build carrying the entitlement notarizes
   and the container resolves at runtime.
 - **A plain `make app`** shares `~/Library/Application Support/Polaris`
-  instead, and the widget is built without the sandbox so it can read there.
+  instead, and the widget is signed with a sandbox exception for that folder.
   This isn't a shortcut: macOS validates an app group against the team in the
   signature, and an ad-hoc build has none, so it would be handed a container
-  URL and then denied every read. The fallback is what makes the widget
-  testable without a certificate.
+  URL and then denied every read. The sandbox itself stays either way —
+  WidgetKit won't register an unsandboxed extension, and a widget that isn't
+  registered never appears in the gallery at all.
 
 ## Releasing
 

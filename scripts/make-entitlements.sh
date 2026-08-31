@@ -7,13 +7,15 @@
 # only see what the app leaves in the shared container. On macOS the group
 # identifier must carry the Team ID prefix, which is a secret in CI.
 #
-# A build with no Team ID gets neither the group nor the sandbox, and that
-# pairing is the point. macOS validates an app group against the team in the
-# signature, so an ad-hoc build can never be granted one: the container URL
-# resolves and every read is then denied, which looks exactly like a bug in
-# the app. Dropping the sandbox with it lets the widget fall back to a plain
-# directory both processes can reach, so a local `make app` produces a widget
-# that actually works. See SharedStore.containerURL for the other half.
+# A build with no Team ID can't have one: macOS validates an app group
+# against the team in the signature, and an ad-hoc build has no team, so the
+# container URL resolves and every read is denied — which looks exactly like
+# a bug in the app. Such a build gets a sandbox exception for a plain folder
+# instead, and SharedStore points both processes there.
+#
+# The sandbox itself stays on either way. WidgetKit will not register an
+# unsandboxed extension at all: the widget simply stops appearing in the
+# gallery, with nothing anywhere to say why.
 set -euo pipefail
 
 OUT="$1"
@@ -44,11 +46,16 @@ EOF
 EOF
 } > "$OUT/Polaris.entitlements"
 
-sandbox_block() {
-    test -n "$GROUP" || return 0
+# Where a local build's widget is allowed to read, since it has no group.
+# An absolute path baked into the entitlements is only defensible because
+# these are the entitlements of a build that never leaves this machine.
+local_exception() {
+    test -z "$GROUP" || return 0
     cat <<EOF
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+	<array>
+		<string>$HOME/Library/Application Support/Polaris/</string>
+	</array>
 EOF
 }
 
@@ -58,8 +65,10 @@ EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
 EOF
-    sandbox_block
+    local_exception
     group_block
     cat <<'EOF'
 </dict>
@@ -70,5 +79,5 @@ EOF
 if [ -n "$GROUP" ]; then
     echo "entitlements: App Group $GROUP"
 else
-    echo "entitlements: no TEAM_ID — local build, widget unsandboxed on a shared folder"
+    echo "entitlements: no TEAM_ID — local build reading $HOME/Library/Application Support/Polaris"
 fi
