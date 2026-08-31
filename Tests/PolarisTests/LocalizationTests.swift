@@ -45,9 +45,15 @@ final class LocalizationTests: XCTestCase {
     }
 
     func testEveryLocalizedStringInTheSourceHasATranslation() throws {
-        let sources = Self.root.appendingPathComponent("Sources/Polaris")
-        let files = try FileManager.default.contentsOfDirectory(at: sources,
-                                                               includingPropertiesForKeys: nil)
+        // All three targets: the widget and the shared code localize through
+        // the same table, and a key only the widget uses would otherwise go
+        // unchecked.
+        let files = try ["Sources/Polaris", "Sources/PolarisShared", "Sources/PolarisWidget"]
+            .flatMap { dir in
+                try FileManager.default.contentsOfDirectory(
+                    at: Self.root.appendingPathComponent(dir),
+                    includingPropertiesForKeys: nil)
+            }
         // Every string literal appearing inside an L(...) call — the ternary in
         // the service row puts two of them in one call.
         // Parens inside a quoted key ("Update Available (v%@)…") must not end

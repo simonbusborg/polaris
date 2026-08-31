@@ -1,11 +1,9 @@
 #!/bin/bash
 # Submit Polaris.app for notarization and fail on the verdict.
 #
-# A copy of the release workflow's notarization step, so the spike proves
-# something about the path releases actually take. If the widget ships, the
-# release workflow should call this instead of keeping a second copy —
-# until then release.yml is deliberately left untouched, because a spike
-# branch has no business changing how releases are cut.
+# Called by the release workflow. It lives in a script rather than inline in
+# the YAML so the same submission can be run by hand when a release needs
+# re-notarizing, and so there is only one copy of it to get wrong.
 #
 # Expects APPLE_ID, TEAM_ID and APP_PASSWORD in the environment.
 set -euo pipefail

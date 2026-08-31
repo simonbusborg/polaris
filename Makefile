@@ -50,7 +50,10 @@ app: build entitlements
 	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp $(BINARY) $(APP)/Contents/MacOS/Polaris
-	cp Resources/Info.plist $(APP)/Contents/Info.plist
+	# The app reads back the App Group it was signed with rather than
+	# hard-coding a Team ID, so the identifier is substituted here too.
+	sed -e 's|__APP_GROUP__|$(APP_GROUP)|' \
+		Resources/Info.plist > $(APP)/Contents/Info.plist
 	cp Resources/Polaris.icns $(APP)/Contents/Resources/Polaris.icns
 	# The .lproj folders are what makes the app follow the system language.
 	cp -R Resources/*.lproj $(APP)/Contents/Resources/
@@ -62,6 +65,11 @@ app: build entitlements
 	cp $(WIDGET_BINARY) $(WIDGET)/Contents/MacOS/PolarisWidget
 	sed -e 's|__APP_GROUP__|$(APP_GROUP)|' \
 		Resources/PolarisWidget-Info.plist > $(WIDGET)/Contents/Info.plist
+	# NSLocalizedString resolves against Bundle.main, which for the widget is
+	# the .appex — so it needs its own copy of the translations or it renders
+	# English inside a Danish system.
+	mkdir -p $(WIDGET)/Contents/Resources
+	cp -R Resources/*.lproj $(WIDGET)/Contents/Resources/
 ifneq ($(PROFILE),)
 	cp "$(PROFILE)" $(APP)/Contents/embedded.provisionprofile
 endif

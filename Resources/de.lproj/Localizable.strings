@@ -86,3 +86,7 @@
 "General" = "Allgemein";
 "Notifications" = "Mitteilungen";
 "Updates" = "Updates";
+
+/* Widget */
+"Open Polaris to sign in" = "Polaris öffnen und anmelden";
+"Battery, range and charging status for your Polestar." = "Batterie, Reichweite und Ladestatus deines Polestar.";

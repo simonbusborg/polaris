@@ -86,3 +86,7 @@
 "General" = "Yleiset";
 "Notifications" = "Ilmoitukset";
 "Updates" = "Päivitykset";
+
+/* Widget */
+"Open Polaris to sign in" = "Avaa Polaris ja kirjaudu sisään";
+"Battery, range and charging status for your Polestar." = "Polestarisi akku, toimintamatka ja lataustila.";

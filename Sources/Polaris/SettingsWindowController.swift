@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import PolarisShared
 
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
@@ -339,6 +340,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
         Accounts.remove(Preferences.email)
+        // The removed car may be the one on the desktop; the next poll fills
+        // the widget with whichever car is now active.
+        WidgetBridge.clear()
         window?.orderOut(nil)
         onSave()
     }

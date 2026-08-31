@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import PolarisShared
 
 final class StatusItemController {
 
@@ -54,6 +55,13 @@ final class StatusItemController {
         statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Polaris")
         statusItem.button?.title = " " + barTitle(for: data)
         statusItem.menu = buildMenu(data: data, error: error)
+    }
+
+    /// Drop the menu as though the icon had been clicked. Clicking the
+    /// widget lands here: an LSUIElement app has no window to bring forward,
+    /// so the menu is the only thing there is to open.
+    func popMenu() {
+        statusItem.button?.performClick(nil)
     }
 
     /// Menu bar icon by car state: filled bolted car while charging, bolted
@@ -297,55 +305,26 @@ final class StatusItemController {
         return item
     }
 
-    /// Takes the already-normalized status key (prefixes stripped), e.g. "IDLE".
+    // The formatting itself lives in PolarisShared so the widget renders the
+    // same numbers; these stay as the menu's call sites (and their tests)
+    // already know them, and supply the unit the extension can't read.
+
     private static func humanStatus(_ key: String) -> String {
-        switch key {
-        case "CHARGING": return L("Charging")
-        case "IDLE": return L("Idle")
-        case "DONE": return L("Done")
-        case "DISCHARGING": return L("Discharging")
-        case "ERROR": return L("Error")
-        case "FAULT": return L("Fault")
-        case "SCHEDULED": return L("Scheduled")
-        case "SMART_CHARGING": return L("Smart charging")
-        default:
-            return key.replacingOccurrences(of: "_", with: " ").capitalized
-        }
+        CarFormat.humanStatus(key)
     }
 
     static func shortDuration(minutes: Int) -> String {
-        if minutes < 60 { return "\(minutes)min" }
-        let h = minutes / 60, m = minutes % 60
-        return m == 0 ? "\(h)h" : "\(h)h\(m)m"
+        CarFormat.shortDuration(minutes: minutes)
     }
 
-    /// "7.2 kW" below 10 kW, "150 kW" above — DC fast charging doesn't
-    /// need a decimal.
     static func kilowatts(watts: Int, locale: Locale = .current) -> String {
-        let kw = Double(watts) / 1000
-        // The separator is locale's, not C's: 7,2 kW in Danish, 7.2 kW in English.
-        // Injectable so tests can pin a locale instead of inheriting the
-        // machine's — the assertions below are written with a decimal point.
-        let f = NumberFormatter()
-        f.locale = locale
-        f.numberStyle = .decimal
-        f.minimumFractionDigits = kw >= 10 ? 0 : 1
-        f.maximumFractionDigits = kw >= 10 ? 0 : 1
-        return "\(f.string(from: NSNumber(value: kw)) ?? "\(Int(kw))") kW"
+        CarFormat.kilowatts(watts: watts, locale: locale)
     }
 
-    /// "412 km" / "256 mi"; `grouped` adds thousands separators (odometer).
-    /// `locale` only reaches the grouped path — the plain one is an integer
-    /// and a suffix, with no separator to get wrong.
     static func distance(km: Int, grouped: Bool = false,
                          unit: DistanceUnit = Preferences.distanceUnit,
                          locale: Locale = .current) -> String {
-        let value = unit.convert(km: km)
-        if grouped {
-            let f = NumberFormatter(); f.locale = locale; f.numberStyle = .decimal
-            return "\(f.string(from: NSNumber(value: value)) ?? "\(value)") \(unit.suffix)"
-        }
-        return "\(value) \(unit.suffix)"
+        CarFormat.distance(km: km, grouped: grouped, unit: unit, locale: locale)
     }
 
     static func batteryColor(percentage: Double, charging: Bool) -> NSColor {

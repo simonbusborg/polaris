@@ -10,6 +10,7 @@
 
 import Foundation
 import CryptoKit
+import PolarisShared
 
 struct CarData {
     let batteryPercentage: Double

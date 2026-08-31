@@ -1,5 +1,6 @@
 import XCTest
 @testable import Polaris
+import PolarisShared
 
 final class FormattingTests: XCTestCase {
 

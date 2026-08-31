@@ -30,6 +30,24 @@
 	<string>13.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<!-- Substituted by the Makefile from TEAM_ID, and empty in a build that
+	     has no Team ID to prefix it with. The app and the widget read the
+	     same key so neither hard-codes a Team ID. -->
+	<key>PolarisAppGroup</key>
+	<string>__APP_GROUP__</string>
+	<!-- Clicking the widget opens polaris://open, which drops the menu bar
+	     menu down rather than bringing up a window this app doesn't have. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.weareheavy.polaris</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>polaris</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSHumanReadableCopyright</key>
 	<string>© Simon Busborg. Not affiliated with Polestar.</string>
 </dict>

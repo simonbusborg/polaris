@@ -74,11 +74,16 @@ jobs:
           echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
 
       - name: Build Polaris.app
+        # TEAM_ID prefixes the App Group the widget reads through; without it
+        # the app still builds and signs, and the widget reports that it has
+        # no container rather than guessing one.
+        env:
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
         run: |
           if [ "$HAS_SIGNING" = "true" ]; then
-            make app IDENTITY="$IDENTITY"
+            make app IDENTITY="$IDENTITY" TEAM_ID="$TEAM_ID"
           else
-            make app
+            make app TEAM_ID="$TEAM_ID"
           fi
 
       - name: Notarize and staple
@@ -88,19 +93,7 @@ jobs:
           TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
           APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: |
-          ditto -c -k --keepParent Polaris.app notarize.zip
-          # --wait exits 0 even when the verdict is Invalid, and the verdict
-          # alone doesn't say what Apple objected to. Fetch the log and fail
-          # on it, or a rejection turns into a confusing stapler error.
-          ID=$(xcrun notarytool submit notarize.zip \
-                 --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" \
-                 --output-format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
-          xcrun notarytool wait "$ID" \
-            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" || true
-          xcrun notarytool log "$ID" \
-            --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" notary.json || true
-          cat notary.json
-          python3 -c 'import json,sys; d=json.load(open("notary.json")); sys.exit(0 if d.get("status")=="Accepted" else 1)'
+          scripts/notarize.sh
           xcrun stapler staple Polaris.app
 
       - name: Package (dmg + zip)

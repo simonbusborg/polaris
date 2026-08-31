@@ -86,3 +86,7 @@
 "General" = "Algemeen";
 "Notifications" = "Berichtgeving";
 "Updates" = "Updates";
+
+/* Widget */
+"Open Polaris to sign in" = "Open Polaris om in te loggen";
+"Battery, range and charging status for your Polestar." = "Batterij, actieradius en laadstatus van je Polestar.";

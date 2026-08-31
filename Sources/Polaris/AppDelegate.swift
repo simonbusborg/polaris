@@ -5,6 +5,7 @@
 
 import AppKit
 import ServiceManagement
+import PolarisShared
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -39,6 +40,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             showSettings()
         }
+    }
+
+    /// polaris://open — sent by a click on the desktop widget.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard urls.contains(where: { $0.scheme == "polaris" }) else { return }
+        statusController.popMenu()
     }
 
     /// Menu-bar-only apps have no visible main menu, but key equivalents
@@ -160,6 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusController.cars = Accounts.allCars
         statusController.activeVin = Preferences.vin
         statusController.render(data: data, error: nil, authenticated: true)
+        WidgetBridge.publish(data)
         scheduleRefresh()
     }
 

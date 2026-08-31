@@ -9,6 +9,7 @@
 
 import AppKit
 import UserNotifications
+import PolarisShared
 
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
 

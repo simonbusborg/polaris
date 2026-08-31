@@ -2,8 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # feature/** so work in progress is checked before it becomes a pull
+    # request — this is what the widget spike had its own workflow for.
+    branches: [main, "feature/**"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-test:

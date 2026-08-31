@@ -13,9 +13,20 @@ let package = Package(
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0")
     ],
     targets: [
+        // Code both the app and the widget need. Small on purpose: the
+        // snapshot they exchange, the formatting they must agree on, and the
+        // string lookup. Nothing that talks to Polestar lives here — the
+        // extension has no business holding a session.
+        .target(
+            name: "PolarisShared",
+            path: "Sources/PolarisShared"
+        ),
         .executableTarget(
             name: "Polaris",
-            dependencies: [.product(name: "Sparkle", package: "Sparkle")],
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle"),
+                "PolarisShared"
+            ],
             path: "Sources/Polaris"
         ),
         // The widget is a second executable, hand-assembled into an .appex
@@ -30,6 +41,7 @@ let package = Package(
         // Polaris is only ever the root.
         .executableTarget(
             name: "PolarisWidget",
+            dependencies: ["PolarisShared"],
             path: "Sources/PolarisWidget",
             linkerSettings: [
                 .unsafeFlags(["-Xlinker", "-e", "-Xlinker", "_NSExtensionMain"])
@@ -37,7 +49,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PolarisTests",
-            dependencies: ["Polaris"],
+            dependencies: ["Polaris", "PolarisShared"],
             path: "Tests/PolarisTests"
         )
     ]
