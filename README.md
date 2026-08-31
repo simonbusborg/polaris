@@ -137,3 +137,8 @@ Not affiliated with Polestar. Use at your own risk.
 ## License
 
 [MIT](LICENSE)
+
+The MIT license covers the source code. It does not grant rights to the
+Polaris name or the app icon — please pick your own if you ship a fork.
+"Polestar" is a trademark of Polestar Performance AB, which is not
+affiliated with this project.
