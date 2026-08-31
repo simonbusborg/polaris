@@ -3,8 +3,9 @@
 Your Polestar, in the menu bar.
 
 Polaris is a tiny native macOS app that shows your Polestar's battery, range,
-and charging status in the menu bar. Pure AppKit — no Electron, no SwiftUI,
-no background services. It talks only to Polestar's official API.
+and charging status in the menu bar, and on the desktop as a widget. Pure
+AppKit — no Electron, no background services; the widget is SwiftUI because
+WidgetKit leaves no choice. It talks only to Polestar's official API.
 
 Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 (the same app for Tesla).
@@ -21,6 +22,10 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   the gRPC battery service the GraphQL API doesn't cover
 - Odometer, service interval and fluid warnings
 - Notifications when charging starts, completes, or the charger reports a fault
+- A desktop widget in two sizes: small for battery, range and state, large for
+  the studio render of your actual car and everything the menu shows about it.
+  It reads what the app last fetched rather than polling on its own, so adding
+  it doesn't double the traffic to Polestar
 - Choose what the menu bar shows
 - Follows the system language in twelve languages: English, Danish, Swedish,
   Norwegian, German, Spanish, Italian, Dutch, Finnish, French, Portuguese and
@@ -65,9 +70,22 @@ make app
 open Polaris.app
 ```
 
-`make run` builds and runs the bare binary for quick iteration (launch-at-login
-and notifications are unavailable in that mode). `make test` (or `swift test`)
-runs the test suite.
+`make run` builds and runs the bare binary for quick iteration (launch-at-login,
+notifications and the widget are unavailable in that mode). `make test` (or
+`swift test`) runs the test suite.
+
+The widget reaches the app's data through an App Group, and on macOS a group
+identifier has to carry the Team ID prefix. A plain `make app` has no Team ID
+to prefix it with, so it builds a widget with no container — it still installs
+and renders, it just has nothing to show. Pass your own to get a working one:
+
+```bash
+make app TEAM_ID=ABCDE12345
+```
+
+No provisioning profile is needed, and the App Group does not have to be
+registered in the developer portal — a Developer ID build carrying the
+entitlement notarizes and the container resolves at runtime.
 
 ## Releasing
 

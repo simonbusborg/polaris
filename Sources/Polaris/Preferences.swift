@@ -9,6 +9,23 @@
 import Foundation
 import PolarisShared
 
+/// The raw values are what sits in UserDefaults and must never be translated
+/// — a Danish user's stored setting has to still parse after they switch the
+/// system to German. `title` is the translated face of the same case.
+enum DisplayOption: String, CaseIterable {
+    case batteryPercentage = "Battery Percentage"
+    case rangeKm = "Range"
+    case chargeTime = "Charge Time"
+
+    var title: String {
+        switch self {
+        case .batteryPercentage: return L("Battery Percentage")
+        case .rangeKm: return L("Range")
+        case .chargeTime: return L("Charge Time")
+        }
+    }
+}
+
 enum Preferences {
     private static let d = UserDefaults.standard
 
