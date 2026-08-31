@@ -15,6 +15,7 @@
 import WidgetKit
 import SwiftUI
 import AppKit
+import ImageIO
 import PolarisShared
 
 // MARK: - Timeline
@@ -38,21 +39,40 @@ struct CarProvider: TimelineProvider {
         CarEntry(date: Date(), snapshot: .placeholder, carImage: nil, hasContainer: true)
     }
 
-    private func currentEntry() -> CarEntry {
+    private func currentEntry(family: WidgetFamily) -> CarEntry {
         let snapshot = SharedStore.loadSnapshot()
         var image: Image?
-        if snapshot?.hasImage == true, let data = SharedStore.loadImage(),
-           let nsImage = NSImage(data: data) {
-            image = Image(nsImage: nsImage)
+        // Only the large widget draws the car, and only it pays for loading
+        // it: an extension has a hard memory ceiling, and a studio render is
+        // several megabytes of PNG that decodes to a great deal more.
+        if family != .systemSmall, snapshot?.hasImage == true {
+            image = Self.carImage()
         }
         return CarEntry(date: Date(), snapshot: snapshot, carImage: image,
                         hasContainer: SharedStore.containerURL != nil)
     }
 
+    /// Decoded straight to the size it's drawn at. ImageIO reads the header
+    /// and produces the thumbnail without ever holding the full-resolution
+    /// bitmap, which is the difference between a widget that renders and one
+    /// the system kills for using too much memory.
+    private static func carImage(maxPixels: Int = 800) -> Image? {
+        guard let data = SharedStore.loadImage(),
+              let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixels
+        ]
+        guard let thumbnail = CGImageSourceCreateThumbnailAtIndex(
+                source, 0, options as CFDictionary) else { return nil }
+        return Image(nsImage: NSImage(cgImage: thumbnail, size: .zero))
+    }
+
     func placeholder(in context: Context) -> CarEntry { placeholderEntry }
 
     func getSnapshot(in context: Context, completion: @escaping (CarEntry) -> Void) {
-        completion(context.isPreview ? placeholderEntry : currentEntry())
+        completion(context.isPreview ? placeholderEntry : currentEntry(family: context.family))
     }
 
     /// The app reloads the timeline whenever it writes something new, so this
@@ -60,7 +80,8 @@ struct CarProvider: TimelineProvider {
     /// process wasn't around to be told.
     func getTimeline(in context: Context, completion: @escaping (Timeline<CarEntry>) -> Void) {
         let next = Date().addingTimeInterval(15 * 60)
-        completion(Timeline(entries: [currentEntry()], policy: .after(next)))
+        completion(Timeline(entries: [currentEntry(family: context.family)],
+                            policy: .after(next)))
     }
 }
 
