@@ -1822,6 +1822,11 @@ uniform float uTime;
 uniform float uPixelSize;
 uniform vec2  uPointer;
 uniform float uReach;
+// A word drawn on a 2D canvas and handed over as a texture. Sampled per
+// cell like everything else, so the letters are built out of the same
+// raster rather than laid over it.
+uniform sampler2D uMask;
+uniform float uHasMask;
 out vec4 fragColor;
 
 // Bayer-matrix: the steps an ordered dither thresholds against.
@@ -1883,6 +1888,12 @@ void main(){
   float d = length(cellCenter - uPointer) / max(uReach, 1.0);
   feed += pow(max(0.0, 1.0 - d * d), 2.0) * 0.42;
 
+  if (uHasMask > 0.5) {
+    vec2 muv = cellCenter / uResolution;
+    muv.y = 1.0 - muv.y;          // the canvas counts down, gl_FragCoord up
+    feed += texture(uMask, muv).r * 0.5;
+  }
+
   float bayer = Bayer8(fragCoord / uPixelSize) - 0.5;
 
   // Tint across the diagonal, drifting slowly so the colour moves even where
@@ -1934,6 +1945,43 @@ void main(){
     gl.uniform3fv(gl.getUniformLocation(prog, 'uStopB'), stops[1]);
     gl.uniform3fv(gl.getUniformLocation(prog, 'uStopC'), stops[2]);
     gl.uniform1f(gl.getUniformLocation(prog, 'uGradient'), opts.gradient ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(prog, 'uHasMask'), opts.word ? 1 : 0);
+
+    // The word is rasterised by the 2D canvas — laying out type in a shader
+    // would be a lot of work to arrive back at what fillText already does.
+    let maskCanvas = null, maskTex = null;
+    if (opts.word) {
+      maskCanvas = document.createElement('canvas');
+      maskTex = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, maskTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.uniform1i(gl.getUniformLocation(prog, 'uMask'), 0);
+    }
+
+    const drawMask = (w, h) => {
+      maskCanvas.width = w; maskCanvas.height = h;
+      const c = maskCanvas.getContext('2d');
+      const word = opts.word;
+      // Sized to the window rather than to a fixed point size: the field is
+      // 100vw, and a word that doesn't span it reads as a caption.
+      const size = Math.min(h * 0.5, (w * 0.86) / (word.length * 0.66));
+      c.clearRect(0, 0, w, h);
+      c.fillStyle = '#fff';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      // Ignored by browsers that don't have it, which costs the tracking
+      // and nothing else.
+      c.letterSpacing = Math.round(size * 0.1) + 'px';
+      c.font = '600 ' + Math.round(size) + "px 'Figtree',system-ui,sans-serif";
+      c.fillText(word, w / 2, h / 2);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, maskTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, maskCanvas);
+    };
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -1956,6 +2004,7 @@ void main(){
       gl.viewport(0, 0, w, h);
       gl.uniform2f(uRes, w, h);
       gl.uniform1f(uReach, Math.min(320, w * 0.3));
+      if (opts.word) drawMask(w, h);
     };
 
     // Two GL contexts on one page is two rAF loops; neither needs to run
@@ -2003,12 +2052,24 @@ void main(){
       if (!still.matches) requestAnimationFrame(draw);
     };
     requestAnimationFrame(draw);
+    // The word is first rasterised in whatever font is loaded at the time,
+    // which early on is the system one. Redrawn once Figtree arrives, or the
+    // letterforms in the raster would be the fallback's.
+    if (opts.word && document.fonts) {
+      document.fonts.ready.then(() => {
+        if (canvas.width && canvas.height) drawMask(canvas.width, canvas.height);
+      });
+    }
     // Reduced motion gets the field, drawn once and left standing still.
     still.addEventListener('change', () => { if (!still.matches) requestAnimationFrame(draw); });
   };
 
   makeDitherField('notifyField', {gradient: true});
-  makeDitherField('wField', {gradient: true, focus: () => document.getElementById('wCard')});
+  makeDitherField('wField', {
+    gradient: true,
+    focus: () => document.getElementById('wCard'),
+    word: 'POLARIS',
+  });
   makeDitherField('statsField', {gradient: true});
 
   // Sticky nav: inverted and transparent while it sits on the hero photo,
