@@ -572,47 +572,69 @@
 
   /* features */
   /* The widgets, rebuilt in HTML for the same reason the menu is: a
-     screenshot goes stale the moment the layout moves. The cards carry the
-     real point sizes — 155 square, 329 by 155, 329 by 345 — so the
-     proportions on the page are the proportions on a desktop.
+     screenshot goes stale the moment the layout moves. The card carries the
+     real point sizes — 155 square, 329 by 155, 329 by 345 — so scrolling
+     through them is scrolling through the actual proportions.
+
+     One card that resizes, rather than three side by side: the sizes are a
+     choice between the same widget, not a set of three.
 
      Always dark, like the mock menu above, and for the same reason: it means
-     one render of the car (the light-painted one) works in both themes. */
-  .widgets{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
+     one render of the car works in both themes. */
+  .widgets{border-top:1px solid var(--line)}
+  .w-stage{height:320vh;position:relative}
+  .w-sticky{
+    position:sticky;top:0;min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(1.8rem,4vh,2.6rem);padding:clamp(3rem,8vh,5rem) 0;text-align:center;
+  }
+  .w-copy{max-width:54ch;margin:0 auto}
   .widgets h2{
     font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
-    line-height:1.1;letter-spacing:-.02em;max-width:18ch;margin-top:.8rem;
+    line-height:1.1;letter-spacing:-.02em;margin:.8rem auto 0;max-width:20ch;
   }
-  .widgets .wlead{color:var(--dim);margin-top:1.2rem;max-width:52ch}
+  .widgets .wlead{color:var(--dim);margin-top:1.1rem}
   .widgets .wlead b{color:var(--ink);font-weight:500}
-  .widgets .wnote{color:var(--dim);font-size:.9rem;margin-top:1.6rem;max-width:52ch}
-  .wdesk{
-    display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;
-    margin-top:2.6rem;
-  }
+  .widgets .states{margin-inline:auto}
+  .widgets .wnote{color:var(--dim);font-size:.9rem;margin:0 auto;max-width:52ch}
+  /* Reserved at the tallest card, so the copy above and below it doesn't
+     shuffle up the page every time the size changes. */
+  .w-frame{display:flex;align-items:center;justify-content:center;min-height:345px}
   .wg{
+    position:relative;
     background:rgba(30,30,32,.86);
     -webkit-backdrop-filter:blur(28px) saturate(160%);
     backdrop-filter:blur(28px) saturate(160%);
     border:1px solid rgba(255,255,255,.12);
     border-radius:20px;box-shadow:0 22px 60px var(--shadow-strong);
-    padding:14px;color:#f5f5f7;box-sizing:border-box;
+    color:#f5f5f7;box-sizing:border-box;text-align:left;
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
-    display:flex;flex-direction:column;
+    transition:width .5s cubic-bezier(.2,.6,.2,1),height .5s cubic-bezier(.2,.6,.2,1);
   }
-  .wg-s{width:155px;height:155px}
-  .wg-m{width:329px;height:155px;flex-direction:row;gap:12px;align-items:center}
-  .wg-l{width:329px;height:345px}
+  .wg[data-size="s"]{width:155px;height:155px}
+  .wg[data-size="m"]{width:329px;height:155px}
+  .wg[data-size="l"]{width:329px;height:345px}
+  /* The three layouts are stacked in the same box and cross-faded. The one
+     arriving waits for the box to be most of the way to its new size —
+     content settling into a frame that is still moving reads as a glitch. */
+  .wc{
+    position:absolute;inset:14px;display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;transition:opacity .22s ease;
+  }
+  .wg[data-size="s"] .wc-s,
+  .wg[data-size="m"] .wc-m,
+  .wg[data-size="l"] .wc-l{opacity:1;transition:opacity .3s ease .22s}
+  .wc-m{flex-direction:row;gap:12px;align-items:center}
   .wg-model{font-size:11px;color:rgba(255,255,255,.6)}
   .wg-title{font-size:13px;font-weight:600;line-height:1.2}
   .wg-plate{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px}
   .wg-pct{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.05}
-  .wg-m .wg-pct,.wg-l .wg-pct{font-size:30px}
+  .wc-m .wg-pct,.wc-l .wg-pct{font-size:30px}
   .wg-range{font-size:13px;font-weight:600}
   .wg-figs{display:flex;align-items:baseline;gap:7px;margin-top:2px}
   .wg-figs .wg-range{font-weight:400;color:rgba(255,255,255,.6)}
   /* The bar takes the Mac's accent colour, which on the page is the site's. */
-  .wg-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.16);margin:7px 0 0}
+  .wg-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.16);margin-top:7px}
   .wg-bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
   .wg-foot{
     display:flex;justify-content:space-between;align-items:center;gap:6px;
@@ -622,22 +644,19 @@
   .wg-ico{width:11px;height:11px;flex:none}
   .wg-ago{color:rgba(255,255,255,.4);white-space:nowrap}
   .wg-car{display:block;width:100%;height:auto}
-  .wg-m .wg-car{width:140px;flex:none}
-  .wg-l .wg-car{margin:6px 0 2px}
+  .wc-m .wg-car{width:132px;flex:none}
+  .wc-l .wg-car{margin:6px 0 2px}
   .wg-col{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
   .wg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .wg-head .wg-state{font-size:10px}
-  .wg-grid{
-    display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;margin-top:11px;
-  }
+  .wg-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;margin-top:11px}
   .wg-k{display:block;font-size:10px;color:rgba(255,255,255,.4)}
   .wg-v{display:block;font-size:12px;font-weight:500;margin-top:1px}
   .wg-updated{font-size:10px;color:rgba(255,255,255,.4);margin-top:auto}
-  @media (max-width:420px){
-    /* Below the medium card's own width the row would overflow, so the
-       cards scale together rather than one of them being cropped. */
-    .wdesk{transform:scale(.86);transform-origin:top left}
-  }
+  /* One line about what this size is for, swapped with the card. */
+  .w-caption{color:var(--dim);font-size:.92rem;min-height:1.4em;margin:0}
+  @keyframes capIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .w-caption.swap{animation:capIn .34s cubic-bezier(.2,.6,.2,1)}
 
   .features{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0}
   .grid{
@@ -798,6 +817,8 @@
     .deal{position:static;opacity:1!important;transform:none!important}
     .real-stage{height:auto}
     .real-sticky{position:static;min-height:0;padding:clamp(4rem,10vh,7rem) 0}
+    .w-stage{height:auto}
+    .w-sticky{position:static;min-height:0;padding:clamp(4rem,10vh,7rem) 0}
     .panel.swap #panelLive,.panel.swap #panelStats{animation:none}
     .pill{transition:none}
     .sign{opacity:1!important;transform:none!important}
@@ -812,6 +833,10 @@
        pills go back to being the way you switch state. */
     .real-stage{height:auto}
     .real-sticky{position:static;min-height:0;grid-template-columns:1fr;padding:clamp(4rem,10vh,7rem) 0}
+    .w-stage{height:auto}
+    .w-sticky{position:static;min-height:0;padding:clamp(4rem,10vh,7rem) 0}
+    /* Below the card's own width it would overflow the page. */
+    .w-frame{transform:scale(.86);transform-origin:top center}
     .mac{width:100%;justify-self:stretch;margin-right:0;height:min(64vh,520px)}
     .mac .panel{width:min(300px,58%)}
     .states{margin-inline:auto}
@@ -1116,67 +1141,75 @@
   </section>
 
   <section class="widgets" id="widgets">
-    <div class="wrap">
-      <div class="kicker rv">On the desktop</div>
-      <h2 class="rv">The same car, without the click.</h2>
-      <p class="wlead rv">Three sizes. Small is the state of charge, range and
-      what the car is doing. Medium adds the studio render of <b>your exact
-      car</b>. Large adds everything else the menu knows — charger, odometer,
-      and the time to full while it's charging.</p>
-      <div class="wdesk rv">
+    <div class="w-stage" id="wStage">
+      <div class="w-sticky">
+        <div class="w-copy rv">
+          <div class="kicker">On the desktop</div>
+          <h2>The same car, without the click.</h2>
+          <p class="wlead">One widget in three sizes, reading what the app
+          already fetched — including the studio render of <b>your exact
+          car</b>. Keep scrolling to size it.</p>
+          <div class="states" role="tablist" id="wStates"></div>
+        </div>
 
-        <div class="wg wg-s">
-          <div class="wg-model">Polestar 4</div>
-          <div class="wg-pct">77%</div>
-          <div class="wg-bar"><i style="width:77%"></i></div>
-          <div class="wg-range">381 km</div>
-          <div class="wg-foot">
-            <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
-            <span class="wg-ago">5h ago</span>
+        <div class="w-frame rv">
+          <div class="wg" id="wCard" data-size="s">
+
+            <div class="wc wc-s">
+              <div class="wg-model">Polestar 4</div>
+              <div class="wg-pct">77%</div>
+              <div class="wg-bar"><i style="width:77%"></i></div>
+              <div class="wg-range">381 km</div>
+              <div class="wg-foot">
+                <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+                <span class="wg-ago">5h ago</span>
+              </div>
+            </div>
+
+            <div class="wc wc-m">
+              <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="wg-col">
+                <div class="wg-title">Polestar 4 · 2025</div>
+                <div class="wg-figs">
+                  <span class="wg-pct">77%</span>
+                  <span class="wg-range">381 km</span>
+                </div>
+                <div class="wg-bar"><i style="width:77%"></i></div>
+                <div class="wg-foot">
+                  <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+                  <span class="wg-ago">5h ago</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="wc wc-l">
+              <div class="wg-head">
+                <div>
+                  <div class="wg-title">Polestar 4 · 2025</div>
+                  <div class="wg-plate">CX 41 927</div>
+                </div>
+                <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
+              </div>
+              <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="wg-figs">
+                <span class="wg-pct">77%</span>
+                <span class="wg-range">381 km</span>
+              </div>
+              <div class="wg-bar"><i style="width:77%"></i></div>
+              <div class="wg-grid">
+                <div><span class="wg-k">Charger</span><span class="wg-v">Disconnected</span></div>
+                <div><span class="wg-k">Odometer</span><span class="wg-v">3.097 km</span></div>
+              </div>
+              <div class="wg-updated">Updated 5 hr ago</div>
+            </div>
+
           </div>
         </div>
 
-        <div class="wg wg-m">
-          <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
-          <div class="wg-col">
-            <div class="wg-title">Polestar 4 · 2025</div>
-            <div class="wg-figs">
-              <span class="wg-pct">77%</span>
-              <span class="wg-range">381 km</span>
-            </div>
-            <div class="wg-bar"><i style="width:77%"></i></div>
-            <div class="wg-foot">
-              <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
-              <span class="wg-ago">5h ago</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="wg wg-l">
-          <div class="wg-head">
-            <div>
-              <div class="wg-title">Polestar 4 · 2025</div>
-              <div class="wg-plate">CX 41 927</div>
-            </div>
-            <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
-          </div>
-          <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
-          <div class="wg-figs">
-            <span class="wg-pct">77%</span>
-            <span class="wg-range">381 km</span>
-          </div>
-          <div class="wg-bar"><i style="width:77%"></i></div>
-          <div class="wg-grid">
-            <div><span class="wg-k">Charger</span><span class="wg-v">Disconnected</span></div>
-            <div><span class="wg-k">Odometer</span><span class="wg-v">3.097 km</span></div>
-          </div>
-          <div class="wg-updated">Updated 5 hr ago</div>
-        </div>
-
+        <p class="w-caption" id="wCaption"></p>
+        <p class="wnote rv">The widget never talks to Polestar, so putting one
+        on the desktop doesn't add a single request to your car.</p>
       </div>
-      <p class="wnote rv">The widget never talks to Polestar. It reads what the
-      app last fetched, so putting one on the desktop doesn't add a single
-      request to your car. The bar follows your Mac's accent colour.</p>
     </div>
   </section>
 
@@ -1547,6 +1580,72 @@
   window.addEventListener('scroll', onStateScroll, {passive: true});
   window.addEventListener('resize', onStateScroll, {passive: true});
   driveStates();
+
+  // The widget sizes, driven by the same pinned-scroll idea as the menu
+  // above: one card, three shapes, and the tabs stay clickable for anyone
+  // who would rather not scroll for it.
+  const wSizes = [
+    {id: 's', tab: 'Small',  text: 'Battery, range, and what the car is doing.'},
+    {id: 'm', tab: 'Medium', text: 'The same, beside the render of your car.'},
+    {id: 'l', tab: 'Large',  text: 'Everything else the menu knows about it.'},
+  ];
+  const wCard = document.getElementById('wCard');
+  const wTabs = document.getElementById('wStates');
+  const wCaption = document.getElementById('wCaption');
+  let moveWPill;
+
+  function renderSize(i) {
+    const size = wSizes[i];
+    wCard.dataset.size = size.id;
+    [...wTabs.querySelectorAll('button')].forEach(b =>
+      b.setAttribute('aria-selected', String(b.dataset.id === size.id)));
+    wCaption.textContent = size.text;
+    // Restarting the animation needs the class gone for a frame.
+    wCaption.classList.remove('swap');
+    void wCaption.offsetWidth;
+    wCaption.classList.add('swap');
+    if (moveWPill) moveWPill();
+  }
+
+  wSizes.forEach((size, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.role = 'tab';
+    b.dataset.id = size.id;
+    b.textContent = size.tab;
+    b.addEventListener('click', () => { wShown = i; renderSize(i); });
+    wTabs.appendChild(b);
+  });
+  moveWPill = pillFor(wTabs);
+
+  const wStage = document.getElementById('wStage');
+  let wShown = -1;
+
+  function driveSizes() {
+    if (calm.matches || stacked.matches) {
+      if (wShown < 0) { wShown = 1; renderSize(1); }   // medium reads best static
+      return;
+    }
+    const rect = wStage.getBoundingClientRect();
+    const travel = rect.height - window.innerHeight;
+    if (travel <= 0) return;
+    const p = Math.min(1, Math.max(0, -rect.top / travel));
+    const i = Math.min(wSizes.length - 1, Math.floor(p * wSizes.length));
+    if (i === wShown) return;
+    wShown = i;
+    renderSize(i);
+  }
+
+  let sizeQueued = false;
+  const onSizeScroll = () => {
+    if (sizeQueued) return;
+    sizeQueued = true;
+    requestAnimationFrame(() => { sizeQueued = false; driveSizes(); });
+  };
+  window.addEventListener('scroll', onSizeScroll, {passive: true});
+  window.addEventListener('resize', onSizeScroll, {passive: true});
+  renderSize(0);
+  driveSizes();
 
   // Install methods. The panes are in the markup rather than built here, so
   // the commands are still readable — and copyable — with JS off.

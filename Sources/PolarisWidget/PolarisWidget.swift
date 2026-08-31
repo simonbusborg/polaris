@@ -84,8 +84,12 @@ struct CarProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> CarEntry { placeholderEntry }
 
+    /// The widget picker asks for this one. Real data if we have it — seeing
+    /// your own car in the gallery is the point of the thing — and the
+    /// invented one only when there's nothing to show yet.
     func getSnapshot(in context: Context, completion: @escaping (CarEntry) -> Void) {
-        completion(context.isPreview ? placeholderEntry : currentEntry(family: context.family))
+        let entry = currentEntry(family: context.family)
+        completion(entry.snapshot == nil && context.isPreview ? placeholderEntry : entry)
     }
 
     /// The app reloads the timeline whenever it writes something new, so this
@@ -106,7 +110,11 @@ private extension WidgetSnapshot {
         isDriving: false, isPluggedIn: false, fullInMinutes: nil,
         chargingPowerWatts: nil, carTitle: "Polestar 4 · 2026",
         modelName: "Polestar 4", registrationNo: nil, odometerKm: 23412,
-        carReportedAt: nil, writtenAt: Date(), unit: .kilometers, hasImage: false
+        // Eight minutes old, not this instant: a preview built at "now"
+        // renders its timestamp as "in 0 sec", which reads like a bug in the
+        // widget picker where first impressions are made.
+        carReportedAt: nil, writtenAt: Date().addingTimeInterval(-8 * 60),
+        unit: .kilometers, hasImage: false
     )
 
     /// Green while charging, orange when it's time to worry, and otherwise
