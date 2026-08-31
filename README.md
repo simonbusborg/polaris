@@ -103,6 +103,15 @@ checker compares the two — a release whose plist says something else would nag
 every user forever. `make release` bumps the plist as part of the same commit,
 which is what keeps them in step.
 
+Pushing a `preview-*` tag builds the same thing without publishing anything:
+signed, notarized and attached to the workflow run as an artifact. It's the
+only way to test the widget's App Group, which macOS honours for a properly
+signed build and denies for an ad-hoc one.
+
+```bash
+git tag preview-widget-1 && git push origin preview-widget-1
+```
+
 Releases are signed and notarized when these repository secrets are configured
 (without them the workflow falls back to an ad-hoc-signed build):
 

@@ -1,0 +1,82 @@
+name: Signed preview build
+
+# A notarized build of any branch, without cutting a release:
+#
+#   git tag preview-widget-1 && git push origin preview-widget-1
+#
+# The App Group the widget reads through is only honoured for a properly
+# signed build — an ad-hoc local build gets a container URL and is then
+# denied the read — so some things simply cannot be tested with `make app`.
+# This is the cheapest way to get a real one.
+#
+# preview-* deliberately does not match release.yml's v* trigger. Nothing
+# here publishes, tags a version or touches the appcast.
+
+on:
+  push:
+    tags: ["preview-*"]
+
+jobs:
+  signed-build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for signing secrets
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+        run: |
+          if [ -n "$CERT_P12" ]; then echo "HAS_SIGNING=true" >> "$GITHUB_ENV"
+          else echo "HAS_SIGNING=false" >> "$GITHUB_ENV"; fi
+
+      - name: Import Developer ID certificate
+        if: env.HAS_SIGNING == 'true'
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PASS=$(uuidgen)
+          echo "$CERT_P12" | base64 --decode > cert.p12
+          security create-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security set-keychain-settings -lut 1800 build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASS" build.keychain
+          security import cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASS" build.keychain
+          security list-keychains -d user -s build.keychain login.keychain
+          rm cert.p12
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | awk -F'"' '/Developer ID Application/ {print $2; exit}')
+          echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
+      - name: Build Polaris.app
+        env:
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+        run: make app IDENTITY="$IDENTITY" TEAM_ID="$TEAM_ID"
+
+      - name: Show what the binaries claim
+        run: |
+          echo "— app —"
+          codesign -d --entitlements - Polaris.app 2>&1 | tail -12
+          echo "— widget —"
+          codesign -d --entitlements - Polaris.app/Contents/PlugIns/PolarisWidget.appex 2>&1 | tail -12
+
+      - name: Notarize and staple
+        if: env.HAS_SIGNING == 'true'
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+        run: |
+          scripts/notarize.sh
+          xcrun stapler staple Polaris.app
+
+      # ditto rather than the upload action's own zipping: Sparkle.framework
+      # is a bundle of symlinks, and flattening them voids the signature.
+      - name: Zip the signed build
+        run: ditto -c -k --keepParent Polaris.app Polaris-preview.zip
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: Polaris-preview
+          path: Polaris-preview.zip
