@@ -149,6 +149,7 @@ defaults delete com.weareheavy.polaris debug_grpc_fields   # turn it off again
 | Key | Effect |
 | --- | --- |
 | `debug_grpc_fields` | Logs which fields the battery message actually carries (`log show --info --last 10m \| grep "battery fields"`). Field numbers and numeric values only — no VIN, no raw payload |
+| `debug_drive` | Logs the numbers behind each "in use" verdict — odometer in metres, the distance since the last reading, and how old both odometer reports are (`log show --info --last 10m \| grep "drive:"`). The one way to see what a parked car's odometer stream actually does |
 | `debug_pno34` | Shows the car's raw `pno34` product code as a copyable menu row. This is how a code gets read off a real car to fill in `PNO34.variantsByPrefix` |
 | `debug_charging_type` | A string (`AC`, `DC`, `WIRELESS`) that renders the charging rows on a parked car. It invents its numbers in the menu layer, so it demonstrates the layout and nothing about the wire format — and it hides the real Power row while set |
 | `debug_demo_car` | Adds a pretend second car mirroring the real one, so the multi-car switcher can be exercised on a single-car account |

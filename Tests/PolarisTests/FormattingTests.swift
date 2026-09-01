@@ -99,7 +99,7 @@ final class FormattingTests: XCTestCase {
                     chargingStatus: "CHARGING_STATUS_IDLE", estimatedChargingTimeToFullMinutes: nil,
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
-                    odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                    odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
@@ -116,12 +116,12 @@ final class FormattingTests: XCTestCase {
 
     func testIsDriving() {
         func car(status: String, connection: String?, odometerAge: TimeInterval?,
-                 odometerKm: Int? = nil) -> CarData {
+                 odometerMeters: Int? = nil) -> CarData {
             CarData(batteryPercentage: 50, rangeKm: 200,
                     chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
-                    odometerKm: odometerKm, daysToService: nil, distanceToServiceKm: nil,
+                    odometerMeters: odometerMeters, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil,
                     odometerReportedAt: odometerAge.map { Date(timeIntervalSinceNow: -$0) },
@@ -131,12 +131,16 @@ final class FormattingTests: XCTestCase {
                                           chargingType: nil)
                     })
         }
-        // With nothing to compare against, a fresh report is the best guess.
+        // With nothing to compare against, a report from moments ago is the
+        // best guess there is.
         XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
                           odometerAge: 60).driving(comparedTo: nil))
         // Unknown plug state (no gRPC) still counts — it isn't a "yes".
         XCTAssertTrue(car(status: "CHARGING_STATUS_IDLE", connection: nil,
                           odometerAge: 60).driving(comparedTo: nil))
+        // Old enough that the car may well have parked since: don't guess.
+        XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                           odometerAge: 300).driving(comparedTo: nil))
         // Parked long enough for the report to go stale.
         XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
                            odometerAge: 3600).driving(comparedTo: nil))
@@ -149,14 +153,38 @@ final class FormattingTests: XCTestCase {
         XCTAssertFalse(car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
                            odometerAge: nil).driving(comparedTo: nil))
 
-        // The regression: a parked car keeps re-reporting a fresh timestamp,
-        // so an unchanged odometer between two polls means it isn't moving.
+        // A parked car keeps re-reporting a fresh timestamp, so an unchanged
+        // odometer between two polls means it isn't moving.
         let parked = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
-                         odometerAge: 60, odometerKm: 12_000)
+                         odometerAge: 60, odometerMeters: 12_000_000)
         XCTAssertFalse(parked.driving(comparedTo: parked))
         let moved = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
-                        odometerAge: 60, odometerKm: 12_007)
+                        odometerAge: 60, odometerMeters: 12_007_000)
         XCTAssertTrue(moved.driving(comparedTo: parked))
+
+        // Crossing town at 25 km/h covers 400 m between two polls — no change
+        // at all in whole kilometres, which is why the comparison is in metres.
+        let crawling = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                           odometerAge: 60, odometerMeters: 12_000_400)
+        XCTAssertTrue(crawling.driving(comparedTo: parked))
+
+        // An odometer that fell belongs to a different car, not to a drive.
+        XCTAssertFalse(parked.driving(comparedTo: crawling))
+
+        // The Mac slept through the drive: the reading it wakes up next to is
+        // thousands of metres further on, but the car has been parked for five
+        // minutes and its last report says so. The distance describes the
+        // drive, not the present.
+        let beforeSleep = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                              odometerAge: 7200, odometerMeters: 12_000_000)
+        let afterSleep = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                             odometerAge: 300, odometerMeters: 12_030_000)
+        XCTAssertFalse(afterSleep.driving(comparedTo: beforeSleep))
+        // Same wake, but the car reported seconds ago: worth the guess, and
+        // the next poll settles it.
+        let justParked = car(status: "CHARGING_STATUS_IDLE", connection: "DISCONNECTED",
+                             odometerAge: 30, odometerMeters: 12_030_000)
+        XCTAssertTrue(justParked.driving(comparedTo: beforeSleep))
     }
 
     func testMenuBarIcon() {
@@ -165,7 +193,7 @@ final class FormattingTests: XCTestCase {
                     chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
-                    odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                    odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
                     serviceWarning: false, fluidWarnings: [], imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
@@ -223,7 +251,7 @@ final class FormattingTests: XCTestCase {
                 chargingStatus: status, estimatedChargingTimeToFullMinutes: nil,
                 modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                 ownerFirstName: nil,
-                odometerKm: nil, daysToService: nil, distanceToServiceKm: nil,
+                odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
                 serviceWarning: false, fluidWarnings: [], imageData: nil,
                 lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                 grpcExtras: nil)

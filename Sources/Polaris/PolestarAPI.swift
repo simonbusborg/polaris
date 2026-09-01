@@ -24,7 +24,10 @@ struct CarData {
     /// Make/model/variant decoded from `pno34`; nil when the car reported no code.
     let spec: PNO34?
     let ownerFirstName: String?
-    let odometerKm: Int?
+    /// Metres, as the car reports them. Kept at full resolution because the
+    /// movement test below lives or dies on it: rounded to whole kilometres,
+    /// a car crossing town at 25 km/h looks stationary for minutes at a time.
+    let odometerMeters: Int?
     let daysToService: Int?
     let distanceToServiceKm: Int?
     let serviceWarning: Bool
@@ -52,22 +55,79 @@ struct CarData {
         statusKey == "CHARGING" || statusKey == "SMART_CHARGING"
     }
 
+    /// What the menu and the widget show. Whole kilometres, the way the car's
+    /// own dashboard reads.
+    var odometerKm: Int? { odometerMeters.map { $0 / 1000 } }
+
     /// Resolved in `driving(comparedTo:)` when a reading is applied, because
     /// movement can only be seen by comparing two readings.
     var isDriving = false
 
+    /// How old the car's own odometer report may be before the car counts as
+    /// parked, whatever the numbers say.
+    private static let freshReport: TimeInterval = 600
+    /// How far apart two odometer reports may be for the distance between them
+    /// to still describe *now* rather than some drive in between.
+    private static let comparableReports: TimeInterval = 300
+    /// Without a second reading to compare against, only a report this new is
+    /// worth guessing "in use" from.
+    private static let justReported: TimeInterval = 180
+
     /// The charging status stays IDLE while driving (confirmed on a PS4 2026),
-    /// so "in use" has to be inferred. A parked car keeps re-reporting its
-    /// odometer with a fresh timestamp, which is why timestamp freshness alone
-    /// left the car stuck "in use" forever — the number itself has to move.
-    /// With no previous reading to compare (first poll after launch or a car
-    /// switch) we fall back to freshness, and the next poll corrects it.
+    /// so "in use" has to be inferred, and two things have to hold: the car
+    /// reported its odometer moments ago, and that odometer is higher than the
+    /// one in the reading before it.
+    ///
+    /// Both halves earn their place. A parked car keeps re-reporting the same
+    /// odometer with a fresh timestamp, so freshness alone left the car stuck
+    /// "in use" forever — the number itself has to move. And a number that has
+    /// moved only says the car drove *somewhere between the two readings*,
+    /// which is precisely what a Mac that slept through the drive sees when it
+    /// wakes up beside a car that has been parked for ten minutes. So the two
+    /// reports also have to be close enough together to be talking about now.
     func driving(comparedTo previous: CarData?) -> Bool {
-        guard !isCharging, isPluggedIn != true, let odometerReportedAt,
-              Date().timeIntervalSince(odometerReportedAt) < 600 else { return false }
-        guard let previous, let now = odometerKm, let before = previous.odometerKm
-        else { return true }
-        return now != before
+        guard !isCharging, isPluggedIn != true, let reportedAt = odometerReportedAt,
+              Date().timeIntervalSince(reportedAt) < Self.freshReport else { return false }
+
+        guard let previousReportedAt = previous?.odometerReportedAt,
+              reportedAt.timeIntervalSince(previousReportedAt) < Self.comparableReports,
+              let now = odometerMeters, let before = previous?.odometerMeters
+        else {
+            // Nothing comparable to hand: the first poll after launch, a car
+            // switch, or a wake from sleep. A report this new is the best
+            // guess available, and the next poll a minute later settles it.
+            return Date().timeIntervalSince(reportedAt) < Self.justReported
+        }
+        // Greater, not merely different: an odometer that fell belongs to
+        // another car, not to a drive.
+        return now > before
+    }
+
+    /// Developer aid: `defaults write com.weareheavy.polaris debug_drive -bool
+    /// YES` logs the numbers behind every verdict. Whether a parked car keeps
+    /// pushing odometer reports, and for how long, is the one thing the API
+    /// documents nowhere — the windows above can only be tuned by watching a
+    /// real car park.
+    func logDriveSignal(comparedTo previous: CarData?) {
+        guard UserDefaults.standard.bool(forKey: "debug_drive") else { return }
+        func age(_ date: Date?) -> String {
+            guard let date else { return "-" }
+            return String(format: "%.0fs", Date().timeIntervalSince(date))
+        }
+        var delta = "-"
+        if let now = odometerMeters, let before = previous?.odometerMeters {
+            delta = "\(now - before)m"
+        }
+        let parts = [
+            "drive:", isDriving ? "in-use" : "parked",
+            "odo=" + (odometerMeters.map { "\($0)" } ?? "-"),
+            "delta=" + delta,
+            "report=" + age(odometerReportedAt),
+            "prev=" + age(previous?.odometerReportedAt),
+            "status=" + statusKey,
+            "plug=" + (isPluggedIn.map { $0 ? "yes" : "no" } ?? "-")
+        ]
+        NSLog("[Polaris] " + parts.joined(separator: " "))
     }
 
     var isPluggedIn: Bool? {
@@ -256,9 +316,6 @@ final class PolestarAPI {
         let odometer = (telematics["odometer"] as? [[String: Any]])?.first
         let health = (telematics["health"] as? [[String: Any]])?.first
 
-        var odometerKm: Int?
-        if let meters = odometer?["odometerMeters"] as? Int { odometerKm = meters / 1000 }
-
         // AppSync serializes the protobuf timestamp's int64 seconds as either
         // a number or a string depending on magnitude — accept both.
         func reportedAt(_ container: [String: Any]?) -> Date? {
@@ -314,7 +371,7 @@ final class PolestarAPI {
             vin: vin,
             spec: PNO34.decode(pno34),
             ownerFirstName: ownerFirstName,
-            odometerKm: odometerKm,
+            odometerMeters: odometer?["odometerMeters"] as? Int,
             daysToService: health?["daysToService"] as? Int,
             distanceToServiceKm: health?["distanceToServiceKm"] as? Int,
             serviceWarning: warning,
