@@ -130,7 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// no stored credentials, or Polestar rejecting the login.
     static func isSignedOut(_ error: Error) -> Bool {
         switch error {
-        case PolestarError.notConfigured, PolestarError.authenticationFailed:
+        case PolestarError.notConfigured, PolestarError.authenticationFailed, PolestarError.sessionExpired:
             return true
         default:
             return false
@@ -146,6 +146,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await MainActor.run { self.apply(data) }
             } catch {
                 await MainActor.run {
+                    // A refresh token Polestar has retired can't be nursed
+                    // back by polling it every minute — sign in again with
+                    // the stored password instead of showing a dead session
+                    // as an error row until the next launch.
+                    if Self.isSignedOut(error) { self.startSession(); return }
                     self.lastError = error.localizedDescription
                     self.statusController.render(data: self.latest, error: error.localizedDescription, authenticated: true)
                 }

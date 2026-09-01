@@ -143,6 +143,11 @@ enum PolestarError: Error, LocalizedError {
     case http(String)
     case parse(String)
     case authenticationFailed
+    /// Polestar rejected the refresh token: the session is gone and only a
+    /// password login can bring it back. Distinct from `authenticationFailed`
+    /// because nothing is wrong with the credentials — telling the user to
+    /// check their password would send them after the wrong problem.
+    case sessionExpired
     case notConfigured
 
     var errorDescription: String? {
@@ -150,6 +155,7 @@ enum PolestarError: Error, LocalizedError {
         case .http(let m): return String(format: L("HTTP error: %@"), m)
         case .parse(let m): return String(format: L("Parse error: %@"), m)
         case .authenticationFailed: return L("Authentication failed — check email/password")
+        case .sessionExpired: return L("Session expired — signing in again")
         case .notConfigured: return L("Not configured — open Settings")
         }
     }
@@ -575,11 +581,27 @@ final class PolestarAPI {
         ].joined(separator: "&").utf8)
 
         let (data, response) = try await session.data(for: request)
-        guard (response as? HTTPURLResponse)?.statusCode == 200,
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        guard status == 200,
               let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let access = json["access_token"] as? String,
               let expiresIn = json["expires_in"] as? Int
-        else { throw PolestarError.http("Token refresh failed") }
+        else {
+            debugLog("token refresh failed (status \(status)): \(String(decoding: data.prefix(300), as: UTF8.self))")
+            // 4xx is Polestar saying the token itself is dead (invalid_grant),
+            // usually because a newer login rotated it away. Retrying it is
+            // pointless, so drop the session and let the caller sign in again.
+            // A 5xx or a mangled body is Polestar having a bad minute — keep
+            // the token and let the next poll try it.
+            if (400..<500).contains(status) {
+                accessToken = nil
+                refreshToken = nil
+                tokenExpiry = nil
+                Keychain.deleteSessionToken()
+                throw PolestarError.sessionExpired
+            }
+            throw PolestarError.http("Token refresh failed")
+        }
 
         accessToken = access
         if let newRefresh = json["refresh_token"] as? String { refreshToken = newRefresh }

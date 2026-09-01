@@ -70,6 +70,7 @@
 "HTTP error: %@" = "HTTP-Fehler: %@";
 "Parse error: %@" = "Analysefehler: %@";
 "Authentication failed — check email/password" = "Anmeldung fehlgeschlagen — E-Mail/Passwort prüfen";
+"Session expired — signing in again" = "Sitzung abgelaufen — neue Anmeldung läuft";
 "Not configured — open Settings" = "Nicht konfiguriert — Einstellungen öffnen";
 "Check for Updates…" = "Nach Updates suchen…";
 "Check automatically" = "Automatisch suchen";

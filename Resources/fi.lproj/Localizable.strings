@@ -70,6 +70,7 @@
 "HTTP error: %@" = "HTTP-virhe: %@";
 "Parse error: %@" = "Jäsennysvirhe: %@";
 "Authentication failed — check email/password" = "Kirjautuminen epäonnistui — tarkista sähköposti/salasana";
+"Session expired — signing in again" = "Istunto vanhentui — kirjaudutaan uudelleen";
 "Not configured — open Settings" = "Ei määritetty — avaa asetukset";
 "Check for Updates…" = "Tarkista päivitykset…";
 "Check automatically" = "Tarkista automaattisesti";

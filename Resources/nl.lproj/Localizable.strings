@@ -70,6 +70,7 @@
 "HTTP error: %@" = "HTTP-fout: %@";
 "Parse error: %@" = "Verwerkingsfout: %@";
 "Authentication failed — check email/password" = "Aanmelden mislukt — controleer e-mail/wachtwoord";
+"Session expired — signing in again" = "Sessie verlopen — opnieuw inloggen";
 "Not configured — open Settings" = "Niet geconfigureerd — open Instellingen";
 "Check for Updates…" = "Controleer op updates…";
 "Check automatically" = "Automatisch controleren";

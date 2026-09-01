@@ -70,6 +70,7 @@
 "HTTP error: %@" = "HTTP-fel: %@";
 "Parse error: %@" = "Tolkningsfel: %@";
 "Authentication failed — check email/password" = "Inloggningen misslyckades — kontrollera e-post/lösenord";
+"Session expired — signing in again" = "Sessionen har gått ut — loggar in igen";
 "Not configured — open Settings" = "Inte konfigurerad — öppna Inställningar";
 "Check for Updates…" = "Sök efter uppdateringar…";
 "Check automatically" = "Sök automatiskt";
