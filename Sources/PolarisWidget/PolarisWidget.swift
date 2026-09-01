@@ -167,7 +167,9 @@ private struct StatusLabel: View {
         if snapshot.isCharging { return "bolt.fill" }
         if snapshot.isDriving { return "steeringwheel" }
         if snapshot.isPluggedIn == true { return "powerplug.fill" }
-        return "parkingsign"
+        // The boxed variant, not the bare glyph: on its own the P reads as a
+        // stray letter next to the status word rather than as a sign.
+        return "parkingsign.square"
     }
 
     var body: some View {
@@ -395,12 +397,14 @@ struct LargeCarView: View {
 
             // The render is a transparent studio PNG of this exact
             // configuration, so it sits on the widget background rather than
-            // in a frame of its own.
+            // in a frame of its own. It is given no fixed height: it takes
+            // whatever the rows below leave, which is most of the card on an
+            // idle car and less once charging adds a second row to the grid.
             if let carImage {
                 carImage
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 128)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -420,7 +424,12 @@ struct LargeCarView: View {
                 ForEach(fields) { $0 }
             }
 
-            Spacer(minLength: 0)
+            // With a render above, the slack belongs to it and the timestamp
+            // follows the grid. Without one there is nothing to grow, so the
+            // spacer goes back in to hold the timestamp at the bottom edge.
+            if carImage == nil {
+                Spacer(minLength: 0)
+            }
 
             HStack(spacing: 4) {
                 Text(L("Updated"))
