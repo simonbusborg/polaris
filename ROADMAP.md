@@ -33,9 +33,12 @@ comment describing where it now stands.
 ## Next
 
 - **[A better "in use" signal](https://github.com/simonbusborg/polaris/issues/3)** — the API's charging status reads `IDLE`
-  whether the car is parked or on the motorway, so driving is currently
-  inferred from how fresh the odometer reading is. It works, but it can lag
-  behind by a refresh cycle after you park.
+  whether the car is parked or on the motorway, so driving is inferred from
+  the odometer moving. v2.8.1 made that inference sharper — metres rather
+  than whole kilometres, and readings too far apart to describe the present
+  are no longer treated as movement — but it is still an inference. Closing
+  this needs a field that reports drive state directly, and neither the
+  GraphQL telematics nor the gRPC battery service has one.
 
 ## Being looked at
 
