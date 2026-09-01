@@ -801,7 +801,28 @@
   @media (max-width:820px){
     footer{border-radius:1.6rem;padding:1.6rem 1.5rem}
   }
-  footer a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+  /* The two credits are reference material, not destinations — they sit back
+     at --dim and only pick up ink and a rule on hover. That leaves the donate
+     button as the one thing in the footer asking to be clicked, which is why
+     it can be small and still carry the accent. */
+  /* Credits and button share the right-hand end, so the brand line is the
+     only thing space-between pushes away from. */
+  .footer-right{display:flex;align-items:center;gap:1.3rem;flex-wrap:wrap}
+  footer a{color:var(--dim);text-decoration:none;border-bottom:1px solid transparent}
+  footer a:hover{color:var(--ink);border-bottom-color:var(--line)}
+  footer .donate{
+    background:var(--accent);color:var(--on-photo);border-bottom:0;
+    font-size:.8rem;font-weight:500;padding:.5rem 1rem;border-radius:1rem;
+    white-space:nowrap;transition:filter .2s,transform .2s;
+  }
+  footer .donate:hover{
+    color:var(--on-photo);border-bottom:0;
+    filter:brightness(1.08);transform:translateY(-1px);
+  }
+  @media (prefers-reduced-motion:reduce){
+    footer .donate{transition:none}
+    footer .donate:hover{transform:none}
+  }
 
   /* reveal motion */
   .rv{opacity:0;transform:translateY(24px);transition:opacity .8s cubic-bezier(.2,.6,.2,1),transform .8s cubic-bezier(.2,.6,.2,1)}
@@ -1359,10 +1380,12 @@
   <footer>
     <div>Polaris<span style="color:var(--accent)">.</span> — MIT licensed.
       Not affiliated with Polestar.</div>
-    <div>
-      <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
-      <a href="https://www.paypal.com/donate/?hosted_button_id=9QFZWN5BRU3MS">Donate</a> ·
-      <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photos via Unsplash</a>
+    <div class="footer-right">
+      <div>
+        <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
+        <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photos via Unsplash</a>
+      </div>
+      <a class="donate" href="https://www.paypal.com/donate/?hosted_button_id=9QFZWN5BRU3MS">Donate</a>
     </div>
   </footer>
 </div>
