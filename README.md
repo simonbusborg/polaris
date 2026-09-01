@@ -158,6 +158,13 @@ Not every field the battery service documents is actually sent. A 2026
 Polestar 4 reports no average consumption at all, which is why there's no row
 for it; `debug_grpc_fields` is how that kind of question gets settled.
 
+## Support
+
+Polaris is free and MIT licensed. If it's earning its place in your menu bar,
+you're welcome to chip in — it's never expected.
+
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=9QFZWN5BRU3MS)
+
 ## Credits
 
 The Polestar auth/API flow was originally studied from
