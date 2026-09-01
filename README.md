@@ -163,21 +163,7 @@ for it; `debug_grpc_fields` is how that kind of question gets settled.
 Polaris is free and MIT licensed. If it's earning its place in your menu bar,
 you're welcome to chip in — it's never expected.
 
-<div id="donate-button-container">
-<div id="donate-button"></div>
-<script src="https://www.paypalobjects.com/donate/sdk/donate-sdk.js" charset="UTF-8"></script>
-<script>
-PayPal.Donation.Button({
-env:'production',
-hosted_button_id:'U6P5Y4A5ZHHVY',
-image: {
-src:'https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif',
-alt:'Donate with PayPal button',
-title:'PayPal - The safer, easier way to pay online!',
-}
-}).render('#donate-button');
-</script>
-</div>
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=U6P5Y4A5ZHHVY)
 
 ## Credits
 
