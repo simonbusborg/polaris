@@ -309,7 +309,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             stack.addArrangedSubview(fill(row, in: stack))
             stack.setCustomSpacing(9, after: row)
         }
-        stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
+        stack.setCustomSpacing(22, after: stack.arrangedSubviews.last!)
 
         let manual = secondaryButton(L("Enter VIN Manually…"), action: #selector(manualVinAction))
         let cont = primaryButton(L("Continue"), action: #selector(continueFromCarsAction))
@@ -509,7 +509,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         let row = PanelStack(views: [icon, previewLabel])
         row.orientation = .horizontal
         row.spacing = 6
-        row.edgeInsets = NSEdgeInsets(top: 7, left: 12, bottom: 7, right: 13)
+        row.edgeInsets = NSEdgeInsets(top: 9, left: 14, bottom: 9, right: 16)
         return row
     }
 
@@ -613,7 +613,7 @@ private final class FlatButton: NSButton {
     /// the site's buttons carry 20 pt of it.
     override var intrinsicContentSize: NSSize {
         var size = super.intrinsicContentSize
-        size.width += 28
+        size.width += 40
         return size
     }
 
@@ -636,7 +636,7 @@ private final class FlatButton: NSButton {
         wantsLayer = true
         layer?.cornerRadius = 2
         translatesAutoresizingMaskIntoConstraints = false
-        heightAnchor.constraint(equalToConstant: 34).isActive = true
+        heightAnchor.constraint(equalToConstant: 38).isActive = true
     }
 
     override var wantsUpdateLayer: Bool { true }
@@ -722,7 +722,7 @@ private final class CarRow: NSView {
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 13
-        row.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+        row.edgeInsets = NSEdgeInsets(top: 15, left: 16, bottom: 15, right: 16)
         row.translatesAutoresizingMaskIntoConstraints = false
 
         if selected {
