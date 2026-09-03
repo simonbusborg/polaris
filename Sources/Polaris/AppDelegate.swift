@@ -224,6 +224,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - First run
 
+    /// Everything the app was holding about a car it no longer has a login
+    /// for. Without this the menu keeps offering the signed-out car in its
+    /// switcher and the widget keeps showing its last reading.
+    private func signedOut() {
+        latest = nil
+        lastError = nil
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        statusController.cars = Accounts.allCars
+        statusController.activeVin = Preferences.vin
+        statusController.render(data: nil, error: nil, authenticated: false)
+        WidgetBridge.clear()
+        settingsController?.close()
+        // A fresh controller, so onboarding opens on its first step rather
+        // than wherever the last run left it.
+        onboardingController = nil
+        showOnboarding()
+    }
+
     private func showOnboarding() {
         if onboardingController == nil {
             onboardingController = OnboardingWindowController(
@@ -254,8 +273,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.redrawStatusItem()
                 },
                 onAccountChange: { [weak self] in
-                    self?.applyLaunchAtLogin()
-                    self?.startSession()
+                    guard let self else { return }
+                    self.applyLaunchAtLogin()
+                    // Signing out of the last account leaves nothing to
+                    // start a session with. Send them back to the front
+                    // door rather than to an error row in the menu.
+                    if self.hasCredentials {
+                        self.startSession()
+                    } else {
+                        self.signedOut()
+                    }
                 }
             )
         }

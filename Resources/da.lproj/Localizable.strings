@@ -124,3 +124,6 @@
 "Signed in · %@ · updated %@" = "Logget ind · %@ · opdateret %@";
 "Distances" = "Afstande";
 "Show in the menu bar" = "Vis i menulinjen";
+"Sign Out" = "Log ud";
+"Sign out of Polaris?" = "Log ud af Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris glemmer loginnet for %@ og holder op med at aflæse din bil.";

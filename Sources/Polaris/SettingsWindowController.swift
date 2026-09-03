@@ -31,6 +31,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let statusDot = NSView()
     private let statusLabel = NSTextField(labelWithString: "")
     private let addCarButton = NSButton(title: L("Add Car…"), target: nil, action: nil)
+    /// Removes the account being shown. It is called "Remove Car" while
+    /// there is another car to fall back to and "Sign Out" when it is the
+    /// last one, because those are two different things to the person
+    /// pressing it even though the code behind them is the same.
     private let removeCarButton = NSButton(title: L("Remove Car"), target: nil, action: nil)
     private let saveAccountButton = NSButton(title: L("Save"), target: nil, action: nil)
 
@@ -398,8 +402,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func loadValues() {
         isAddingCar = false
-        // Nothing to remove until there's a second car to fall back to.
-        removeCarButton.isHidden = Accounts.all.count < 2
+        // Signing out used to be impossible with one account: the only path
+        // out was a button hidden until a second car existed, which is to
+        // say hidden from nearly everyone.
+        removeCarButton.isHidden = Accounts.all.isEmpty
+        removeCarButton.title = isLastAccount ? L("Sign Out") : L("Remove Car")
         emailField.stringValue = Preferences.email
         passwordField.stringValue = ((try? Keychain.readPassword()) ?? nil) ?? ""
         vinField.stringValue = Preferences.vin
@@ -506,12 +513,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window?.makeFirstResponder(emailField)
     }
 
+    private var isLastAccount: Bool { Accounts.all.count < 2 }
+
     @objc private func removeCarAction() {
+        let last = isLastAccount
         let alert = NSAlert()
-        alert.messageText = L("Sign out and forget this car?")
-        alert.informativeText = String(format: L("Polaris will forget the login for %@."),
-                                       Preferences.email)
-        alert.addButton(withTitle: L("Remove Car"))
+        alert.messageText = last ? L("Sign out of Polaris?") : L("Sign out and forget this car?")
+        alert.informativeText = last
+            ? String(format: L("Polaris will forget the login for %@ and stop reading your car."),
+                     Preferences.email)
+            : String(format: L("Polaris will forget the login for %@."), Preferences.email)
+        alert.addButton(withTitle: last ? L("Sign Out") : L("Remove Car"))
         alert.addButton(withTitle: L("Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 

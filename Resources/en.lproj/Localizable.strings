@@ -124,3 +124,6 @@
 "Signed in · %@ · updated %@" = "Signed in · %@ · updated %@";
 "Distances" = "Distances";
 "Show in the menu bar" = "Show in the menu bar";
+"Sign Out" = "Sign Out";
+"Sign out of Polaris?" = "Sign out of Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris will forget the login for %@ and stop reading your car.";
