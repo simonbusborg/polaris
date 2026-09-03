@@ -59,6 +59,9 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     private let emailField = NSTextField()
     private let passwordField = NSSecureTextField()
     private let displayPopup = NSPopUpButton()
+    /// The text inside the menu bar preview, so changing the popup shows
+    /// what the bar will actually read rather than leaving a stale sample.
+    private let previewLabel = NSTextField(labelWithString: "")
     private let launchCheckbox = NSButton(checkboxWithTitle: L("Open Polaris at login"),
                                           target: nil, action: nil)
     private var errorText: String?
@@ -171,6 +174,21 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
             field.font = .systemFont(ofSize: 13)
             field.isEnabled = !isWorking
         }
+
+        // Password managers fill native apps over the accessibility API, and
+        // they look for a field that says what it holds. Without this the
+        // two fields are anonymous text boxes and 1Password's app filling
+        // has nothing to aim at. contentType is the modern hint; the
+        // accessibility label and role description are what older versions
+        // and the rest of the assistive stack read.
+        if #available(macOS 14.0, *) {
+            emailField.contentType = .username
+            passwordField.contentType = .password
+        }
+        emailField.setAccessibilityLabel(L("Email"))
+        emailField.setAccessibilityIdentifier("username")
+        passwordField.setAccessibilityLabel(L("Password"))
+        passwordField.setAccessibilityIdentifier("password")
         // Return in either field is Sign In — the button is the only action
         // on this screen, so the keyboard shouldn't need the mouse.
         emailField.target = self;    emailField.action = #selector(signInAction)
@@ -284,7 +302,7 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
 
         for car in discovered {
-            let row = CarRow(car: car, selected: car.vin == selectedVin) { [weak self] in
+            let row = CarRow(car: car, image: nil, selected: car.vin == selectedVin) { [weak self] in
                 self?.selectedVin = car.vin
                 self?.render()
             }
@@ -293,15 +311,13 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         }
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
 
-        let manual = NSButton(title: L("Enter VIN Manually…"), target: self,
-                              action: #selector(manualVinAction))
-        manual.bezelStyle = .rounded
+        let manual = secondaryButton(L("Enter VIN Manually…"), action: #selector(manualVinAction))
         let cont = primaryButton(L("Continue"), action: #selector(continueFromCarsAction))
         let spacer = NSView()
         spacer.setContentHuggingPriority(.init(1), for: .horizontal)
         let row = NSStackView(views: [manual, spacer, cont])
         row.orientation = .horizontal
-        row.spacing = 10
+        row.spacing = 14
         stack.addArrangedSubview(fill(row, in: stack))
         stack.setCustomSpacing(20, after: row)
         stack.addArrangedSubview(stepBars(2))
@@ -337,6 +353,8 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         displayPopup.removeAllItems()
         for option in DisplayOption.allCases { displayPopup.addItem(withTitle: option.title) }
         displayPopup.selectItem(at: DisplayOption.allCases.firstIndex(of: Preferences.displayOption) ?? 0)
+        displayPopup.target = self
+        displayPopup.action = #selector(displayOptionChanged)
         stack.addArrangedSubview(label(L("SHOW IN THE MENU BAR")))
         stack.setCustomSpacing(6, after: stack.arrangedSubviews.last!)
         stack.addArrangedSubview(displayPopup)
@@ -350,6 +368,28 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         stack.addArrangedSubview(fill(done, in: stack))
         stack.setCustomSpacing(20, after: done)
         stack.addArrangedSubview(stepBars(3))
+    }
+
+    @objc private func displayOptionChanged() {
+        previewLabel.stringValue = sampleBarTitle()
+    }
+
+    /// A plausible reading for the chosen option. Invented numbers, because
+    /// the car hasn't been polled yet at this point in the flow — the point
+    /// is the shape of the text, not the value.
+    private func sampleBarTitle() -> String {
+        let option = displayPopup.indexOfSelectedItem >= 0
+            ? DisplayOption.allCases[displayPopup.indexOfSelectedItem]
+            : Preferences.displayOption
+        switch option {
+        case .batteryPercentage:
+            return "72%"
+        case .rangeKm:
+            let unit = Preferences.distanceUnit
+            return "\(unit.convert(km: 412))\(unit.suffix)"
+        case .chargeTime:
+            return "1h 20min"
+        }
     }
 
     @objc private func doneAction() {
@@ -419,6 +459,16 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
         return b
     }
 
+    /// The quieter of the two: same metrics as the primary, hairline border
+    /// instead of a fill, so the pair reads as one row of buttons.
+    private func secondaryButton(_ title: String, action: Selector) -> NSButton {
+        let b = FlatButton(title: title, target: self, action: action)
+        b.fillColor = .clear
+        b.borderColor = Self.hairline
+        b.titleColor = .labelColor
+        return b
+    }
+
     private func errorRow(_ text: String) -> NSView {
         let icon = NSImageView(image: NSImage(systemSymbolName: "exclamationmark.circle",
                                               accessibilityDescription: nil) ?? NSImage())
@@ -454,9 +504,9 @@ final class OnboardingWindowController: NSWindowController, NSWindowDelegate {
     private func menuBarPreview() -> NSView {
         let icon = NSImageView(image: NSImage(systemSymbolName: StatusItemController.icon(for: nil),
                                               accessibilityDescription: nil) ?? NSImage())
-        let pct = NSTextField(labelWithString: "72%")
-        pct.font = .systemFont(ofSize: 13, weight: .medium)
-        let row = PanelStack(views: [icon, pct])
+        previewLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        previewLabel.stringValue = sampleBarTitle()
+        let row = PanelStack(views: [icon, previewLabel])
         row.orientation = .horizontal
         row.spacing = 6
         row.edgeInsets = NSEdgeInsets(top: 7, left: 12, bottom: 7, right: 13)
@@ -556,7 +606,16 @@ private final class PanelStack: NSStackView {
 /// behaviour of a real button.
 private final class FlatButton: NSButton {
     var fillColor: NSColor = .controlAccentColor { didSet { needsDisplay = true } }
+    var borderColor: NSColor? { didSet { needsDisplay = true } }
     var titleColor: NSColor = .white { didSet { restyle() } }
+
+    /// NSButton sizes itself to the title with barely any room either side;
+    /// the site's buttons carry 20 pt of it.
+    override var intrinsicContentSize: NSSize {
+        var size = super.intrinsicContentSize
+        size.width += 28
+        return size
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -593,6 +652,8 @@ private final class FlatButton: NSButton {
     override func updateLayer() {
         effectiveAppearance.performAsCurrentDrawingAppearance {
             layer?.backgroundColor = (isHighlighted ? fillColor.withAlphaComponent(0.85) : fillColor).cgColor
+            layer?.borderWidth = borderColor == nil ? 0 : 1
+            layer?.borderColor = borderColor?.cgColor
         }
     }
 
@@ -612,7 +673,7 @@ private final class CarRow: NSView {
     private let onSelect: () -> Void
     private let selected: Bool
 
-    init(car: CarSummary, selected: Bool, onSelect: @escaping () -> Void) {
+    init(car: CarSummary, image: NSImage?, selected: Bool, onSelect: @escaping () -> Void) {
         self.onSelect = onSelect
         self.selected = selected
         super.init(frame: .zero)
@@ -622,28 +683,22 @@ private final class CarRow: NSView {
         layer?.borderWidth = 1
         restyle()
 
-        let plate = NSView()
-        plate.wantsLayer = true
-        plate.layer?.backgroundColor = OnboardingWindowController.panel.cgColor
-        plate.layer?.cornerRadius = 2
-        plate.translatesAutoresizingMaskIntoConstraints = false
-        plate.widthAnchor.constraint(equalToConstant: 76).isActive = true
-        plate.heightAnchor.constraint(equalToConstant: 44).isActive = true
-
-        // The account's studio render belongs here, but it is fetched one car
-        // at a time and only for the selected VIN — at this point in the flow
-        // no car is selected yet. The silhouette stands in until the picker
-        // can ask for all of them.
-        let glyph = NSImageView(image: NSImage(systemSymbolName: "car",
-                                               accessibilityDescription: nil) ?? NSImage())
-        glyph.contentTintColor = .secondaryLabelColor
-        glyph.symbolConfiguration = .init(pointSize: 22, weight: .light)
-        glyph.translatesAutoresizingMaskIntoConstraints = false
-        plate.addSubview(glyph)
-        NSLayoutConstraint.activate([
-            glyph.centerXAnchor.constraint(equalTo: plate.centerXAnchor),
-            glyph.centerYAnchor.constraint(equalTo: plate.centerYAnchor)
-        ])
+        // The studio render, when the app happens to have one. It is fetched
+        // one car at a time and only for the selected VIN, so during
+        // onboarding there usually isn't one — and an empty plate holding a
+        // generic car glyph says nothing the model name doesn't already say.
+        // Better to have no plate than a plate of nothing.
+        var leading: [NSView] = []
+        if let image {
+            let plate = NSImageView(image: image)
+            plate.imageScaling = .scaleProportionallyUpOrDown
+            plate.wantsLayer = true
+            plate.layer?.cornerRadius = 2
+            plate.translatesAutoresizingMaskIntoConstraints = false
+            plate.widthAnchor.constraint(equalToConstant: 76).isActive = true
+            plate.heightAnchor.constraint(equalToConstant: 44).isActive = true
+            leading.append(plate)
+        }
 
         let name = NSTextField(labelWithString: car.title)
         name.font = .systemFont(ofSize: 13, weight: .semibold)
@@ -658,11 +713,16 @@ private final class CarRow: NSView {
         meta.alignment = .leading
         meta.spacing = 2
 
-        let row = NSStackView(views: [plate, meta])
+        // A spacer, so the tick sits at the trailing edge rather than
+        // crowding the model name.
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+
+        let row = NSStackView(views: leading + [meta, spacer])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 13
-        row.edgeInsets = NSEdgeInsets(top: 11, left: 12, bottom: 11, right: 12)
+        row.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
         row.translatesAutoresizingMaskIntoConstraints = false
 
         if selected {
