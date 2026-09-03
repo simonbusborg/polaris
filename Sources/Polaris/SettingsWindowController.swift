@@ -5,11 +5,11 @@
 //  Settings, in the shape macOS settings actually take: a toolbar of panes,
 //  and changes that land the moment they're made.
 //
-//  It used to be one long grid behind Save and Cancel. Two problems with
+//  It used to be one long form behind Save and Cancel. Two problems with
 //  that. A settings pane on this platform doesn't have a Save button —
 //  people expect a checkbox to mean something the instant it's ticked, and
 //  a window that hoards changes until a button is pressed loses them to a
-//  ⌘W. And the grid had grown past the height of the window: account,
+//  ⌘W. And the form had grown past the height of the window: account,
 //  menu bar, general, notifications, updates and the version number, all
 //  in one column.
 //
@@ -134,13 +134,27 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func buildUI() {
         tabs.tabStyle = .toolbar
-        tabs.addTabViewItem(pane(L("Account"), symbol: "person.crop.circle", view: accountPane()))
-        tabs.addTabViewItem(pane(L("Menu Bar"), symbol: "menubar.rectangle", view: menuBarPane()))
-        tabs.addTabViewItem(pane(L("Notifications"), symbol: "bell", view: notificationsPane()))
+
+        var items: [NSTabViewItem] = [
+            pane(L("Account"), symbol: "person.crop.circle", view: accountPane()),
+            pane(L("Menu Bar"), symbol: "menubar.rectangle", view: menuBarPane()),
+            pane(L("Notifications"), symbol: "bell", view: notificationsPane())
+        ]
         if updater != nil {
-            tabs.addTabViewItem(pane(L("Updates"), symbol: "arrow.down.circle", view: updatesPane()))
+            items.append(pane(L("Updates"), symbol: "arrow.down.circle", view: updatesPane()))
         }
-        tabs.addTabViewItem(pane(L("About"), symbol: "info.circle", view: aboutPane()))
+        items.append(pane(L("About"), symbol: "info.circle", view: aboutPane()))
+
+        // Every pane takes the same size — the tallest one — so clicking
+        // along the toolbar doesn't resize the window under the pointer.
+        let tallest = items
+            .compactMap { $0.viewController?.preferredContentSize.height }
+            .max() ?? 0
+        let size = NSSize(width: Self.paneWidth, height: tallest)
+        for item in items {
+            item.viewController?.preferredContentSize = size
+            tabs.addTabViewItem(item)
+        }
 
         window?.contentViewController = tabs
         // The System Settings look: pane icons centred in the title bar
@@ -153,32 +167,22 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let host = NSView()
         view.translatesAutoresizingMaskIntoConstraints = false
         host.addSubview(view)
-        // Pinned to the leading edge, never stretched to the trailing one.
-        // A grid whose label column is trailing-aligned hands every spare
-        // point to that column, so a pane stretched to full width ends up
-        // with its contents pressed against the right edge — which is what
-        // the Menu Bar pane did.
+        // Leading, top, fixed content width. Nothing centred, nothing
+        // right-aligned: five panes each picking their own alignment read
+        // as five different windows.
         NSLayoutConstraint.activate([
             view.topAnchor.constraint(equalTo: host.topAnchor, constant: Self.paneInset.height),
             view.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: Self.paneInset.width),
-            view.trailingAnchor.constraint(lessThanOrEqualTo: host.trailingAnchor,
-                                           constant: -Self.paneInset.width),
+            view.widthAnchor.constraint(equalToConstant: Self.contentWidth),
             view.bottomAnchor.constraint(lessThanOrEqualTo: host.bottomAnchor,
                                          constant: -Self.paneInset.height)
         ])
         vc.view = host
         vc.title = title
 
-        // Without this every pane inherits the window's initial size and the
-        // window stays at the tallest one — a checkbox pane with 700 points
-        // of empty space under it. The tab controller resizes the window to
-        // the selected pane's preferred size, so each pane has to state it.
         host.layoutSubtreeIfNeeded()
-        let fitting = view.fittingSize
-        vc.preferredContentSize = NSSize(
-            width: max(Self.paneMinWidth, fitting.width + Self.paneInset.width * 2),
-            height: fitting.height + Self.paneInset.height * 2
-        )
+        vc.preferredContentSize = NSSize(width: Self.paneWidth,
+                                         height: view.fittingSize.height + Self.paneInset.height * 2)
 
         let item = NSTabViewItem(viewController: vc)
         item.label = title
@@ -186,11 +190,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return item
     }
 
-    /// Shared so every pane starts its content at the same point; panes that
-    /// disagree on their left margin read as five different windows.
+    /// As wide as the toolbar needs and no wider: the five pane icons set
+    /// the width, not the widest field on any one pane.
+    private static let paneWidth: CGFloat = 360
     private static let paneInset = NSSize(width: 24, height: 22)
-    /// Wide enough that the five toolbar items aren't crowded.
-    private static let paneMinWidth: CGFloat = 480
+    private static var contentWidth: CGFloat { paneWidth - paneInset.width * 2 }
 
     // MARK: Panes
 
@@ -198,12 +202,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         emailField.placeholderString = "you@example.com"
         passwordField.placeholderString = L("Polestar password")
         vinField.placeholderString = L("Vehicle VIN")
-        // Editable text fields have no useful intrinsic width; without one,
-        // the grid hands the window's spare width to the label column and
-        // the whole form ends up shoved against the right edge.
+        // Editable text fields have no useful intrinsic width, so they are
+        // given the pane's: three fields all ending at the same point.
         for field in [emailField, passwordField, vinField] {
             field.translatesAutoresizingMaskIntoConstraints = false
-            field.widthAnchor.constraint(equalToConstant: 260).isActive = true
+            field.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
         }
         // Same reason as onboarding: a password manager filling a native app
         // looks for fields that declare what they hold.
@@ -214,15 +217,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         emailField.setAccessibilityIdentifier("username")
         passwordField.setAccessibilityIdentifier("password")
 
-        let grid = NSGridView(views: [
-            [label(L("Email:")), emailField],
-            [label(L("Password:")), passwordField],
-            [label(L("VIN:")), vinField]
+        let form = NSStackView(views: [
+            field(L("Email"), emailField),
+            field(L("Password"), passwordField),
+            field(L("VIN"), vinField)
         ])
-        grid.rowSpacing = 8
-        grid.columnSpacing = 10
-        grid.rowAlignment = .firstBaseline
-        grid.column(at: 0).xPlacement = .trailing
+        form.orientation = .vertical
+        form.alignment = .leading
+        form.spacing = 12
 
         addCarButton.target = self
         addCarButton.action = #selector(addCarAction)
@@ -239,10 +241,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         buttons.spacing = 8
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let stack = NSStackView(views: [statusRow(), grid, buttons])
+        let stack = NSStackView(views: [statusRow(), form, buttons])
         stack.orientation = .vertical
-        // Leading, so the status line and the grid share a left edge with
-        // the other panes rather than centring on their own.
+        // Leading, so the status line, the form and the buttons share a
+        // left edge with every other pane.
         stack.alignment = .leading
         stack.spacing = 18
         stack.setCustomSpacing(20, after: stack.arrangedSubviews[0])
@@ -263,6 +265,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         statusLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        statusLabel.widthAnchor.constraint(lessThanOrEqualToConstant:
+            Self.contentWidth - 16).isActive = true
 
         let row = NSStackView(views: [statusDot, statusLabel])
         row.orientation = .horizontal
@@ -283,19 +288,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         unitPopup.target = self;    unitPopup.action = #selector(unitChanged)
         launchCheckbox.target = self; launchCheckbox.action = #selector(launchChanged)
 
-        let grid = NSGridView(views: [
-            [label(L("Show in bar:")), displayPopup],
-            [label(L("Distances:")), unitPopup],
-            [NSGridCell.emptyContentView, launchCheckbox]
+        let stack = NSStackView(views: [
+            field(L("Show in the menu bar"), displayPopup),
+            field(L("Distances"), unitPopup),
+            launchCheckbox
         ])
-        grid.rowSpacing = 10
-        grid.columnSpacing = 10
-        grid.rowAlignment = .firstBaseline
-        grid.column(at: 0).xPlacement = .trailing
-        for control in [displayPopup, unitPopup, launchCheckbox] {
-            grid.cell(for: control)?.xPlacement = .leading
-        }
-        return grid
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 16
+        stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
+        return stack
     }
 
     private func notificationsPane() -> NSView {
@@ -375,10 +377,21 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return row
     }
 
-    private func label(_ text: String) -> NSTextField {
-        let l = NSTextField(labelWithString: text)
-        l.alignment = .right
-        return l
+    /// A caption above its control. Labels used to sit in a right-aligned
+    /// column beside the field, which is what pushed a whole pane to the
+    /// window's trailing edge; above and to the left, every pane starts at
+    /// the same x whatever its longest label happens to be.
+    private func field(_ caption: String, _ control: NSView) -> NSView {
+        let l = NSTextField(labelWithString: caption)
+        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        l.textColor = .secondaryLabelColor
+        l.alignment = .left
+
+        let stack = NSStackView(views: [l, control])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 5
+        return stack
     }
 
     // MARK: - Loading
