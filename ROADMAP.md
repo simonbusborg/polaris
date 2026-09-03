@@ -53,6 +53,26 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **First run asks for your account** (v2.9.0) — signing in happens while you
+  watch, with the failure shown under the field that caused it, and the car is
+  picked from what the account reports instead of typed in as a VIN. The last
+  screen says where the app went, which is the question a menu-bar-only app
+  leaves people with.
+
+- **Sign out** (v2.9.0) — there was no way out short of deleting the app and its
+  Keychain items by hand: removing an account lived behind a button hidden until
+  a second car existed. It is always there now, and signing out of the last
+  account returns the app to its fresh-install state.
+
+- **Settings as panes** (v2.9.0) — a toolbar of five panes rather than one column
+  taller than the window, every control applying the moment it is changed, and a
+  status line saying whether the app is actually talking to the car. The version
+  moved to an About pane.
+
+- **A disk image that looks like the download page** (v2.9.0) — the installer
+  window now arrives sized, with its background and both icons placed, instead of
+  as a Finder file listing.
+
 - **Desktop widget** (v2.8.0) — small, medium and large. It reads what the app
   last fetched rather than polling on its own, so adding one doesn't add a
   request to your car, and clicking it drops the menu. The large size carries
