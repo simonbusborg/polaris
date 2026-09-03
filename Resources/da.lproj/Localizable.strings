@@ -115,3 +115,10 @@
 "Done" = "Færdig";
 "Email" = "E-mail";
 "Password" = "Adgangskode";
+
+/* Settings panes */
+"About" = "Om";
+"Signed in" = "Logget ind";
+"Not signed in" = "Ikke logget ind";
+"Signed in · updated %@" = "Logget ind · opdateret %@";
+"Signed in · %@ · updated %@" = "Logget ind · %@ · opdateret %@";

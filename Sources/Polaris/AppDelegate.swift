@@ -121,6 +121,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await MainActor.run {
                     self.lastError = error.localizedDescription
                     self.statusController.render(data: self.latest, error: error.localizedDescription, authenticated: false)
+                    self.settingsController?.updateStatus(data: self.latest,
+                                                          error: error.localizedDescription,
+                                                          authenticated: false)
                     // A dead session is "not signed in", not a transient
                     // error: open Settings so the fix is in reach instead
                     // of only an error row in the menu.
@@ -157,6 +160,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     if Self.isSignedOut(error) { self.startSession(); return }
                     self.lastError = error.localizedDescription
                     self.statusController.render(data: self.latest, error: error.localizedDescription, authenticated: true)
+                    self.settingsController?.updateStatus(data: self.latest,
+                                                          error: error.localizedDescription,
+                                                          authenticated: true)
                 }
             }
         }
@@ -177,6 +183,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusController.cars = Accounts.allCars
         statusController.activeVin = Preferences.vin
         statusController.render(data: data, error: nil, authenticated: true)
+        settingsController?.updateStatus(data: data, error: nil, authenticated: true)
         WidgetBridge.publish(data)
         scheduleRefresh()
     }
@@ -237,12 +244,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettings() {
         if settingsController == nil {
-            settingsController = SettingsWindowController(updater: updater) { [weak self] in
-                self?.applyLaunchAtLogin()
-                self?.startSession()
-            }
+            settingsController = SettingsWindowController(
+                updater: updater,
+                onChange: { [weak self] in
+                    // Instant apply: the pane has already written the
+                    // preference, so this only has to act on it. No refetch —
+                    // the numbers didn't change, only how they're shown.
+                    self?.applyLaunchAtLogin()
+                    self?.redrawStatusItem()
+                },
+                onAccountChange: { [weak self] in
+                    self?.applyLaunchAtLogin()
+                    self?.startSession()
+                }
+            )
         }
         settingsController?.show()
+        settingsController?.updateStatus(data: latest, error: lastError,
+                                         authenticated: api.isAuthenticated)
+    }
+
+    /// Re-render the menu bar from what the app already knows.
+    private func redrawStatusItem() {
+        statusController.render(data: latest, error: lastError,
+                                authenticated: api.isAuthenticated)
     }
 
     private func applyLaunchAtLogin() {

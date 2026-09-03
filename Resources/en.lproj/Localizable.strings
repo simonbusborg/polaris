@@ -115,3 +115,10 @@
 "Done" = "Done";
 "Email" = "Email";
 "Password" = "Password";
+
+/* Settings panes */
+"About" = "About";
+"Signed in" = "Signed in";
+"Not signed in" = "Not signed in";
+"Signed in · updated %@" = "Signed in · updated %@";
+"Signed in · %@ · updated %@" = "Signed in · %@ · updated %@";
