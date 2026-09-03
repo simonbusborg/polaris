@@ -8,3 +8,12 @@ DerivedData/
 
 # Generated entitlements
 /build/
+
+# DMG background art, redrawn by scripts/make-dmg-background.js on each build
+/Resources/dmg/
+/dmg-staging/
+/dmg-rw.dmg
+/*.dmg
+
+# Design mockups, not part of the build
+/mockups/

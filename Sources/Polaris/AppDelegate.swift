@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusController: StatusItemController!
     private var settingsController: SettingsWindowController?
+    private var onboardingController: OnboardingWindowController?
 
     private let api = PolestarAPI()
     private let notifier = Notifier()
@@ -38,7 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if hasCredentials {
             startSession()
         } else {
-            showSettings()
+            // First run: ask for the account, not for a VIN. Settings is
+            // still where an existing setup is changed — it is just no
+            // longer the first thing anyone meets.
+            showOnboarding()
         }
     }
 
@@ -209,6 +213,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshNow()
         }
+    }
+
+    // MARK: - First run
+
+    private func showOnboarding() {
+        if onboardingController == nil {
+            onboardingController = OnboardingWindowController(
+                api: api,
+                onFinish: { [weak self] in
+                    self?.applyLaunchAtLogin()
+                    self?.startSession()
+                },
+                onManualVIN: { [weak self] in
+                    self?.showSettings()
+                }
+            )
+        }
+        onboardingController?.show()
     }
 
     // MARK: - Settings

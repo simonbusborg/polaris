@@ -126,14 +126,65 @@ install: app
 ## Package the existing bundle as a drag-to-Applications disk image.
 ## Deliberately NOT dependent on `app`: that target is phony, and re-running
 ## it in CI after notarization would re-sign the bundle and void the staple.
+## Assemble the disk image. The window arrangement — size, background,
+## icon positions, no toolbar — is baked into the image by driving Finder
+## over AppleScript, so it opens the same way on every machine rather than
+## as a plain file list. Geometry is shared with the background generator:
+## change it in scripts/make-dmg-background.js and here together.
+DMG_W       = 520
+DMG_H       = 340
+DMG_TITLEBAR = 28
+DMG_ICON    = 104
+DMG_APP_X   = 140
+DMG_DEST_X  = 380
+DMG_ICON_Y  = 158
+DMG_BG      = Resources/dmg/background.png
+DMG_BG2X    = Resources/dmg/background@2x.png
+
 dmg:
 	@test -d $(APP) || { echo "No $(APP) — run 'make app' first"; exit 1; }
-	rm -rf dmg-staging $(DMG)
-	mkdir dmg-staging
+	@command -v node >/dev/null || { echo "node is needed to draw the DMG background"; exit 1; }
+	rm -rf dmg-staging $(DMG) dmg-rw.dmg
+	node scripts/make-dmg-background.js
+	mkdir -p dmg-staging/.background
 	cp -R $(APP) dmg-staging/
 	ln -s /Applications dmg-staging/Applications
-	hdiutil create -volname Polaris -srcfolder dmg-staging -ov -format UDZO $(DMG)
-	rm -rf dmg-staging
+	# Finder wants one file carrying both resolutions; a bare @1x PNG is
+	# soft on every display sold this decade.
+	tiffutil -cathidpicheck $(DMG_BG) $(DMG_BG2X) -out dmg-staging/.background/background.tiff
+	# A compressed image is read-only, so the arrangement is made on a
+	# read/write one first and frozen on the way out.
+	hdiutil create -volname Polaris -srcfolder dmg-staging -ov \
+		-format UDRW -fs HFS+ dmg-rw.dmg
+	hdiutil attach dmg-rw.dmg -readwrite -noverify -noautoopen -mountpoint /Volumes/Polaris
+	# Finder scripting can be refused on a headless CI session. The window
+	# arrangement is not worth failing a release over — an unstyled but
+	# working image ships instead.
+	-osascript \
+		-e 'tell application "Finder"' \
+		-e '  tell disk "Polaris"' \
+		-e '    open' \
+		-e '    set current view of container window to icon view' \
+		-e '    set toolbar visible of container window to false' \
+		-e '    set statusbar visible of container window to false' \
+		-e '    set the bounds of container window to {200, 120, $(shell expr 200 + $(DMG_W)), $(shell expr 120 + $(DMG_H) + $(DMG_TITLEBAR))}' \
+		-e '    set theViewOptions to the icon view options of container window' \
+		-e '    set arrangement of theViewOptions to not arranged' \
+		-e '    set icon size of theViewOptions to $(DMG_ICON)' \
+		-e '    set text size of theViewOptions to 12' \
+		-e '    set background picture of theViewOptions to file ".background:background.tiff"' \
+		-e '    set position of item "Polaris.app" of container window to {$(DMG_APP_X), $(DMG_ICON_Y)}' \
+		-e '    set position of item "Applications" of container window to {$(DMG_DEST_X), $(DMG_ICON_Y)}' \
+		-e '    update without registering applications' \
+		-e '    close' \
+		-e '  end tell' \
+		-e 'end tell'
+	# Finder writes .DS_Store lazily; detaching too early loses the layout.
+	sync
+	sleep 2
+	hdiutil detach /Volumes/Polaris
+	hdiutil convert dmg-rw.dmg -format UDZO -imagekey zlib-level=9 -o $(DMG)
+	rm -rf dmg-staging dmg-rw.dmg
 	@echo "Done → $(DMG)"
 
 ## Write the entitlements both binaries are signed with.

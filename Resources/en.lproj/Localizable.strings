@@ -91,3 +91,25 @@
 /* Widget */
 "Open Polaris to sign in" = "Open Polaris to sign in";
 "Battery, range and charging status for your Polestar." = "Battery, range and charging status for your Polestar.";
+
+/* Onboarding */
+"Sign in" = "Sign in";
+"Sign in with the account you use in the Polestar app." = "Sign in with the account you use in the Polestar app.";
+"EMAIL" = "EMAIL";
+"PASSWORD" = "PASSWORD";
+"Sign In" = "Sign In";
+"Signing in…" = "Signing in…";
+"Enter the email and password for your Polestar account." = "Enter the email and password for your Polestar account.";
+"Polestar rejected that email and password." = "Polestar rejected that email and password.";
+"No cars on this account. You can enter a VIN manually in Settings." = "No cars on this account. You can enter a VIN manually in Settings.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own.";
+"Choose your car" = "Choose your car";
+"One car on this account." = "One car on this account.";
+"%d cars on this account. You can switch any time from the menu." = "%d cars on this account. You can switch any time from the menu.";
+"Enter VIN Manually…" = "Enter VIN Manually…";
+"Continue" = "Continue";
+"Lives in the menu bar" = "Lives in the menu bar";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors.";
+"SHOW IN THE MENU BAR" = "SHOW IN THE MENU BAR";
+"Open Polaris at login" = "Open Polaris at login";
+"Done" = "Done";
