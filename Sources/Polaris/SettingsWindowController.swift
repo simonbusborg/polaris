@@ -77,7 +77,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         self.onAccountChange = onAccountChange
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 260),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -153,21 +153,44 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let host = NSView()
         view.translatesAutoresizingMaskIntoConstraints = false
         host.addSubview(view)
+        // Pinned to the leading edge, never stretched to the trailing one.
+        // A grid whose label column is trailing-aligned hands every spare
+        // point to that column, so a pane stretched to full width ends up
+        // with its contents pressed against the right edge — which is what
+        // the Menu Bar pane did.
         NSLayoutConstraint.activate([
-            view.topAnchor.constraint(equalTo: host.topAnchor, constant: 22),
-            view.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: 24),
-            view.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -24),
-            view.bottomAnchor.constraint(equalTo: host.bottomAnchor, constant: -22),
-            host.widthAnchor.constraint(greaterThanOrEqualToConstant: 460)
+            view.topAnchor.constraint(equalTo: host.topAnchor, constant: Self.paneInset.height),
+            view.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: Self.paneInset.width),
+            view.trailingAnchor.constraint(lessThanOrEqualTo: host.trailingAnchor,
+                                           constant: -Self.paneInset.width),
+            view.bottomAnchor.constraint(lessThanOrEqualTo: host.bottomAnchor,
+                                         constant: -Self.paneInset.height)
         ])
         vc.view = host
         vc.title = title
+
+        // Without this every pane inherits the window's initial size and the
+        // window stays at the tallest one — a checkbox pane with 700 points
+        // of empty space under it. The tab controller resizes the window to
+        // the selected pane's preferred size, so each pane has to state it.
+        host.layoutSubtreeIfNeeded()
+        let fitting = view.fittingSize
+        vc.preferredContentSize = NSSize(
+            width: max(Self.paneMinWidth, fitting.width + Self.paneInset.width * 2),
+            height: fitting.height + Self.paneInset.height * 2
+        )
 
         let item = NSTabViewItem(viewController: vc)
         item.label = title
         item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
         return item
     }
+
+    /// Shared so every pane starts its content at the same point; panes that
+    /// disagree on their left margin read as five different windows.
+    private static let paneInset = NSSize(width: 24, height: 22)
+    /// Wide enough that the five toolbar items aren't crowded.
+    private static let paneMinWidth: CGFloat = 480
 
     // MARK: Panes
 
@@ -214,12 +237,16 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let buttons = NSStackView(views: [addCarButton, removeCarButton, spacer, saveAccountButton])
         buttons.orientation = .horizontal
         buttons.spacing = 8
+        buttons.translatesAutoresizingMaskIntoConstraints = false
 
         let stack = NSStackView(views: [statusRow(), grid, buttons])
         stack.orientation = .vertical
+        // Leading, so the status line and the grid share a left edge with
+        // the other panes rather than centring on their own.
         stack.alignment = .leading
         stack.spacing = 18
         stack.setCustomSpacing(20, after: stack.arrangedSubviews[0])
+        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return stack
     }
 
