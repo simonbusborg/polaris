@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Polaris öffnen und anmelden";
 "Battery, range and charging status for your Polestar." = "Batterie, Reichweite und Ladestatus deines Polestar.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Anmelden";
+"Sign in with the account you use in the Polestar app." = "Melde dich mit dem Konto an, das du in der Polestar-App verwendest.";
+"EMAIL" = "E-MAIL";
+"PASSWORD" = "PASSWORT";
+"Sign In" = "Anmelden";
+"Signing in…" = "Anmeldung läuft…";
+"Enter the email and password for your Polestar account." = "Gib die E-Mail-Adresse und das Passwort deines Polestar-Kontos ein.";
+"Polestar rejected that email and password." = "Polestar hat diese E-Mail-Adresse und dieses Passwort abgelehnt.";
+"No cars on this account. You can enter a VIN manually in Settings." = "Keine Fahrzeuge in diesem Konto. Du kannst in den Einstellungen eine FIN manuell eingeben.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Wird im macOS-Schlüsselbund gespeichert und nur an Polestar gesendet. Polaris hat keinen eigenen Server.";
+"Choose your car" = "Wähle dein Fahrzeug";
+"One car on this account." = "Ein Fahrzeug in diesem Konto.";
+"%d cars on this account. You can switch any time from the menu." = "%d Fahrzeuge in diesem Konto. Du kannst jederzeit über das Menü wechseln.";
+"Enter VIN Manually…" = "FIN manuell eingeben…";
+"Continue" = "Weiter";
+"Lives in the menu bar" = "Wohnt in der Menüleiste";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Kein Dock-Symbol, kein Fenster. Der Ladestand sitzt in der Menüleiste — klicke für Reichweite, Ladevorgang und Türen.";
+"SHOW IN THE MENU BAR" = "IN DER MENÜLEISTE ANZEIGEN";
+"Open Polaris at login" = "Polaris bei der Anmeldung öffnen";
+"Email" = "E-Mail";
+"Password" = "Passwort";
+"About" = "Über";
+"Signed in" = "Angemeldet";
+"Not signed in" = "Nicht angemeldet";
+"Signed in · updated %@" = "Angemeldet · aktualisiert %@";
+"Signed in · %@ · updated %@" = "Angemeldet · %@ · aktualisiert %@";
+"Distances" = "Entfernungen";
+"Show in the menu bar" = "In der Menüleiste anzeigen";
+"Sign Out" = "Abmelden";
+"Sign out of Polaris?" = "Von Polaris abmelden?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris vergisst die Anmeldung für %@ und liest dein Fahrzeug nicht mehr aus.";

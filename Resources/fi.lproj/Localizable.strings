@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Avaa Polaris ja kirjaudu sisään";
 "Battery, range and charging status for your Polestar." = "Polestarisi akku, toimintamatka ja lataustila.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Kirjaudu sisään";
+"Sign in with the account you use in the Polestar app." = "Kirjaudu sisään tilillä, jota käytät Polestar-sovelluksessa.";
+"EMAIL" = "SÄHKÖPOSTI";
+"PASSWORD" = "SALASANA";
+"Sign In" = "Kirjaudu sisään";
+"Signing in…" = "Kirjaudutaan…";
+"Enter the email and password for your Polestar account." = "Anna Polestar-tilisi sähköposti ja salasana.";
+"Polestar rejected that email and password." = "Polestar hylkäsi tämän sähköpostin ja salasanan.";
+"No cars on this account. You can enter a VIN manually in Settings." = "Tällä tilillä ei ole autoja. Voit syöttää VIN-numeron käsin Asetuksissa.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Tallennetaan macOS-avainnippuun ja lähetetään vain Polestarille. Polariksella ei ole omaa palvelinta.";
+"Choose your car" = "Valitse autosi";
+"One car on this account." = "Yksi auto tällä tilillä.";
+"%d cars on this account. You can switch any time from the menu." = "%d autoa tällä tilillä. Voit vaihtaa milloin tahansa valikosta.";
+"Enter VIN Manually…" = "Syötä VIN käsin…";
+"Continue" = "Jatka";
+"Lives in the menu bar" = "Asuu valikkorivillä";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Ei Dock-kuvaketta, ei ikkunaa. Akku näkyy valikkorivillä — napsauta nähdäksesi toimintamatkan, latauksen ja ovet.";
+"SHOW IN THE MENU BAR" = "NÄYTÄ VALIKKORIVILLÄ";
+"Open Polaris at login" = "Avaa Polaris kirjautuessa";
+"Email" = "Sähköposti";
+"Password" = "Salasana";
+"About" = "Tietoja";
+"Signed in" = "Kirjautunut";
+"Not signed in" = "Ei kirjautunut";
+"Signed in · updated %@" = "Kirjautunut · päivitetty %@";
+"Signed in · %@ · updated %@" = "Kirjautunut · %@ · päivitetty %@";
+"Distances" = "Etäisyydet";
+"Show in the menu bar" = "Näytä valikkorivillä";
+"Sign Out" = "Kirjaudu ulos";
+"Sign out of Polaris?" = "Kirjaudutaanko ulos Polariksesta?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris unohtaa tilin %@ kirjautumisen eikä enää lue autoasi.";

@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Åpne Polaris for å logge inn";
 "Battery, range and charging status for your Polestar." = "Batteri, rekkevidde og ladestatus for din Polestar.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Logg inn";
+"Sign in with the account you use in the Polestar app." = "Logg inn med kontoen du bruker i Polestar-appen.";
+"EMAIL" = "E-POST";
+"PASSWORD" = "PASSORD";
+"Sign In" = "Logg inn";
+"Signing in…" = "Logger inn…";
+"Enter the email and password for your Polestar account." = "Skriv inn e-post og passord for Polestar-kontoen din.";
+"Polestar rejected that email and password." = "Polestar avviste den e-postadressen og det passordet.";
+"No cars on this account. You can enter a VIN manually in Settings." = "Ingen biler på denne kontoen. Du kan skrive inn et VIN manuelt i Innstillinger.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Lagres i macOS-nøkkelringen og sendes bare til Polestar. Polaris har ingen egen server.";
+"Choose your car" = "Velg bilen din";
+"One car on this account." = "Én bil på denne kontoen.";
+"%d cars on this account. You can switch any time from the menu." = "%d biler på denne kontoen. Du kan bytte når som helst fra menyen.";
+"Enter VIN Manually…" = "Skriv inn VIN manuelt…";
+"Continue" = "Fortsett";
+"Lives in the menu bar" = "Bor i menylinjen";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Ingen Dock-ikon, ingen vindu. Batteriet sitter i menylinjen — klikk for rekkevidde, lading og dørene.";
+"SHOW IN THE MENU BAR" = "VIS I MENYLINJEN";
+"Open Polaris at login" = "Åpne Polaris ved pålogging";
+"Email" = "E-post";
+"Password" = "Passord";
+"About" = "Om";
+"Signed in" = "Logget inn";
+"Not signed in" = "Ikke logget inn";
+"Signed in · updated %@" = "Logget inn · oppdatert %@";
+"Signed in · %@ · updated %@" = "Logget inn · %@ · oppdatert %@";
+"Distances" = "Avstander";
+"Show in the menu bar" = "Vis i menylinjen";
+"Sign Out" = "Logg ut";
+"Sign out of Polaris?" = "Logge ut av Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris glemmer innloggingen for %@ og slutter å lese av bilen din.";

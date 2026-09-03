@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Open Polaris om in te loggen";
 "Battery, range and charging status for your Polestar." = "Batterij, actieradius en laadstatus van je Polestar.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Inloggen";
+"Sign in with the account you use in the Polestar app." = "Log in met het account dat je in de Polestar-app gebruikt.";
+"EMAIL" = "E-MAIL";
+"PASSWORD" = "WACHTWOORD";
+"Sign In" = "Inloggen";
+"Signing in…" = "Bezig met inloggen…";
+"Enter the email and password for your Polestar account." = "Voer het e-mailadres en wachtwoord van je Polestar-account in.";
+"Polestar rejected that email and password." = "Polestar heeft dat e-mailadres en wachtwoord geweigerd.";
+"No cars on this account. You can enter a VIN manually in Settings." = "Geen auto's op dit account. Je kunt in Instellingen handmatig een VIN invoeren.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Wordt bewaard in de macOS-sleutelhanger en alleen naar Polestar gestuurd. Polaris heeft geen eigen server.";
+"Choose your car" = "Kies je auto";
+"One car on this account." = "Eén auto op dit account.";
+"%d cars on this account. You can switch any time from the menu." = "%d auto's op dit account. Je kunt altijd wisselen via het menu.";
+"Enter VIN Manually…" = "VIN handmatig invoeren…";
+"Continue" = "Doorgaan";
+"Lives in the menu bar" = "Woont in de menubalk";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Geen Dock-symbool, geen venster. De accu staat in de menubalk — klik voor actieradius, laden en de deuren.";
+"SHOW IN THE MENU BAR" = "TONEN IN DE MENUBALK";
+"Open Polaris at login" = "Polaris openen bij inloggen";
+"Email" = "E-mail";
+"Password" = "Wachtwoord";
+"About" = "Over";
+"Signed in" = "Ingelogd";
+"Not signed in" = "Niet ingelogd";
+"Signed in · updated %@" = "Ingelogd · bijgewerkt %@";
+"Signed in · %@ · updated %@" = "Ingelogd · %@ · bijgewerkt %@";
+"Distances" = "Afstanden";
+"Show in the menu bar" = "Tonen in de menubalk";
+"Sign Out" = "Uitloggen";
+"Sign out of Polaris?" = "Uitloggen bij Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris vergeet de login voor %@ en leest je auto niet meer uit.";

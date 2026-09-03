@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Apri Polaris per accedere";
 "Battery, range and charging status for your Polestar." = "Batteria, autonomia e stato di ricarica della tua Polestar.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Accedi";
+"Sign in with the account you use in the Polestar app." = "Accedi con l'account che usi nell'app Polestar.";
+"EMAIL" = "EMAIL";
+"PASSWORD" = "PASSWORD";
+"Sign In" = "Accedi";
+"Signing in…" = "Accesso in corso…";
+"Enter the email and password for your Polestar account." = "Inserisci l'email e la password del tuo account Polestar.";
+"Polestar rejected that email and password." = "Polestar ha rifiutato questa email e questa password.";
+"No cars on this account. You can enter a VIN manually in Settings." = "Nessuna auto su questo account. Puoi inserire un VIN manualmente in Impostazioni.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Salvata nel portachiavi di macOS e inviata solo a Polestar. Polaris non ha un server proprio.";
+"Choose your car" = "Scegli la tua auto";
+"One car on this account." = "Un'auto su questo account.";
+"%d cars on this account. You can switch any time from the menu." = "%d auto su questo account. Puoi cambiare quando vuoi dal menu.";
+"Enter VIN Manually…" = "Inserisci il VIN manualmente…";
+"Continue" = "Continua";
+"Lives in the menu bar" = "Vive nella barra dei menu";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Nessuna icona nel Dock, nessuna finestra. La batteria sta nella barra dei menu: fai clic per autonomia, ricarica e porte.";
+"SHOW IN THE MENU BAR" = "MOSTRA NELLA BARRA DEI MENU";
+"Open Polaris at login" = "Apri Polaris all'accesso";
+"Email" = "Email";
+"Password" = "Password";
+"About" = "Info";
+"Signed in" = "Connesso";
+"Not signed in" = "Non connesso";
+"Signed in · updated %@" = "Connesso · aggiornato %@";
+"Signed in · %@ · updated %@" = "Connesso · %@ · aggiornato %@";
+"Distances" = "Distanze";
+"Show in the menu bar" = "Mostra nella barra dei menu";
+"Sign Out" = "Esci";
+"Sign out of Polaris?" = "Uscire da Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris dimenticherà l'accesso per %@ e smetterà di leggere la tua auto.";

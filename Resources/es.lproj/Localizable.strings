@@ -91,3 +91,36 @@
 /* Widget */
 "Open Polaris to sign in" = "Abre Polaris para iniciar sesión";
 "Battery, range and charging status for your Polestar." = "Batería, autonomía y estado de carga de tu Polestar.";
+
+/* Onboarding, settings panes, sign out */
+"Sign in" = "Iniciar sesión";
+"Sign in with the account you use in the Polestar app." = "Inicia sesión con la cuenta que usas en la app de Polestar.";
+"EMAIL" = "CORREO";
+"PASSWORD" = "CONTRASEÑA";
+"Sign In" = "Iniciar sesión";
+"Signing in…" = "Iniciando sesión…";
+"Enter the email and password for your Polestar account." = "Introduce el correo y la contraseña de tu cuenta de Polestar.";
+"Polestar rejected that email and password." = "Polestar ha rechazado ese correo y esa contraseña.";
+"No cars on this account. You can enter a VIN manually in Settings." = "No hay coches en esta cuenta. Puedes introducir un VIN manualmente en Ajustes.";
+"Stored in the macOS Keychain, sent only to Polestar. Polaris has no server of its own." = "Se guarda en el llavero de macOS y solo se envía a Polestar. Polaris no tiene servidor propio.";
+"Choose your car" = "Elige tu coche";
+"One car on this account." = "Un coche en esta cuenta.";
+"%d cars on this account. You can switch any time from the menu." = "%d coches en esta cuenta. Puedes cambiar cuando quieras desde el menú.";
+"Enter VIN Manually…" = "Introducir VIN manualmente…";
+"Continue" = "Continuar";
+"Lives in the menu bar" = "Vive en la barra de menús";
+"No Dock icon, no window. Your battery sits in the menu bar — click it for range, charging and the doors." = "Sin icono en el Dock, sin ventana. La batería está en la barra de menús: haz clic para ver autonomía, carga y puertas.";
+"SHOW IN THE MENU BAR" = "MOSTRAR EN LA BARRA DE MENÚS";
+"Open Polaris at login" = "Abrir Polaris al iniciar sesión";
+"Email" = "Correo";
+"Password" = "Contraseña";
+"About" = "Acerca de";
+"Signed in" = "Sesión iniciada";
+"Not signed in" = "Sesión no iniciada";
+"Signed in · updated %@" = "Sesión iniciada · actualizado %@";
+"Signed in · %@ · updated %@" = "Sesión iniciada · %@ · actualizado %@";
+"Distances" = "Distancias";
+"Show in the menu bar" = "Mostrar en la barra de menús";
+"Sign Out" = "Cerrar sesión";
+"Sign out of Polaris?" = "¿Cerrar sesión en Polaris?";
+"Polaris will forget the login for %@ and stop reading your car." = "Polaris olvidará el inicio de sesión de %@ y dejará de leer tu coche.";
