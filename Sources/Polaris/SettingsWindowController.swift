@@ -2,8 +2,20 @@
 //  SettingsWindowController.swift
 //  Polaris (AppKit rewrite)
 //
-//  A small programmatic settings window: email, password (Keychain),
-//  VIN, menu bar display option, launch at login.
+//  Settings, in the shape macOS settings actually take: a toolbar of panes,
+//  and changes that land the moment they're made.
+//
+//  It used to be one long form behind Save and Cancel. Two problems with
+//  that. A settings pane on this platform doesn't have a Save button —
+//  people expect a checkbox to mean something the instant it's ticked, and
+//  a window that hoards changes until a button is pressed loses them to a
+//  ⌘W. And the form had grown past the height of the window: account,
+//  menu bar, general, notifications, updates and the version number, all
+//  in one column.
+//
+//  Credentials are the exception and keep an explicit Save. An email
+//  half-typed is not an email, and writing it per keystroke would tear
+//  down a working session on the way to a valid one.
 //
 
 import AppKit
@@ -11,40 +23,65 @@ import PolarisShared
 
 final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
+    // MARK: Account pane
+
     private let emailField = NSTextField()
     private let passwordField = NSSecureTextField()
     private let vinField = NSTextField()
+    private let statusDot = NSView()
+    private let statusLabel = NSTextField(labelWithString: "")
+    private let addCarButton = NSButton(title: L("Add Car…"), target: nil, action: nil)
+    /// Removes the account being shown. It is called "Remove Car" while
+    /// there is another car to fall back to and "Sign Out" when it is the
+    /// last one, because those are two different things to the person
+    /// pressing it even though the code behind them is the same.
+    private let removeCarButton = NSButton(title: L("Remove Car"), target: nil, action: nil)
+    private let saveAccountButton = NSButton(title: L("Save"), target: nil, action: nil)
+
+    // MARK: Menu bar pane
+
     private let displayPopup = NSPopUpButton()
     private let unitPopup = NSPopUpButton()
     private let launchCheckbox = NSButton(checkboxWithTitle: L("Launch at login"), target: nil, action: nil)
+
+    // MARK: Notifications pane
+
     private let notifyStartCheckbox = NSButton(checkboxWithTitle: L("Charging started"), target: nil, action: nil)
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
     private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
     private let lowThresholdPopup = NSPopUpButton()
-    private lazy var lowBatteryRowView: NSView = lowBatteryRow()
+
+    // MARK: Updates pane
+
     private let autoCheckCheckbox = NSButton(checkboxWithTitle: L("Check automatically"), target: nil, action: nil)
     private let autoInstallCheckbox = NSButton(checkboxWithTitle: L("Download and install automatically"), target: nil, action: nil)
 
-    /// Sparkle isn't running under `swift run`, so the two update rows are
-    /// left out entirely rather than shown dead.
+    /// Sparkle isn't running under `swift run`, so the update pane is left
+    /// out entirely rather than shown dead.
     private let updater: Updater?
-
-    private let addCarButton = NSButton(title: L("Add Car…"), target: nil, action: nil)
-    private let removeCarButton = NSButton(title: L("Remove Car"), target: nil, action: nil)
 
     /// Set while the form holds a login for a car being added, so saving
     /// creates a second account instead of overwriting the current one.
     private var isAddingCar = false
 
-    private let onSave: () -> Void
+    /// Cheap changes: launch-at-login, and redrawing the menu bar with what
+    /// the app already has. Never refetches.
+    private let onChange: () -> Void
+    /// The account changed — the session has to be started over.
+    private let onAccountChange: () -> Void
 
-    init(updater: Updater? = nil, onSave: @escaping () -> Void) {
+    private let tabs = NSTabViewController()
+
+    init(updater: Updater? = nil,
+         onChange: @escaping () -> Void,
+         onAccountChange: @escaping () -> Void) {
         self.updater = (updater?.isAvailable == true) ? updater : nil
-        self.onSave = onSave
+        self.onChange = onChange
+        self.onAccountChange = onAccountChange
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 260),
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 260),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -65,181 +102,311 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window?.makeKeyAndOrderFront(nil)
     }
 
+    /// Called by the app whenever it learns something new, so the pane isn't
+    /// showing a connection state from whenever it was last opened.
+    func updateStatus(data: CarData?, error: String?, authenticated: Bool) {
+        let colour: NSColor
+        let text: String
+        if let error {
+            colour = .systemRed
+            text = error
+        } else if authenticated, let data {
+            colour = .systemGreen
+            let car = [data.modelName, data.modelYear].compactMap { $0 }.joined(separator: " · ")
+            let when = Self.relative(data.lastUpdated)
+            text = car.isEmpty
+                ? String(format: L("Signed in · updated %@"), when)
+                : String(format: L("Signed in · %@ · updated %@"), car, when)
+        } else if authenticated {
+            colour = .systemGreen
+            text = L("Signed in")
+        } else {
+            colour = .tertiaryLabelColor
+            text = L("Not signed in")
+        }
+        statusLabel.stringValue = text
+        statusDot.layer?.backgroundColor = colour.cgColor
+    }
+
+    private static func relative(_ date: Date) -> String {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .full
+        return f.localizedString(for: date, relativeTo: Date())
+    }
+
     // MARK: - UI
 
     private func buildUI() {
-        guard let content = window?.contentView else { return }
+        tabs.tabStyle = .toolbar
 
+        var items: [NSTabViewItem] = [
+            pane(L("Account"), symbol: "person.crop.circle", view: accountPane()),
+            pane(L("Menu Bar"), symbol: "menubar.rectangle", view: menuBarPane()),
+            pane(L("Notifications"), symbol: "bell", view: notificationsPane())
+        ]
+        if updater != nil {
+            items.append(pane(L("Updates"), symbol: "arrow.down.circle", view: updatesPane()))
+        }
+        items.append(pane(L("About"), symbol: "info.circle", view: aboutPane()))
+
+        // Every pane takes the same size — the tallest one — so clicking
+        // along the toolbar doesn't resize the window under the pointer.
+        let tallest = items
+            .compactMap { $0.viewController?.preferredContentSize.height }
+            .max() ?? 0
+        let size = NSSize(width: Self.paneWidth, height: tallest)
+        for item in items {
+            item.viewController?.preferredContentSize = size
+            tabs.addTabViewItem(item)
+        }
+
+        window?.contentViewController = tabs
+        // The System Settings look: pane icons centred in the title bar
+        // rather than a toolbar sitting above the content.
+        window?.toolbarStyle = .preference
+    }
+
+    private func pane(_ title: String, symbol: String, view: NSView) -> NSTabViewItem {
+        let vc = NSViewController()
+        let host = NSView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        host.addSubview(view)
+        // Leading, top, fixed content width. Nothing centred, nothing
+        // right-aligned: five panes each picking their own alignment read
+        // as five different windows.
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: host.topAnchor, constant: Self.paneInset.height),
+            view.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: Self.paneInset.width),
+            view.widthAnchor.constraint(equalToConstant: Self.contentWidth),
+            view.bottomAnchor.constraint(lessThanOrEqualTo: host.bottomAnchor,
+                                         constant: -Self.paneInset.height)
+        ])
+        vc.view = host
+        vc.title = title
+
+        host.layoutSubtreeIfNeeded()
+        vc.preferredContentSize = NSSize(width: Self.paneWidth,
+                                         height: view.fittingSize.height + Self.paneInset.height * 2)
+
+        let item = NSTabViewItem(viewController: vc)
+        item.label = title
+        item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+        return item
+    }
+
+    /// As wide as the toolbar needs and no wider: the five pane icons set
+    /// the width, not the widest field on any one pane.
+    private static let paneWidth: CGFloat = 360
+    private static let paneInset = NSSize(width: 24, height: 22)
+    private static var contentWidth: CGFloat { paneWidth - paneInset.width * 2 }
+
+    // MARK: Panes
+
+    private func accountPane() -> NSView {
         emailField.placeholderString = "you@example.com"
         passwordField.placeholderString = L("Polestar password")
         vinField.placeholderString = L("Vehicle VIN")
-        // Editable text fields have no useful intrinsic width; without one,
-        // the grid hands the window's spare width to the label column and
-        // the whole form ends up shoved against the right edge.
+        // Editable text fields have no useful intrinsic width, so they are
+        // given the pane's: three fields all ending at the same point.
         for field in [emailField, passwordField, vinField] {
             field.translatesAutoresizingMaskIntoConstraints = false
-            field.widthAnchor.constraint(equalToConstant: 260).isActive = true
+            field.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
         }
-
-        // Selection travels by index, not by title: a translated title can no
-        // longer be fed back through init(rawValue:).
-        displayPopup.removeAllItems()
-        for option in DisplayOption.allCases {
-            displayPopup.addItem(withTitle: option.title)
+        // Same reason as onboarding: a password manager filling a native app
+        // looks for fields that declare what they hold.
+        if #available(macOS 14.0, *) {
+            emailField.contentType = .username
+            passwordField.contentType = .password
         }
-        unitPopup.removeAllItems()
-        for unit in DistanceUnit.allCases {
-            unitPopup.addItem(withTitle: unit.title)
-        }
+        emailField.setAccessibilityIdentifier("username")
+        passwordField.setAccessibilityIdentifier("password")
 
-        // Grouped like a System Settings pane: a header per group, with the
-        // label column still carrying the per-row names. Rows are added one
-        // at a time because the header rows have to be merged across both
-        // columns as they go.
-        let grid = NSGridView(views: [[sectionHeader(L("Account"))]])
-        var headerRows: [Int] = [0]
-
-        func addSection(_ title: String, _ rows: [[NSView]]) {
-            let row = grid.addRow(with: [sectionHeader(title)])
-            headerRows.append(grid.index(of: row))
-            rows.forEach { grid.addRow(with: $0) }
-        }
-
-        grid.addRow(with: [label(L("Email:")), emailField])
-        grid.addRow(with: [label(L("Password:")), passwordField])
-        grid.addRow(with: [label(L("VIN:")), vinField])
-        addSection(L("Menu Bar"), [
-            [label(L("Show in bar:")), displayPopup],
-            [label(L("Distances:")), unitPopup]
+        let form = NSStackView(views: [
+            field(L("Email"), emailField),
+            field(L("Password"), passwordField),
+            field(L("VIN"), vinField)
         ])
-        addSection(L("General"), [
-            [NSGridCell.emptyContentView, launchCheckbox]
-        ])
-        addSection(L("Notifications"), [
-            [NSGridCell.emptyContentView, notifyStartCheckbox],
-            [NSGridCell.emptyContentView, notifyDoneCheckbox],
-            [NSGridCell.emptyContentView, notifyProblemCheckbox],
-            [NSGridCell.emptyContentView, lowBatteryRowView]
-        ])
-        if updater != nil {
-            addSection(L("Updates"), [
-                [NSGridCell.emptyContentView, autoCheckCheckbox],
-                [NSGridCell.emptyContentView, autoInstallCheckbox]
-            ])
-        }
-        // The version has to be readable somewhere, and this is the only
-        // window the app has — there is no About box to put it in.
-        grid.addRow(with: [NSGridCell.emptyContentView, versionLabel()])
-
-        grid.rowSpacing = 8
-        grid.columnSpacing = 10
-        grid.rowAlignment = .firstBaseline
-        grid.column(at: 0).xPlacement = .trailing
-        // Text fields stretch with the window; popups and checkboxes keep
-        // their natural width.
-        for control in [displayPopup, unitPopup, launchCheckbox, notifyStartCheckbox,
-                        notifyDoneCheckbox, notifyProblemCheckbox,
-                        autoCheckCheckbox, autoInstallCheckbox] {
-            grid.cell(for: control)?.xPlacement = .leading
-        }
-        grid.cell(for: lowBatteryRowView)?.xPlacement = .leading
-        // Air above each group, except the first one at the top of the window.
-        for row in headerRows.dropFirst() {
-            grid.row(at: row).topPadding = 14
-        }
-        for row in headerRows {
-            grid.row(at: row).bottomPadding = 2
-            grid.mergeCells(inHorizontalRange: NSRange(location: 0, length: grid.numberOfColumns),
-                            verticalRange: NSRange(location: row, length: 1))
-            grid.cell(atColumnIndex: 0, rowIndex: row).xPlacement = .leading
-        }
-        grid.row(at: grid.numberOfRows - 1).topPadding = 14
-        grid.translatesAutoresizingMaskIntoConstraints = false
-
-        let saveButton = NSButton(title: L("Save"), target: self, action: #selector(saveAction))
-        saveButton.keyEquivalent = "\r"
-        let cancelButton = NSButton(title: L("Cancel"), target: self, action: #selector(cancelAction))
-        cancelButton.keyEquivalent = "\u{1b}"
+        form.orientation = .vertical
+        form.alignment = .leading
+        form.spacing = 12
 
         addCarButton.target = self
         addCarButton.action = #selector(addCarAction)
         removeCarButton.target = self
         removeCarButton.action = #selector(removeCarAction)
+        saveAccountButton.target = self
+        saveAccountButton.action = #selector(saveAccountAction)
+        saveAccountButton.keyEquivalent = "\r"
 
-        let buttons = NSStackView(views: [cancelButton, saveButton])
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        let buttons = NSStackView(views: [addCarButton, removeCarButton, spacer, saveAccountButton])
         buttons.orientation = .horizontal
-        buttons.spacing = 12
+        buttons.spacing = 8
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let accountButtons = NSStackView(views: [addCarButton, removeCarButton])
-        accountButtons.orientation = .horizontal
-        accountButtons.spacing = 8
-        accountButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        content.addSubview(grid)
-        content.addSubview(buttons)
-        content.addSubview(accountButtons)
-        NSLayoutConstraint.activate([
-            accountButtons.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            accountButtons.centerYAnchor.constraint(equalTo: buttons.centerYAnchor),
-            grid.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
-            grid.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
-            grid.trailingAnchor.constraint(lessThanOrEqualTo: content.trailingAnchor, constant: -20),
-            buttons.topAnchor.constraint(equalTo: grid.bottomAnchor, constant: 20),
-            buttons.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
-            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20)
-        ])
-
-        window?.setContentSize(NSSize(width: 420, height: content.fittingSize.height))
+        let stack = NSStackView(views: [statusRow(), form, buttons])
+        stack.orientation = .vertical
+        // Leading, so the status line, the form and the buttons share a
+        // left edge with every other pane.
+        stack.alignment = .leading
+        stack.spacing = 18
+        stack.setCustomSpacing(20, after: stack.arrangedSubviews[0])
+        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return stack
     }
 
-    /// A group title: the same weight System Settings uses for its section
-    /// headings, so the groups read as groups without drawing boxes.
-    private func sectionHeader(_ text: String) -> NSTextField {
-        let l = NSTextField(labelWithString: text)
-        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
-        l.textColor = .secondaryLabelColor
-        return l
-    }
+    /// A dot and a sentence: signed in or not, which car, how long ago it
+    /// last heard anything — or the error, in place of all of it. Without
+    /// this the only way to tell a stale session from a quiet car was to
+    /// watch the menu bar and guess.
+    private func statusRow() -> NSView {
+        statusDot.wantsLayer = true
+        statusDot.layer?.cornerRadius = 4
+        statusDot.translatesAutoresizingMaskIntoConstraints = false
+        statusDot.widthAnchor.constraint(equalToConstant: 8).isActive = true
+        statusDot.heightAnchor.constraint(equalToConstant: 8).isActive = true
+        statusLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        statusLabel.widthAnchor.constraint(lessThanOrEqualToConstant:
+            Self.contentWidth - 16).isActive = true
 
-    private func versionLabel() -> NSTextField {
-        let info = Bundle.main.infoDictionary
-        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
-        let l = NSTextField(labelWithString: "Polaris \(short) (\(build))")
-        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        l.textColor = .tertiaryLabelColor
-        return l
-    }
-
-    private func label(_ text: String) -> NSTextField {
-        let l = NSTextField(labelWithString: text)
-        l.alignment = .right
-        return l
-    }
-
-    /// The threshold belongs to the checkbox, so the two share a row rather
-    /// than the popup floating a line below with a label of its own.
-    private func lowBatteryRow() -> NSView {
-        lowThresholdPopup.removeAllItems()
-        lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
-        notifyLowCheckbox.target = self
-        notifyLowCheckbox.action = #selector(lowBatteryToggled)
-        let row = NSStackView(views: [notifyLowCheckbox, lowThresholdPopup])
+        let row = NSStackView(views: [statusDot, statusLabel])
         row.orientation = .horizontal
+        row.alignment = .centerY
         row.spacing = 8
-        row.alignment = .firstBaseline
         return row
     }
 
-    @objc private func lowBatteryToggled() {
-        lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
+    private func menuBarPane() -> NSView {
+        displayPopup.removeAllItems()
+        // Selection travels by index, not by title: a translated title can no
+        // longer be fed back through init(rawValue:).
+        for option in DisplayOption.allCases { displayPopup.addItem(withTitle: option.title) }
+        unitPopup.removeAllItems()
+        for unit in DistanceUnit.allCases { unitPopup.addItem(withTitle: unit.title) }
+
+        displayPopup.target = self; displayPopup.action = #selector(displayChanged)
+        unitPopup.target = self;    unitPopup.action = #selector(unitChanged)
+        launchCheckbox.target = self; launchCheckbox.action = #selector(launchChanged)
+
+        let stack = NSStackView(views: [
+            field(L("Show in the menu bar"), displayPopup),
+            field(L("Distances"), unitPopup),
+            launchCheckbox
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 16
+        stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
+        return stack
     }
+
+    private func notificationsPane() -> NSView {
+        lowThresholdPopup.removeAllItems()
+        lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
+        lowThresholdPopup.target = self
+        lowThresholdPopup.action = #selector(notificationsChanged)
+        for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, notifyLowCheckbox] {
+            box.target = self
+            box.action = #selector(notificationsChanged)
+        }
+
+        /// The threshold belongs to the checkbox, so the two share a row
+        /// rather than the popup floating a line below with a label of its own.
+        let lowRow = NSStackView(views: [notifyLowCheckbox, lowThresholdPopup])
+        lowRow.orientation = .horizontal
+        lowRow.spacing = 8
+        lowRow.alignment = .firstBaseline
+
+        let stack = NSStackView(views: [
+            notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow
+        ])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 10
+        return stack
+    }
+
+    private func updatesPane() -> NSView {
+        autoCheckCheckbox.target = self;   autoCheckCheckbox.action = #selector(updatesChanged)
+        autoInstallCheckbox.target = self; autoInstallCheckbox.action = #selector(updatesChanged)
+
+        let check = NSButton(title: L("Check for Updates…"), target: self,
+                             action: #selector(checkForUpdatesAction))
+
+        let stack = NSStackView(views: [autoCheckCheckbox, autoInstallCheckbox, check])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 12
+        stack.setCustomSpacing(18, after: autoInstallCheckbox)
+        return stack
+    }
+
+    /// The version used to sit at the bottom of the settings form because
+    /// there was nowhere else for it. There is now.
+    private func aboutPane() -> NSView {
+        let icon = NSImageView(image: NSApp.applicationIconImage)
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        icon.widthAnchor.constraint(equalToConstant: 64).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 64).isActive = true
+
+        let name = NSTextField(labelWithString: "Polaris")
+        name.font = .systemFont(ofSize: 17, weight: .semibold)
+
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+        let build = info?["CFBundleVersion"] as? String ?? "—"
+        let version = NSTextField(labelWithString: "\(short) (\(build))")
+        version.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        version.textColor = .secondaryLabelColor
+
+        let blurb = NSTextField(wrappingLabelWithString:
+            L("Battery, range and charging status for your Polestar."))
+        blurb.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        blurb.textColor = .secondaryLabelColor
+
+        let text = NSStackView(views: [name, version, blurb])
+        text.orientation = .vertical
+        text.alignment = .leading
+        text.spacing = 3
+        text.setCustomSpacing(10, after: version)
+
+        let row = NSStackView(views: [icon, text])
+        row.orientation = .horizontal
+        row.alignment = .top
+        row.spacing = 16
+        return row
+    }
+
+    /// A caption above its control. Labels used to sit in a right-aligned
+    /// column beside the field, which is what pushed a whole pane to the
+    /// window's trailing edge; above and to the left, every pane starts at
+    /// the same x whatever its longest label happens to be.
+    private func field(_ caption: String, _ control: NSView) -> NSView {
+        let l = NSTextField(labelWithString: caption)
+        l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        l.textColor = .secondaryLabelColor
+        l.alignment = .left
+
+        let stack = NSStackView(views: [l, control])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 5
+        return stack
+    }
+
+    // MARK: - Loading
 
     private func loadValues() {
         isAddingCar = false
-        // Nothing to remove until there's a second car to fall back to.
-        removeCarButton.isHidden = Accounts.all.count < 2
+        // Signing out used to be impossible with one account: the only path
+        // out was a button hidden until a second car existed, which is to
+        // say hidden from nearly everyone.
+        removeCarButton.isHidden = Accounts.all.isEmpty
+        removeCarButton.title = isLastAccount ? L("Sign Out") : L("Remove Car")
         emailField.stringValue = Preferences.email
         passwordField.stringValue = ((try? Keychain.readPassword()) ?? nil) ?? ""
         vinField.stringValue = Preferences.vin
@@ -252,16 +419,55 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyLowCheckbox.state = Preferences.notifyLowBattery ? .on : .off
         lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
             .firstIndex(of: Preferences.lowBatteryThreshold) ?? 0)
-        lowBatteryToggled()
+        lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
         if let updater {
             autoCheckCheckbox.state = updater.automaticallyChecks ? .on : .off
             autoInstallCheckbox.state = updater.automaticallyDownloads ? .on : .off
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Instant apply
 
-    @objc private func saveAction() {
+    @objc private func displayChanged() {
+        guard displayPopup.indexOfSelectedItem >= 0 else { return }
+        Preferences.displayOption = DisplayOption.allCases[displayPopup.indexOfSelectedItem]
+        onChange()
+    }
+
+    @objc private func unitChanged() {
+        guard unitPopup.indexOfSelectedItem >= 0 else { return }
+        Preferences.distanceUnit = DistanceUnit.allCases[unitPopup.indexOfSelectedItem]
+        onChange()
+    }
+
+    @objc private func launchChanged() {
+        Preferences.launchAtLogin = (launchCheckbox.state == .on)
+        onChange()
+    }
+
+    @objc private func notificationsChanged() {
+        Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
+        Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
+        Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
+        Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
+        if lowThresholdPopup.indexOfSelectedItem >= 0 {
+            Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
+        }
+        lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
+    }
+
+    @objc private func updatesChanged() {
+        updater?.automaticallyChecks = (autoCheckCheckbox.state == .on)
+        updater?.automaticallyDownloads = (autoInstallCheckbox.state == .on)
+    }
+
+    @objc private func checkForUpdatesAction() {
+        updater?.checkForUpdates()
+    }
+
+    // MARK: - Account
+
+    @objc private func saveAccountAction() {
         let email = emailField.stringValue.trimmingCharacters(in: .whitespaces)
         let previous = Preferences.email
         // Editing the address of the account you're on is a rename, not a
@@ -273,24 +479,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.email = email
         Accounts.add(email)
         Preferences.vin = vinField.stringValue.trimmingCharacters(in: .whitespaces).uppercased()
-        if displayPopup.indexOfSelectedItem >= 0 {
-            Preferences.displayOption = DisplayOption.allCases[displayPopup.indexOfSelectedItem]
-        }
-        if unitPopup.indexOfSelectedItem >= 0 {
-            Preferences.distanceUnit = DistanceUnit.allCases[unitPopup.indexOfSelectedItem]
-        }
-        Preferences.launchAtLogin = (launchCheckbox.state == .on)
-        Preferences.notifyChargingStarted = (notifyStartCheckbox.state == .on)
-        Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
-        Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
-        Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
-        if lowThresholdPopup.indexOfSelectedItem >= 0 {
-            Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
-        }
-        if let updater {
-            updater.automaticallyChecks = (autoCheckCheckbox.state == .on)
-            updater.automaticallyDownloads = (autoInstallCheckbox.state == .on)
-        }
 
         let password = passwordField.stringValue
         if password.isEmpty {
@@ -310,13 +498,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // Credentials may have changed — drop the stored session so the next
         // login uses the new account rather than resuming the old one.
         Keychain.deleteSessionToken()
-
-        window?.orderOut(nil)
-        onSave()
-    }
-
-    @objc private func cancelAction() {
-        window?.orderOut(nil)
+        isAddingCar = false
+        onAccountChange()
     }
 
     /// Empty the form for a second Polestar login. The current car stays
@@ -330,12 +513,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window?.makeFirstResponder(emailField)
     }
 
+    private var isLastAccount: Bool { Accounts.all.count < 2 }
+
     @objc private func removeCarAction() {
+        let last = isLastAccount
         let alert = NSAlert()
-        alert.messageText = L("Sign out and forget this car?")
-        alert.informativeText = String(format: L("Polaris will forget the login for %@."),
-                                       Preferences.email)
-        alert.addButton(withTitle: L("Remove Car"))
+        alert.messageText = last ? L("Sign out of Polaris?") : L("Sign out and forget this car?")
+        alert.informativeText = last
+            ? String(format: L("Polaris will forget the login for %@ and stop reading your car."),
+                     Preferences.email)
+            : String(format: L("Polaris will forget the login for %@."), Preferences.email)
+        alert.addButton(withTitle: last ? L("Sign Out") : L("Remove Car"))
         alert.addButton(withTitle: L("Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
@@ -344,6 +532,6 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // the widget with whichever car is now active.
         WidgetBridge.clear()
         window?.orderOut(nil)
-        onSave()
+        onAccountChange()
     }
 }

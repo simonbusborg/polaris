@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusController: StatusItemController!
     private var settingsController: SettingsWindowController?
+    private var onboardingController: OnboardingWindowController?
 
     private let api = PolestarAPI()
     private let notifier = Notifier()
@@ -38,7 +39,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if hasCredentials {
             startSession()
         } else {
-            showSettings()
+            // First run: ask for the account, not for a VIN. Settings is
+            // still where an existing setup is changed — it is just no
+            // longer the first thing anyone meets.
+            showOnboarding()
         }
     }
 
@@ -117,6 +121,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await MainActor.run {
                     self.lastError = error.localizedDescription
                     self.statusController.render(data: self.latest, error: error.localizedDescription, authenticated: false)
+                    self.settingsController?.updateStatus(data: self.latest,
+                                                          error: error.localizedDescription,
+                                                          authenticated: false)
                     // A dead session is "not signed in", not a transient
                     // error: open Settings so the fix is in reach instead
                     // of only an error row in the menu.
@@ -153,6 +160,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     if Self.isSignedOut(error) { self.startSession(); return }
                     self.lastError = error.localizedDescription
                     self.statusController.render(data: self.latest, error: error.localizedDescription, authenticated: true)
+                    self.settingsController?.updateStatus(data: self.latest,
+                                                          error: error.localizedDescription,
+                                                          authenticated: true)
                 }
             }
         }
@@ -173,6 +183,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusController.cars = Accounts.allCars
         statusController.activeVin = Preferences.vin
         statusController.render(data: data, error: nil, authenticated: true)
+        settingsController?.updateStatus(data: data, error: nil, authenticated: true)
         WidgetBridge.publish(data)
         scheduleRefresh()
     }
@@ -211,16 +222,79 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // MARK: - First run
+
+    /// Everything the app was holding about a car it no longer has a login
+    /// for. Without this the menu keeps offering the signed-out car in its
+    /// switcher and the widget keeps showing its last reading.
+    private func signedOut() {
+        latest = nil
+        lastError = nil
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        statusController.cars = Accounts.allCars
+        statusController.activeVin = Preferences.vin
+        statusController.render(data: nil, error: nil, authenticated: false)
+        WidgetBridge.clear()
+        settingsController?.close()
+        // A fresh controller, so onboarding opens on its first step rather
+        // than wherever the last run left it.
+        onboardingController = nil
+        showOnboarding()
+    }
+
+    private func showOnboarding() {
+        if onboardingController == nil {
+            onboardingController = OnboardingWindowController(
+                api: api,
+                onFinish: { [weak self] in
+                    self?.applyLaunchAtLogin()
+                    self?.startSession()
+                },
+                onManualVIN: { [weak self] in
+                    self?.showSettings()
+                }
+            )
+        }
+        onboardingController?.show()
+    }
+
     // MARK: - Settings
 
     func showSettings() {
         if settingsController == nil {
-            settingsController = SettingsWindowController(updater: updater) { [weak self] in
-                self?.applyLaunchAtLogin()
-                self?.startSession()
-            }
+            settingsController = SettingsWindowController(
+                updater: updater,
+                onChange: { [weak self] in
+                    // Instant apply: the pane has already written the
+                    // preference, so this only has to act on it. No refetch —
+                    // the numbers didn't change, only how they're shown.
+                    self?.applyLaunchAtLogin()
+                    self?.redrawStatusItem()
+                },
+                onAccountChange: { [weak self] in
+                    guard let self else { return }
+                    self.applyLaunchAtLogin()
+                    // Signing out of the last account leaves nothing to
+                    // start a session with. Send them back to the front
+                    // door rather than to an error row in the menu.
+                    if self.hasCredentials {
+                        self.startSession()
+                    } else {
+                        self.signedOut()
+                    }
+                }
+            )
         }
         settingsController?.show()
+        settingsController?.updateStatus(data: latest, error: lastError,
+                                         authenticated: api.isAuthenticated)
+    }
+
+    /// Re-render the menu bar from what the app already knows.
+    private func redrawStatusItem() {
+        statusController.render(data: latest, error: lastError,
+                                authenticated: api.isAuthenticated)
     }
 
     private func applyLaunchAtLogin() {
