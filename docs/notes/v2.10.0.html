@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Polaris 2.10.0</title>
+<style>
+  /* Sparkle renders this in a small WebView that follows the system
+     appearance, so the page has to work in both and stay legible at
+     roughly 500 points wide. */
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font: 13px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: #1d1d1f;
+    background: #fff;
+  }
+  h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  .date { margin: 2px 0 16px; font-size: 12px; color: #6e6e73; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 7px; }
+  a { color: #0a6cff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { margin-top: 18px; font-size: 12px; color: #6e6e73; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #f2f2f7; background: #1e1e1e; }
+    .date, footer { color: #9a9aa0; }
+    a { color: #6cb1ff; }
+  }
+</style>
+</head>
+<body>
+  <h1>Polaris 2.10.0</h1>
+  <p class="date">September 10, 2026</p>
+  <ul>
+      <li><strong>Choose how often the car is polled</strong> — a &quot;Refresh while parked&quot; setting in the menu bar pane: every 1, 2, 5, 10 or 15 minutes, applied the moment it&#x27;s changed. Charging and driving still refresh every minute — those are the moments the numbers actually move.</li>
+      <li><strong>The menu speaks VoiceOver</strong> — the data rows, the car image and the widget now carry proper accessibility labels, so &quot;Battery, 78%&quot; is read aloud instead of silence. Decorative pieces like the battery bar stay quiet rather than repeating what the text next to them already says.</li>
+      <li><strong>Readable release notes in the update window</strong> — Sparkle&#x27;s update panel now shows what a release means for you, written from this roadmap, instead of raw commit subjects.</li>
+      <li><strong>No more half-translated greeting</strong> — Chinese and Korean systems got a localized &quot;hello&quot; atop an otherwise English menu; the greeting now only speaks languages the rest of the app speaks too.</li>
+  </ul>
+  <footer><a href="https://github.com/simonbusborg/polaris/compare/v2.9.1...v2.10.0">All changes on GitHub</a></footer>
+</body>
+</html>

@@ -13,6 +13,16 @@
     <language>en</language>
     <!-- items -->
     <item>
+      <title>2.10.0</title>
+      <pubDate>Thu, 10 Sep 2026 18:46:24 +0000</pubDate>
+      <sparkle:version>25</sparkle:version>
+      <sparkle:shortVersionString>2.10.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+      <sparkle:releaseNotesLink>https://simonbusborg.github.io/polaris/notes/v2.10.0.html</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/simonbusborg/polaris/releases/download/v2.10.0/Polaris.zip"
+                 type="application/octet-stream" sparkle:edSignature="1/Byo8uE7iuR49YhB/Adjwg/PnV8Gx62LRJmSpHo0iV9zz9SKSkF4JhantOUJNJtvXzuj3InYFERikO6i8XXDA==" length="2022455" />
+    </item>
+    <item>
       <title>2.9.1</title>
       <pubDate>Thu, 03 Sep 2026 10:28:41 +0000</pubDate>
       <sparkle:version>24</sparkle:version>
