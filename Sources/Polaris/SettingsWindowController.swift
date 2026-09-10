@@ -42,6 +42,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private let displayPopup = NSPopUpButton()
     private let unitPopup = NSPopUpButton()
+    private let refreshPopup = NSPopUpButton()
     private let launchCheckbox = NSButton(checkboxWithTitle: L("Launch at login"), target: nil, action: nil)
 
     // MARK: Notifications pane
@@ -287,20 +288,24 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         for option in DisplayOption.allCases { displayPopup.addItem(withTitle: option.title) }
         unitPopup.removeAllItems()
         for unit in DistanceUnit.allCases { unitPopup.addItem(withTitle: unit.title) }
+        refreshPopup.removeAllItems()
+        for interval in RefreshInterval.allCases { refreshPopup.addItem(withTitle: interval.title) }
 
         displayPopup.target = self; displayPopup.action = #selector(displayChanged)
         unitPopup.target = self;    unitPopup.action = #selector(unitChanged)
+        refreshPopup.target = self; refreshPopup.action = #selector(refreshIntervalChanged)
         launchCheckbox.target = self; launchCheckbox.action = #selector(launchChanged)
 
         let stack = NSStackView(views: [
             field(L("Show in the menu bar"), displayPopup),
             field(L("Distances"), unitPopup),
+            field(L("Refresh while parked"), refreshPopup),
             launchCheckbox
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 16
-        stack.setCustomSpacing(20, after: stack.arrangedSubviews[1])
+        stack.setCustomSpacing(20, after: stack.arrangedSubviews[2])
         return stack
     }
 
@@ -412,6 +417,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         vinField.stringValue = Preferences.vin
         displayPopup.selectItem(at: DisplayOption.allCases.firstIndex(of: Preferences.displayOption) ?? 0)
         unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
+        refreshPopup.selectItem(at: RefreshInterval.allCases.firstIndex(of: Preferences.refreshInterval) ?? 0)
         launchCheckbox.state = Preferences.launchAtLogin ? .on : .off
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
@@ -437,6 +443,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     @objc private func unitChanged() {
         guard unitPopup.indexOfSelectedItem >= 0 else { return }
         Preferences.distanceUnit = DistanceUnit.allCases[unitPopup.indexOfSelectedItem]
+        onChange()
+    }
+
+    @objc private func refreshIntervalChanged() {
+        guard refreshPopup.indexOfSelectedItem >= 0 else { return }
+        Preferences.refreshInterval = RefreshInterval.allCases[refreshPopup.indexOfSelectedItem]
         onChange()
     }
 

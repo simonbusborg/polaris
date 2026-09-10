@@ -104,7 +104,7 @@ final class StatusItemController {
 
             // Car image (studio render of the actual configuration)
             if let imageData = data.imageData, let image = NSImage(data: imageData) {
-                menu.addItem(Self.imageItem(image))
+                menu.addItem(Self.imageItem(image, description: data.modelName))
             }
 
             // Identity
@@ -277,7 +277,7 @@ final class StatusItemController {
 
     // MARK: - Helpers
 
-    private static func imageItem(_ image: NSImage) -> NSMenuItem {
+    private static func imageItem(_ image: NSImage, description: String?) -> NSMenuItem {
         let width: CGFloat = 280
         let aspect = image.size.height / max(image.size.width, 1)
         let height = min(width * aspect, 180)
@@ -285,6 +285,7 @@ final class StatusItemController {
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width + 28, height: height + 8))
         let imageView = NSImageView(frame: NSRect(x: 14, y: 4, width: width, height: height))
         imageView.image = image
+        imageView.setAccessibilityLabel(description)
         imageView.imageScaling = .scaleProportionallyUpOrDown
         container.addSubview(imageView)
 
@@ -333,7 +334,9 @@ final class StatusItemController {
         return .controlAccentColor
     }
 
-    /// "Hi"/"Hello" in the system language, covering Polestar's markets.
+    /// "Hi"/"Hello" in the system language — but only for languages the rest
+    /// of the menu also speaks. A greeting in Chinese above an all-English
+    /// menu promises a localization that doesn't exist.
     static func greeting(_ name: String,
                          languageCode: String? = Locale.preferredLanguages.first) -> String {
         let code = String(languageCode?.prefix(2) ?? "en")
@@ -341,7 +344,7 @@ final class StatusItemController {
             "da": "Hej", "sv": "Hej", "nb": "Hei", "nn": "Hei", "no": "Hei",
             "de": "Hallo", "nl": "Hallo", "fi": "Hei", "fr": "Bonjour",
             "es": "Hola", "it": "Ciao", "pt": "Olá", "pl": "Cześć",
-            "zh": "你好", "ko": "안녕하세요", "en": "Hi"
+            "en": "Hi"
         ]
         return "\(hello[code] ?? "Hi"), \(name)"
     }
@@ -362,6 +365,12 @@ final class KVRowView: NSView {
         super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
         wantsLayer = true
         layer?.cornerRadius = 4
+
+        // A menu item with a custom view exposes nothing to VoiceOver on its
+        // own, so without this the whole data section of the menu is silent.
+        setAccessibilityElement(true)
+        setAccessibilityRole(.staticText)
+        setAccessibilityLabel(value.map { "\(key), \($0)" } ?? key)
 
         let keyLabel = NSTextField(labelWithString: key)
         keyLabel.font = bold ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
@@ -440,6 +449,10 @@ final class BatteryBarView: NSView {
         let barHeight: CGFloat = 5
         super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
         wantsLayer = true
+        // Decorative: the Battery row above already reads the percentage, and
+        // a second element saying the same number is worse for VoiceOver, not
+        // better.
+        setAccessibilityElement(false)
 
         let track = CGRect(x: sidePad, y: (height - barHeight) / 2,
                            width: StatusItemController.rowWidth - sidePad * 2, height: barHeight)

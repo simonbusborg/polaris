@@ -211,10 +211,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Poll every minute while charging or driving (the numbers actually move,
-    /// and a short cycle keeps "In use" from lingering after parking),
-    /// every 5 minutes otherwise.
+    /// and a short cycle keeps "In use" from lingering after parking); at the
+    /// pace chosen in Settings otherwise.
     private func scheduleRefresh() {
-        let interval: TimeInterval = (latest?.isCharging == true || latest?.isDriving == true) ? 60 : 300
+        let idle = TimeInterval(Preferences.refreshInterval.rawValue)
+        let interval: TimeInterval =
+            (latest?.isCharging == true || latest?.isDriving == true) ? min(60, idle) : idle
         if let timer = refreshTimer, timer.isValid, timer.timeInterval == interval { return }
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
@@ -271,6 +273,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // the numbers didn't change, only how they're shown.
                     self?.applyLaunchAtLogin()
                     self?.redrawStatusItem()
+                    // A new refresh pace takes effect on the next tick, not
+                    // after the old timer has run its full course.
+                    self?.scheduleRefresh()
                 },
                 onAccountChange: { [weak self] in
                     guard let self else { return }

@@ -26,6 +26,24 @@ enum DisplayOption: String, CaseIterable {
     }
 }
 
+/// How often the car is asked for fresh numbers while nothing is happening.
+/// The raw value is the interval in seconds — what sits in UserDefaults —
+/// so a new choice can be added without renumbering anything. While charging
+/// or driving the app polls every minute regardless; this is the parked pace.
+enum RefreshInterval: Int, CaseIterable {
+    case oneMinute = 60
+    case twoMinutes = 120
+    case fiveMinutes = 300
+    case tenMinutes = 600
+    case fifteenMinutes = 900
+
+    var title: String {
+        self == .oneMinute
+            ? L("Every minute")
+            : String(format: L("Every %d minutes"), rawValue / 60)
+    }
+}
+
 enum Preferences {
     private static let d = UserDefaults.standard
 
@@ -55,6 +73,11 @@ enum Preferences {
             return DistanceUnit(rawValue: raw) ?? .kilometers
         }
         set { d.set(newValue.rawValue, forKey: "distance_unit") }
+    }
+
+    static var refreshInterval: RefreshInterval {
+        get { RefreshInterval(rawValue: d.integer(forKey: "refresh_interval")) ?? .fiveMinutes }
+        set { d.set(newValue.rawValue, forKey: "refresh_interval") }
     }
 
     static var launchAtLogin: Bool {

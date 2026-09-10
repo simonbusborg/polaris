@@ -6,8 +6,10 @@ site — nav bar, sign-in button and all — inside a 500pt box. This writes a
 small standalone page to docs/notes/<tag>.html instead, served from the
 same GitHub Pages site as the appcast.
 
-The notes are the commit subjects since the previous tag, which is why
-those subjects are written as sentences about intent.
+The notes come from ROADMAP.md's Shipped list when it has entries for this
+version — those are written as user-facing prose, which is what belongs in
+an update dialog. Commit subjects are the fallback for releases the roadmap
+doesn't mention (patch releases, mostly).
 
     release_notes.py <tag> [previous-tag]
 """
@@ -47,6 +49,26 @@ def ships(sha):
                and f not in ("README.md", "CONTRIBUTING.md", "ROADMAP.md")
                for f in files if f)
 
+def roadmap_items():
+    """Shipped entries carrying this release's version, as (title, prose).
+
+    An entry looks like `- **Title** (v2.9.0) — prose`, possibly wrapped
+    over several lines and possibly naming more than one version in the
+    parenthesis; it counts if this version is one of them.
+    """
+    path = Path("ROADMAP.md")
+    if not path.exists():
+        return []
+    shipped = re.search(r"^## Shipped\n(.*?)(?:^## |\Z)", path.read_text(),
+                        re.M | re.S)
+    if not shipped:
+        return []
+    entries = re.findall(r"^- \*\*(.+?)\*\* \(([^)]*)\)\s*[—-]\s*(.*?)(?=^- |\Z)",
+                         shipped.group(1), re.M | re.S)
+    return [(bold, " ".join(prose.split()))
+            for bold, versions, prose in entries
+            if re.search(rf"\bv{re.escape(version)}\b", versions)]
+
 items = []
 for line in log:
     sha, _, subject = line.partition("\t")
@@ -55,8 +77,14 @@ for line in log:
 
 date = git("log", "-1", "--format=%ad", "--date=format:%B %-d, %Y", tag)
 
-body = "\n".join(f"      <li>{html.escape(i)}</li>" for i in items) or \
-       "      <li>Maintenance and small fixes.</li>"
+curated = roadmap_items()
+if curated:
+    body = "\n".join(
+        f"      <li><strong>{html.escape(t)}</strong> — {html.escape(p)}</li>"
+        for t, p in curated)
+else:
+    body = "\n".join(f"      <li>{html.escape(i)}</li>" for i in items) or \
+           "      <li>Maintenance and small fixes.</li>"
 compare = (f"https://github.com/simonbusborg/polaris/compare/{previous}...{tag}"
            if previous else f"https://github.com/simonbusborg/polaris/releases/tag/{tag}")
 
@@ -105,4 +133,5 @@ page = f"""<!DOCTYPE html>
 path = Path("docs/notes") / f"{tag}.html"
 path.parent.mkdir(parents=True, exist_ok=True)
 path.write_text(page)
-print(f"wrote {path} with {len(items)} entries")
+source = "roadmap" if curated else "commit"
+print(f"wrote {path} with {len(curated) or len(items)} {source} entries")

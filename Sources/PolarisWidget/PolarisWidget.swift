@@ -157,6 +157,9 @@ private struct BatteryBar: View {
             }
         }
         .frame(height: 6)
+        // Decorative: the percentage sits right next to it as text, and a
+        // second element saying the same number helps nobody.
+        .accessibilityHidden(true)
     }
 }
 
@@ -305,6 +308,7 @@ struct MediumCarView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 150, maxHeight: 104)
+                    .accessibilityHidden(true)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -405,6 +409,9 @@ struct LargeCarView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    // The title above already names the car; the render adds
+                    // nothing VoiceOver could say about it.
+                    .accessibilityHidden(true)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {

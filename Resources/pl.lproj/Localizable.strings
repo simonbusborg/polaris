@@ -124,3 +124,8 @@
 "Sign Out" = "Wyloguj się";
 "Sign out of Polaris?" = "Wylogować się z Polarisa?";
 "Polaris will forget the login for %@ and stop reading your car." = "Polaris zapomni login dla %@ i przestanie odczytywać Twój samochód.";
+
+/* Menu bar pane: refresh pace */
+"Refresh while parked" = "Odświeżanie podczas postoju";
+"Every minute" = "Co minutę";
+"Every %d minutes" = "Co %d min";

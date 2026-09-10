@@ -126,3 +126,8 @@
 "Sign Out" = "Log ud";
 "Sign out of Polaris?" = "Log ud af Polaris?";
 "Polaris will forget the login for %@ and stop reading your car." = "Polaris glemmer loginnet for %@ og holder op med at aflæse din bil.";
+
+/* Menu bar pane: refresh pace */
+"Refresh while parked" = "Opdater, mens bilen er parkeret";
+"Every minute" = "Hvert minut";
+"Every %d minutes" = "Hvert %d. minut";

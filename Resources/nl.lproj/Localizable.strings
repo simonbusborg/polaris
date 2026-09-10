@@ -124,3 +124,8 @@
 "Sign Out" = "Uitloggen";
 "Sign out of Polaris?" = "Uitloggen bij Polaris?";
 "Polaris will forget the login for %@ and stop reading your car." = "Polaris vergeet de login voor %@ en leest je auto niet meer uit.";
+
+/* Menu bar pane: refresh pace */
+"Refresh while parked" = "Vernieuwen terwijl geparkeerd";
+"Every minute" = "Elke minuut";
+"Every %d minutes" = "Elke %d minuten";

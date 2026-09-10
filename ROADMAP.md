@@ -53,6 +53,24 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Choose how often the car is polled** (v2.10.0) — a "Refresh while parked"
+  setting in the menu bar pane: every 1, 2, 5, 10 or 15 minutes, applied the
+  moment it's changed. Charging and driving still refresh every minute — those
+  are the moments the numbers actually move.
+
+- **The menu speaks VoiceOver** (v2.10.0) — the data rows, the car image and
+  the widget now carry proper accessibility labels, so "Battery, 78%" is read
+  aloud instead of silence. Decorative pieces like the battery bar stay quiet
+  rather than repeating what the text next to them already says.
+
+- **Readable release notes in the update window** (v2.10.0) — Sparkle's update
+  panel now shows what a release means for you, written from this roadmap,
+  instead of raw commit subjects.
+
+- **No more half-translated greeting** (v2.10.0) — Chinese and Korean systems
+  got a localized "hello" atop an otherwise English menu; the greeting now only
+  speaks languages the rest of the app speaks too.
+
 - **First run asks for your account** (v2.9.0) — signing in happens while you
   watch, with the failure shown under the field that caused it, and the car is
   picked from what the account reports instead of typed in as a VIN. The last
