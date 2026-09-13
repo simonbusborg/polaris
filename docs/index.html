@@ -33,6 +33,9 @@
     --dim:rgba(20,20,20,.55);
     --line:rgba(20,20,20,.14);
     --panel:#F6F5F3;
+    /* The globe band's sky. On paper it is a soft grey so the band reads as
+       its own space; in the dark it is the page itself. */
+    --band:#F3F2F0;
     --accent:#FF4D00;
     /* The bar over the scrolled page is frosted paper, not a flat fill —
        tokenised because it inverts with the theme while the glass over the
@@ -70,6 +73,7 @@
     --dim:rgba(242,240,237,.56);
     --line:rgba(242,240,237,.14);
     --panel:#1C1C1E;
+    --band:var(--paper);
     --accent:#FF5F22;
     --glass:rgba(26,26,28,.72);
     --wordmark:rgba(242,240,237,.085);
@@ -86,6 +90,7 @@
       --dim:rgba(242,240,237,.56);
       --line:rgba(242,240,237,.14);
       --panel:#1C1C1E;
+      --band:var(--paper);
       --accent:#FF5F22;
       --glass:rgba(26,26,28,.72);
       --wordmark:rgba(242,240,237,.085);
@@ -142,13 +147,13 @@
   /* Liquid glass, Chromium only (the .liquid gate is set in the head): the
      backdrop is bent through a displacement map before it is blurred, so
      what scrolls past the edges of the pill refracts instead of just
-     frosting. Near-clear on purpose — the reference values are the
-     liquid-glass-react playground's (blur 0.1, i.e. no frost), so the
-     tint alone quiets the photo and the refraction stays sharp. The 2px
-     is only there to hide banding in the displacement map. */
+     frosting. Started from the liquid-glass-react playground's values
+     (blur 0.1, displacement 119) and pulled towards frost: a real blur so
+     what passes behind reads as light rather than as detail, and a gentler
+     bend so the edges magnify less. */
   html.liquid .nav-inner{
-    -webkit-backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
-    backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
+    -webkit-backdrop-filter:url(#liquidGlass) blur(8px) saturate(140%);
+    backdrop-filter:url(#liquidGlass) blur(8px) saturate(140%);
   }
   header.scrolled .nav-inner{
     background:var(--glass);border-color:var(--line);
@@ -403,7 +408,7 @@
     top:0;bottom:0;left:50%;transform:translateX(-50%);width:100vw;
     background:radial-gradient(60% 70% at 72% 50%, rgba(231,100,39,.09), transparent 70%);
   }
-  .real h2,.features h2,.get h2{
+  .real h2,.features h2,.get h2,.car-band h2{
     font-weight:600;font-size:clamp(1.7rem,3.2vw,2.6rem);
     line-height:1.1;letter-spacing:-.02em;max-width:18ch;margin-top:.8rem;
   }
@@ -587,11 +592,11 @@
     color:#f5f5f7;
   }
   /* The dither field cycles behind these while they hold still, so the
-     refraction actually has something to bend. Same near-clear glass as
+     refraction actually has something to bend. Same frosted glass as
      the pill; the banner's own tint carries the legibility. */
   html.liquid .banner{
-    -webkit-backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
-    backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
+    -webkit-backdrop-filter:url(#liquidGlass) blur(8px) saturate(140%);
+    backdrop-filter:url(#liquidGlass) blur(8px) saturate(140%);
   }
   .banner img{width:34px;height:34px;border-radius:8px}
   .banner .t{font-size:.85rem;font-weight:600;line-height:1.25}
@@ -700,17 +705,42 @@
   .cell p{color:var(--dim);font-size:.9rem;line-height:1.4}
   .cell p code{font-size:.85em;background:var(--panel);border:1px solid var(--line);padding:.05em .35em;border-radius:var(--r)}
 
-  /* car band */
-  .car-band{padding:clamp(3rem,8vh,5rem) 0;text-align:center}
-  /* The model name sits behind the render as a wordmark. The stage carries
-     the image's own ratio so the type is placed against the car rather than
-     against whatever height the image happens to have loaded at. */
-  .car-band .stage{position:relative;width:min(680px,92%);margin:0 auto;aspect-ratio:1400/787}
-  /* Full-bleed strip: the marquee runs edge to edge behind the car, wider
+  /* globe band — a pinned stage, like the notifications one. Its height is
+     the scroll budget for the whole trip: the solar system, the dive into
+     Earth, and a hold on the globe until the pin lets go. It runs full bleed so
+     the sky has no gutters. */
+  .car-band{margin-inline:calc(50% - 50vw);overflow-x:clip;text-align:center}
+  .orbit-stage{height:400vh;position:relative;background:var(--band)}
+  /* The sky melts into the paper where the band starts and ends, instead of
+     meeting the neighbouring sections at a hard edge. The gradients belong to
+     the stage, not the pinned frame, so they only show on the way in and out. */
+  .orbit-stage::before,.orbit-stage::after{
+    content:'';position:absolute;left:0;right:0;height:14vh;z-index:1;pointer-events:none;
+  }
+  .orbit-stage::before{top:0;background:linear-gradient(var(--paper),transparent)}
+  .orbit-stage::after{bottom:0;background:linear-gradient(transparent,var(--paper))}
+  .car-band + section{border-top:0}
+  .orbit-sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+  .orbit{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .orbit-head{
+    position:absolute;left:0;right:0;top:calc(clamp(4.5rem,11vh,7rem) + 12vh);
+    padding-inline:20px;z-index:2;pointer-events:none;
+  }
+  .car-band p{z-index:2}
+  .car-band h2{margin:.8rem auto 0}
+  /* The globe's stage is where the dive ends. The globe itself plays Earth
+     the whole way, shrunk and moved inside this box by the scene script; --g
+     is how far it has arrived, and brings the wordmark and caption with it. */
+  .car-band .stage{
+    position:absolute;left:50%;top:60%;translate:-50% -50%;
+    width:min(560px,88vw,54vh);aspect-ratio:1;
+    pointer-events:var(--g-hit,auto);
+  }
+  /* Full-bleed strip: the marquee runs edge to edge behind the globe, wider
      than the stage it is anchored to, and clips at the viewport. */
   .car-band .wordmark{
     position:absolute;left:50%;top:50%;translate:-50% -50%;
-    width:100vw;overflow:hidden;
+    width:100vw;overflow:hidden;opacity:var(--g,1);
     user-select:none;pointer-events:none;
   }
   .car-band .mq{
@@ -720,8 +750,35 @@
     will-change:transform;
   }
   .car-band .mq span{padding-right:.32em}
-  .car-band img{position:relative;display:block;width:100%;height:auto}
-  .car-band p{color:var(--dim);font-size:.9rem;margin-top:1.2rem}
+  /* Fades in once cobe has drawn its first frame, so a slow module load
+     never shows as an empty black square. */
+  /* Twice the stage and drawn at half scale, so Earth has room to travel in
+     from its orbit before it settles at the stage's own size. */
+  .car-band .globe{
+    position:absolute;display:block;left:-50%;top:-50%;width:200%;height:200%;
+    opacity:0;transition:opacity 1.2s ease;cursor:grab;touch-action:pan-y;
+  }
+  .car-band .globe.on{opacity:1}
+  .car-band .globe:active{cursor:grabbing}
+  /* A footnote to the globe, not a second headline: smaller than body copy
+     and a step further back than --dim. It only shows while the globe does. */
+  .car-band p{
+    position:absolute;left:0;right:0;bottom:clamp(1.5rem,6vh,3.5rem);padding-inline:20px;
+    color:var(--dim);opacity:calc(.7 * var(--g,1));font-size:.78rem;
+  }
+  @media (max-width:600px){
+    .car-band p br{display:none}
+  }
+  /* No scroll trip: the sky is dropped and the globe simply sits under its
+     title, as the section was before it was pinned. */
+  @media (prefers-reduced-motion:reduce){
+    .orbit-stage{height:auto}
+    .orbit-sticky{position:static;height:auto;overflow:visible;padding:clamp(4rem,10vh,7rem) 0}
+    .orbit{display:none}
+    .orbit-head,.car-band p{position:static}
+    .car-band .stage{position:relative;left:auto;top:auto;translate:none;margin:clamp(1.5rem,4vh,2.5rem) auto 0;width:min(560px,88vw)}
+    .car-band p{margin-top:1.2rem}
+  }
 
   /* get it */
   .get{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
@@ -1000,14 +1057,14 @@
           filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
     <feImage x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cdefs%3E%3ClinearGradient id='x' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23ff0000'/%3E%3Cstop offset='1' stop-color='%23000000'/%3E%3C/linearGradient%3E%3ClinearGradient id='y' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2300ff00'/%3E%3Cstop offset='1' stop-color='%23000000'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='240' height='120' fill='url(%23x)'/%3E%3Crect width='240' height='120' fill='url(%23y)' style='mix-blend-mode:screen'/%3E%3Crect x='12' y='12' width='216' height='96' rx='42' fill='%23808000' style='filter:blur(10px)'/%3E%3C/svg%3E"/>
-    <!-- Chromatic aberration: one displacement at the playground's scale
-         (119), then the red and blue channels are slid 2px apart before
+    <!-- Chromatic aberration: one displacement, gentler than the
+         playground's 119 so the rim magnifies less, then the red and blue channels are slid 2px apart before
          recombining, so content edges fringe warm on one side and cool on
          the other — the tell of thick glass. Slid rather than displaced at
          mismatched scales: a per-channel scale difference leaves a bright
          blue seam along the box edge where only the shortest channel still
          finds backdrop to sample. -->
-    <feDisplacementMap in="SourceGraphic" in2="map" scale="119" xChannelSelector="R" yChannelSelector="G" result="disp"/>
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="70" xChannelSelector="R" yChannelSelector="G" result="disp"/>
     <feColorMatrix in="disp" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="chR"/>
     <feOffset in="chR" dx="2" dy="0" result="offR"/>
     <feColorMatrix in="disp" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="chG"/>
@@ -1337,13 +1394,22 @@
     </div>
   </section>
 
-  <section class="car-band rv">
-    <div class="stage">
-      <div class="wordmark" aria-hidden="true"><div class="mq" id="carWord"></div></div>
-      <img class="car-light" src="assets/polestar-4-magnesium.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+  <section class="car-band">
+    <div class="orbit-stage">
+      <div class="orbit-sticky">
+        <canvas class="orbit" id="orbit" aria-hidden="true"></canvas>
+        <div class="orbit-head">
+          <div class="kicker">On the road</div>
+          <h2>Wherever the road goes.</h2>
+        </div>
+        <div class="stage">
+          <div class="wordmark" aria-hidden="true"><div class="mq" id="carWord"></div></div>
+          <canvas class="globe" id="globe" role="img" aria-label="A globe marking the countries where Polestar sells its cars"></canvas>
+        </div>
+        <p>Polestars are on the road in <span id="globeCount">30</span> markets, from Gothenburg to Melbourne —<br>
+        and Polaris talks to the same account your car does, wherever that is.</p>
+      </div>
     </div>
-    <p>The studio render of your exact configuration — paint, wheels and all —<br>
-    fetched straight from Polestar and shown at the top of the menu.</p>
   </section>
 
   <section class="get" id="get">
@@ -1460,7 +1526,6 @@
     {name: 'Polestar 4', model: 'Polestar 4 · 2025', light: 'assets/polestar-4-magnesium.png', dark: 'assets/polestar-4-snow.png'},
   ];
   const car = cars[Math.floor(Math.random() * cars.length)];
-  document.querySelectorAll('img.car-light').forEach(img => img.src = car.light);
   // The mock menu is always dark, so it always gets the light-paint render.
   document.getElementById('panelCar').src = car.dark;
   // The widget cards are dark too, so they take the same light-painted car.
@@ -2115,6 +2180,368 @@ void main(){
     if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
   }), {threshold: .15});
   document.querySelectorAll('.rv').forEach(el => io.observe(el));
+</script>
+<script type="module">
+  // Polestar's markets, not Polaris users: the app has no analytics, so the
+  // globe can only say where the cars are sold. Each entry is a centre and a
+  // rough radius in degrees, enough to scatter a cloud of markers over the
+  // country without shipping any borders.
+  const MARKETS = [
+    ['Sweden', 62, 16, 5], ['Norway', 61, 9, 4], ['Denmark', 56, 9.5, 1.3],
+    ['Finland', 63, 26, 4], ['Iceland', 64.9, -18.6, 2], ['Germany', 51, 10.4, 3],
+    ['Netherlands', 52.2, 5.5, 1], ['Belgium', 50.6, 4.6, .8], ['Luxembourg', 49.8, 6.1, .3],
+    ['Switzerland', 46.8, 8.2, .9], ['Austria', 47.5, 14.5, 1.3], ['United Kingdom', 53.5, -1.8, 2.8],
+    ['Ireland', 53.3, -8, 1.4], ['Spain', 40.2, -3.6, 3.4], ['Portugal', 39.6, -8.2, 1.4],
+    ['France', 46.6, 2.4, 3.6], ['Italy', 42.8, 12.6, 2.8], ['Poland', 52, 19.4, 2.6],
+    ['United States', 39, -97, 14], ['Canada', 53, -100, 12], ['Australia', -27, 134, 13],
+    ['New Zealand', -41.5, 173, 3], ['China', 34, 106, 13], ['Hong Kong', 22.35, 114.15, .3],
+    ['Singapore', 1.35, 103.8, .3], ['South Korea', 36.4, 127.9, 1.6], ['United Arab Emirates', 24.2, 54.4, 1.4],
+    ['Kuwait', 29.3, 47.6, .6], ['Qatar', 25.3, 51.2, .4], ['Bahrain', 26.05, 50.55, .2],
+    ['Israel', 31.4, 34.9, .7],
+  ];
+
+  document.getElementById('globeCount').textContent = MARKETS.length;
+
+  // Seeded, so the scatter is the same on every visit and every rebuild.
+  let seed = 7;
+  const rand = () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  // Every dot remembers its bearing from the country's centre. The colour
+  // runs through the gradient by that bearing plus time, which is what makes
+  // the accent circle around each country instead of washing across the map.
+  const dots = [];
+  MARKETS.forEach(([, lat, lon, r], country) => {
+    const n = Math.round(Math.min(110, 14 + r * 7));
+    const phase = rand();
+    for (let i = 0; i < n; i++) {
+      const d = r * Math.sqrt(rand());
+      const bearing = rand() * Math.PI * 2;
+      const dLat = lat + d * Math.sin(bearing);
+      dots.push({
+        location: [dLat, lon + d * Math.cos(bearing) / Math.cos(dLat * Math.PI / 180)],
+        bearing: bearing / (Math.PI * 2) + phase,
+        base: .03 + (1 - d / (r || 1)) * .03,
+        country,
+      });
+    }
+  });
+
+  // The same three stops as the dot-field shader above, read as a loop.
+  const STOPS = [[1.0, 0.30, 0.0], [1.0, 0.16, 0.58], [0.0, 0.78, 1.0]];
+  const gradient = t => {
+    t = ((t % 1) + 1) % 1 * STOPS.length;
+    const i = Math.floor(t), f = t - i;
+    const a = STOPS[i], b = STOPS[(i + 1) % STOPS.length];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  };
+
+  const phone = window.matchMedia('(max-width: 600px)');
+  // Canvas pixels per CSS pixel for the globe and the sky, which share the
+  // 3-canvas-pixel Bayer cell: 1.5 makes every cell 2px on screen.
+  const CELL_SCALE = 1.5;
+  const markersAt = time => dots.map(d => ({
+    location: d.location,
+    size: d.base * (1 + .35 * Math.sin(time * 2 + d.bearing * 6.283)),
+    color: gradient(d.bearing - time * .12),
+  }));
+
+  const canvas = document.getElementById('globe');
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => {
+    const set = document.documentElement.dataset.theme;
+    return set ? set === 'dark' : systemDark.matches;
+  };
+  const rgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  let createGlobe, globe = null, visible = false, frame = 0;
+  // Starts facing Europe, tipped towards the north where most markets sit.
+  let phi = Math.PI - (12 * Math.PI / 180 - Math.PI / 2), theta = .5;
+  let dragX = null, drag = 0;
+  const started = performance.now();
+  const baseColor = () => isDark() ? [.043, .043, .043] : [.9, .9, .89];
+
+  function build() {
+    if (globe) globe.destroy();
+    const size = canvas.offsetWidth;
+    if (!size) return;
+    const dark = isDark();
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    globe = createGlobe(canvas, {
+      // CSS pixels, like the dither fields: the land is drawn as that same
+      // 3px Bayer raster, drawn at 1.5x so a cell lands on 2 CSS pixels —
+      // finer than the other dither fields, since the globe carries detail.
+      devicePixelRatio: CELL_SCALE,
+      width: size, height: size, phi: phi + drag, theta,
+      dark: dark ? 1 : 0,
+      // A couple of tints under the page itself, so the globe reads as a
+      // shape cut into the band rather than an object lit on top of it. The
+      // brightness is high on purpose: the patched shader clamps it, which
+      // keeps the dots an even 40% right out to the limb.
+      diffuse: .3,
+      mapSamples: 16000,
+      mapBrightness: 12,
+      baseColor: baseColor(),
+      glowColor: [0, 0, 0],
+      markerColor: rgb(accent),
+      markerElevation: .01,
+      scale: .5,
+      markers: markersAt((performance.now() - started) / 1000),
+    });
+    requestAnimationFrame(() => canvas.classList.add('on'));
+  }
+
+  // The trip in: a solar system drawn in the same Bayer raster as the globe,
+  // which the camera dives into until Earth is exactly the globe's size and
+  // place, and then holds there until the pin lets go.
+  const orbit = document.getElementById('orbit');
+  const orbitStage = document.querySelector('.orbit-stage');
+  const sticky = document.querySelector('.orbit-sticky');
+  const stageBox = document.querySelector('.car-band .stage');
+  const ogl = orbit.getContext('webgl', {premultipliedAlpha: true, antialias: false});
+
+  // Orbit radius and body radius as fractions of the system's scale, and a
+  // speed. Nothing here is to scale — true sizes would leave every planet
+  // smaller than one cell of the raster.
+  const PLANETS = [
+    [.10, .006, 2.4, .3], [.15, .010, 1.7, 2.1], [.21, .016, 1.3, 4.0], [.27, .008, 1.0, 5.2],
+    [.36, .024, .62, .9], [.44, .020, .45, 3.3], [.50, .013, .34, 1.8], [.56, .013, .27, 5.9],
+  ];
+  const EARTH = 2, TILT = .34;
+
+  const ORBIT_FS = `precision highp float;
+uniform vec3 uSun;
+uniform vec3 uP[8];
+uniform float uR[8];
+uniform float uTime, uOrbitA, uBodyA;
+uniform vec3 uInk, uAccent;
+float X(vec2 a){ a = floor(a); return fract(a.x / 2. + a.y * a.y * .75); }
+float Bayer8(vec2 a){ return (X(.25 * a) * .25 + X(.5 * a)) * .25 + X(a); }
+// Integer-style hash: the sin() one lays faint diagonal streaks across a
+// wide canvas, which is exactly what a star field shows up.
+float hash(vec2 p){
+  vec3 q = fract(vec3(p.xyx) * .1031);
+  q += dot(q, q.yzx + 33.33);
+  return fract((q.x + q.y) * q.z);
+}
+// Lit from the sun's side. Earth is not among these: cobe draws it.
+void planet(vec3 p, vec2 P, float by, inout vec4 col){
+  vec2 q = (P - p.xy) / p.z;
+  float dd = dot(q, q);
+  if (dd > 1.) return;
+  vec3 n = vec3(q, sqrt(1. - dd));
+  vec2 toSun = uSun.xy - p.xy;
+  float lam = max(dot(n, normalize(vec3(toSun, length(toSun) * .25 + 1.))), 0.);
+  col = by < .12 + .72 * lam ? vec4(uInk, .6 * uBodyA) : vec4(0);
+}
+void main(){
+  vec2 cell = floor(gl_FragCoord.xy / 3.);
+  vec2 P = cell * 3. + 1.5;
+  float by = Bayer8(cell);
+  vec4 col = vec4(0);
+  // Sparse stars at uneven brightness, a few of them bright enough to throw
+  // a one-cell cross, all twinkling slowly out of step.
+  float h = hash(cell);
+  if (h > .9989) {
+    col = vec4(uInk, (.18 + 400. * (h - .9989)) * (.75 + .25 * sin(uTime * 1.3 + h * 4000.)));
+  } else {
+    for (int k = 0; k < 4; k++) {
+      vec2 o = k == 0 ? vec2(1, 0) : k == 1 ? vec2(-1, 0) : k == 2 ? vec2(0, 1) : vec2(0, -1);
+      float hn = hash(cell + o);
+      if (hn > .99978) col = vec4(uInk, .22);
+    }
+  }
+
+  // Orbits as dotted ellipses round the sun; the tolerance follows the
+  // ellipse's gradient so the far and near sides are as thick as the flanks.
+  if (uOrbitA > 0.) {
+    vec2 d = P - uSun.xy;
+    float rho = length(vec2(d.x, d.y / ${TILT}));
+    float tol = 1.7 * length(vec2(d.x, d.y / ${TILT * TILT})) / max(rho, 1.);
+    for (int i = 0; i < 8; i++) {
+      if (abs(rho - uR[i]) < tol && by > .5) col = vec4(uInk, .22 * uOrbitA);
+    }
+  }
+
+  // Painter's order: planets on the far side, then the sun, then the near.
+  for (int i = 0; i < 8; i++) {
+    if (i != ${EARTH} && uP[i].y >= uSun.y) planet(uP[i], P, by, col);
+  }
+  vec2 s = (P - uSun.xy) / uSun.z;
+  float sd = dot(s, s);
+  if (sd < 1.) {
+    col = by < .3 + .6 * (1. - sd) ? vec4(uAccent, uBodyA) : vec4(0);
+  }
+  for (int i = 0; i < 8; i++) {
+    if (i != ${EARTH} && uP[i].y < uSun.y) planet(uP[i], P, by, col);
+  }
+  gl_FragColor = vec4(col.rgb * col.a, col.a);
+}`;
+
+  let orbitDraw = null;
+  if (ogl) {
+    const sh = (type, src) => {
+      const o = ogl.createShader(type);
+      ogl.shaderSource(o, src);
+      ogl.compileShader(o);
+      if (!ogl.getShaderParameter(o, ogl.COMPILE_STATUS)) console.error('orbit:', ogl.getShaderInfoLog(o));
+      return o;
+    };
+    const prog = ogl.createProgram();
+    ogl.attachShader(prog, sh(ogl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0,1);}'));
+    ogl.attachShader(prog, sh(ogl.FRAGMENT_SHADER, ORBIT_FS));
+    ogl.linkProgram(prog);
+    ogl.useProgram(prog);
+    ogl.bindBuffer(ogl.ARRAY_BUFFER, ogl.createBuffer());
+    ogl.bufferData(ogl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), ogl.STATIC_DRAW);
+    ogl.enableVertexAttribArray(0);
+    ogl.vertexAttribPointer(0, 2, ogl.FLOAT, false, 0, 0);
+    const u = name => ogl.getUniformLocation(prog, name);
+    const [uSun, uP, uR, uTime, uOrbitA, uBodyA, uInk, uAccent] =
+      ['uSun', 'uP', 'uR', 'uTime', 'uOrbitA', 'uBodyA', 'uInk', 'uAccent'].map(u);
+    const P = new Float32Array(24), R = new Float32Array(8);
+
+    // Draws the sky and returns where Earth is, relative to the globe's stage,
+    // so cobe can be shrunk and moved onto it.
+    orbitDraw = (progress, time, e) => {
+      const scale = CELL_SCALE;
+      const w = orbit.clientWidth, h = orbit.clientHeight;
+      if (orbit.width !== Math.round(w * scale) || orbit.height !== Math.round(h * scale)) {
+        orbit.width = Math.round(w * scale);
+        orbit.height = Math.round(h * scale);
+        ogl.viewport(0, 0, orbit.width, orbit.height);
+      }
+      // Where the dive has to end: the globe stage's centre, and cobe's own
+      // sphere, which fills .8 of its canvas.
+      const box = stageBox.getBoundingClientRect(), frame = sticky.getBoundingClientRect();
+      const cx = box.left + box.width / 2 - frame.left, cy = box.top + box.height / 2 - frame.top;
+      const globeR = box.width * .4;
+      // A phone lets the outer planets run off the sides; a wide screen is
+      // held back by its height, since the orbits are flattened.
+      const unit = Math.min(w * (phone.matches ? .62 : .46), h * .42 / TILT) / .56;
+      const cellCss = 3 / scale;
+
+      const angle = i => PLANETS[i][3] + (progress * 5 + time * .04) * PLANETS[i][2];
+      const bodyR = i => Math.max(PLANETS[i][1] * unit, cellCss * 1.3);
+      const world = i => [Math.cos(angle(i)) * PLANETS[i][0] * unit, Math.sin(angle(i)) * PLANETS[i][0] * unit * TILT];
+      // Geometric zoom, so each stretch of scroll feels like the same push.
+      const zoom = Math.pow(globeR / bodyR(EARTH), e);
+      const [ex, ey] = world(EARTH);
+      const fx = ex * e, fy = ey * e;
+      const toGL = (x, y) => [(cx + (x - fx) * zoom) * scale, orbit.height - (cy + (y - fy) * zoom) * scale];
+
+      const [sx, sy] = toGL(0, 0);
+      ogl.uniform3f(uSun, sx, sy, .04 * unit * zoom * scale);
+      PLANETS.forEach((pl, i) => {
+        const [x, y] = world(i);
+        const [gx, gy] = toGL(x, y);
+        P.set([gx, gy, bodyR(i) * zoom * scale], i * 3);
+        R[i] = pl[0] * unit * zoom * scale;
+      });
+      ogl.uniform3fv(uP, P);
+      ogl.uniform1fv(uR, R);
+      ogl.uniform1f(uTime, time);
+      ogl.uniform1f(uOrbitA, Math.max(0, 1 - e / .45));
+      // The sun and the other planets clear out during the dive, so Earth is
+      // alone by the time it lands; the stars stay for the hold.
+      ogl.uniform1f(uBodyA, 1 - clamp01((e - .15) / .6));
+      ogl.uniform3fv(uInk, isDark() ? [1, 1, 1] : [0, 0, 0]);
+      // The sun is the site's accent, read live so it follows the theme's shade.
+      ogl.uniform3fv(uAccent, rgb(getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()));
+      ogl.clearColor(0, 0, 0, 0);
+      ogl.clear(ogl.COLOR_BUFFER_BIT);
+      ogl.drawArrays(ogl.TRIANGLES, 0, 3);
+      const [erx, ery] = [(ex - fx) * zoom, (ey - fy) * zoom];
+      const earthR = bodyR(EARTH) * zoom, sunR = .04 * unit * zoom;
+      return {
+        dx: erx, dy: ery,
+        ratio: earthR / (2 * globeR),
+        // Behind the sun and overlapping it: the globe canvas sits on top of
+        // the sky, so it has to step out rather than draw over the sun.
+        hidden: ey < 0 && Math.hypot(ex, ey) * zoom < sunR + earthR,
+      };
+    };
+  }
+
+  const clamp01 = v => Math.min(1, Math.max(0, v));
+  const span = (v, a, b) => clamp01((v - a) / (b - a));
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  function tick() {
+    frame = 0;
+    if (!visible) return;
+    const time = still.matches ? 0 : (performance.now() - started) / 1000;
+    const rect = orbitStage.getBoundingClientRect();
+    const progress = clamp01(-rect.top / Math.max(1, rect.height - window.innerHeight));
+    // In over .22–.58, then held on the globe until the page moves on. The
+    // wordmark and caption arrive as the dive lands.
+    const e = ease(span(progress, .22, .58));
+    const g = still.matches || !orbitDraw ? 1 : span(progress, .5, .59);
+    sticky.style.setProperty('--g', g);
+    sticky.style.setProperty('--g-hit', g > .5 ? 'auto' : 'none');
+    const earth = orbitDraw && !still.matches ? orbitDraw(progress, time, e) : null;
+    if (globe) {
+      if (!still.matches && dragX === null) phi += .0022;
+      // Scroll turns the globe too, so the hold never reads as a freeze. It is
+      // measured from the middle of the hold, where Europe should face you.
+      const place = {};
+      if (earth) {
+        // cobe's offset is in CSS pixels (it applies its own pixel ratio) and
+        // is divided through by its scale.
+        // A slow, steady push in across the whole hold, so the globe never sits
+        // dead still. Only the sphere grows; the dither cells keep their size.
+        const ratio = earth.ratio * (1 + .05 * span(progress, .58, 1));
+        const k = 2 / ratio;
+        Object.assign(place, {scale: ratio, offset: [earth.dx * k, earth.dy * k]});
+        canvas.style.visibility = earth.hidden ? 'hidden' : '';
+      }
+      globe.update({phi: phi + drag + (still.matches ? 0 : (progress - .79) * 1.5), markers: markersAt(time), ...place});
+    }
+    if (!still.matches) frame = requestAnimationFrame(tick);
+  }
+  const wake = () => { if (!frame) frame = requestAnimationFrame(tick); };
+
+  canvas.addEventListener('pointerdown', e => {
+    dragX = e.clientX - drag * 200;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (dragX === null) return;
+    drag = (e.clientX - dragX) / 200;
+    wake();
+  });
+  const release = () => { if (dragX === null) return; phi += drag; drag = 0; dragX = null; };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+
+  // Nothing is fetched or drawn until the band is close, and the loop stops
+  // whenever it is off screen.
+  new IntersectionObserver(async ([e]) => {
+    visible = e.isIntersecting;
+    if (!visible) return;
+    wake();
+    if (!createGlobe) {
+      createGlobe = (await import('./assets/cobe.js')).default;
+      build();
+      wake();
+    }
+  }, {rootMargin: '300px'}).observe(orbitStage);
+
+  const rebuild = () => { if (createGlobe) { build(); wake(); } };
+  new MutationObserver(rebuild).observe(document.documentElement, {attributeFilter: ['data-theme']});
+  systemDark.addEventListener('change', rebuild);
+  still.addEventListener('change', wake);
+  let lastSize = 0;
+  window.addEventListener('resize', () => {
+    if (canvas.offsetWidth === lastSize) return;
+    lastSize = canvas.offsetWidth;
+    rebuild();
+  }, {passive: true});
 </script>
 </body>
 </html>
