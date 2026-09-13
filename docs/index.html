@@ -142,11 +142,13 @@
   /* Liquid glass, Chromium only (the .liquid gate is set in the head): the
      backdrop is bent through a displacement map before it is blurred, so
      what scrolls past the edges of the pill refracts instead of just
-     frosting. The blur drops from 20 to 12 here — at 20 the bend is
-     blurred back out of existence. */
+     frosting. Near-clear on purpose — the reference values are the
+     liquid-glass-react playground's (blur 0.1, i.e. no frost), so the
+     tint alone quiets the photo and the refraction stays sharp. The 2px
+     is only there to hide banding in the displacement map. */
   html.liquid .nav-inner{
-    -webkit-backdrop-filter:url(#liquidGlass) blur(12px) saturate(1.6);
-    backdrop-filter:url(#liquidGlass) blur(12px) saturate(1.6);
+    -webkit-backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
+    backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
   }
   header.scrolled .nav-inner{
     background:var(--glass);border-color:var(--line);
@@ -585,11 +587,11 @@
     color:#f5f5f7;
   }
   /* The dither field cycles behind these while they hold still, so the
-     refraction actually has something to bend. Less blur than the pill:
-     the banners sit over pattern, not photograph, and survive it. */
+     refraction actually has something to bend. Same near-clear glass as
+     the pill; the banner's own tint carries the legibility. */
   html.liquid .banner{
-    -webkit-backdrop-filter:url(#liquidGlass) blur(10px) saturate(160%);
-    backdrop-filter:url(#liquidGlass) blur(10px) saturate(160%);
+    -webkit-backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
+    backdrop-filter:url(#liquidGlass) blur(2px) saturate(140%);
   }
   .banner img{width:34px;height:34px;border-radius:8px}
   .banner .t{font-size:.85rem;font-weight:600;line-height:1.25}
@@ -998,7 +1000,21 @@
           filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">
     <feImage x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cdefs%3E%3ClinearGradient id='x' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23ff0000'/%3E%3Cstop offset='1' stop-color='%23000000'/%3E%3C/linearGradient%3E%3ClinearGradient id='y' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%2300ff00'/%3E%3Cstop offset='1' stop-color='%23000000'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='240' height='120' fill='url(%23x)'/%3E%3Crect width='240' height='120' fill='url(%23y)' style='mix-blend-mode:screen'/%3E%3Crect x='12' y='12' width='216' height='96' rx='42' fill='%23808000' style='filter:blur(10px)'/%3E%3C/svg%3E"/>
-    <feDisplacementMap in="SourceGraphic" in2="map" scale="56" xChannelSelector="R" yChannelSelector="G"/>
+    <!-- Chromatic aberration: one displacement at the playground's scale
+         (119), then the red and blue channels are slid 2px apart before
+         recombining, so content edges fringe warm on one side and cool on
+         the other — the tell of thick glass. Slid rather than displaced at
+         mismatched scales: a per-channel scale difference leaves a bright
+         blue seam along the box edge where only the shortest channel still
+         finds backdrop to sample. -->
+    <feDisplacementMap in="SourceGraphic" in2="map" scale="119" xChannelSelector="R" yChannelSelector="G" result="disp"/>
+    <feColorMatrix in="disp" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="chR"/>
+    <feOffset in="chR" dx="2" dy="0" result="offR"/>
+    <feColorMatrix in="disp" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="chG"/>
+    <feColorMatrix in="disp" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="chB"/>
+    <feOffset in="chB" dx="-2" dy="0" result="offB"/>
+    <feComposite in="offR" in2="chG" operator="arithmetic" k2="1" k3="1" result="chRG"/>
+    <feComposite in="chRG" in2="offB" operator="arithmetic" k2="1" k3="1"/>
   </filter>
 </svg>
 
