@@ -2620,13 +2620,13 @@ void main(){
       // measured from the middle of the hold, where Europe should face you.
       const place = {};
       if (earth) {
-        // cobe's offset is in CSS pixels (it applies its own pixel ratio) and
-        // is divided through by its scale.
+        // The canvas itself rides along with Earth rather than cobe offsetting
+        // the sphere inside it: on a wide, short window the orbit is wider than
+        // the canvas, and an offset sphere gets cut off at the canvas edge.
         // A slow, steady push in across the whole hold, so the globe never sits
         // dead still. Only the sphere grows; the dither cells keep their size.
-        const ratio = earth.ratio * (1 + .05 * span(progress, .58, 1));
-        const k = 2 / ratio;
-        Object.assign(place, {scale: ratio, offset: [earth.dx * k, earth.dy * k]});
+        place.scale = earth.ratio * (1 + .05 * span(progress, .58, 1));
+        canvas.style.translate = `${earth.dx}px ${earth.dy}px`;
         canvas.style.visibility = earth.hidden ? 'hidden' : '';
       }
       globe.update({phi: phi + drag + (still.matches ? 0 : (progress - .79) * 1.5), markers: markersAt(time), ...place});
