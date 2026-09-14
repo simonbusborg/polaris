@@ -264,6 +264,24 @@
        in frame when a short window crops the top away. */
     object-position:50% 58%;
   }
+  /* The film. Phones keep the portrait photographs; from 901px up the clip
+     takes over in both themes — it is one dusk scene, so unlike the stills
+     there is no light/dark pair to swap. */
+  .shot-film{display:none}
+  @media (min-width:901px){
+    .shot-film{display:block;width:100%;height:100%;object-fit:cover}
+    /* The photographs stay in the tree as a fallback surface but never
+       fight the film for paint. */
+    .hero-media picture{display:none!important}
+    /* One scene means one scrim recipe: the dusk clip takes the dark-shot
+       values whichever theme is on, overriding the light-photo boost. */
+    html[data-theme="light"] .hero-media::after,
+    html:not([data-theme="dark"]) .hero-media::after{
+      background:
+        linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.08) 75%),
+        linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 30%);
+    }
+  }
   /* Two scrims, not one: the lower gradient buys contrast for the headline,
      the flat wash keeps the bright wall top-right from blowing out the card. */
   .hero-media::after{
@@ -326,6 +344,26 @@
   .appicon{
     width:72px;height:72px;margin:0 0 .4rem -6px;
   }
+  /* Pause — a quiet roundel that only exists where the film does. It never
+     autoplays for visitors who asked for calm, so for them it opens as a
+     play control on the held first frame. */
+  .hero-pause{display:none}
+  @media (min-width:901px){
+    .hero-pause{
+      position:absolute;right:clamp(1.25rem,4vw,3rem);bottom:clamp(2.5rem,6vh,4rem);
+      width:44px;height:44px;border-radius:50%;z-index:2;
+      display:grid;place-items:center;cursor:pointer;
+      color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.28);
+      background:rgba(20,20,20,.35);
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      transition:background .2s ease,color .2s ease;
+    }
+    .hero-pause:hover{background:rgba(255,255,255,.18);color:#fff}
+  }
+  .hero-pause svg{width:18px;height:18px}
+  .hero-pause .ico-play{display:none}
+  .hero-pause.paused .ico-play{display:block}
+  .hero-pause.paused .ico-pause{display:none}
   .hero .kicker{color:rgba(255,255,255,.72)}
   h1{
     font-weight:600;font-size:clamp(2.8rem,8vw,6.5rem);
@@ -916,15 +954,15 @@
   /* Each question is its own soft card rather than a row between rules:
      quieter than hairlines stacked on hairlines, and the open one simply
      grows. */
-  .faq .rv{display:grid;gap:.5rem;align-content:start}
-  .faq details{background:var(--panel);border-radius:1rem}
+  .faq .rv{display:grid;gap:2px;align-content:start}
+  .faq details{background:var(--panel);border-radius:var(--r)}
   .faq summary{
     list-style:none;cursor:pointer;position:relative;
     padding:1.05rem 3rem 1.05rem 1.3rem;font-size:1rem;
   }
   .faq summary::-webkit-details-marker{display:none}
   .faq summary:hover{color:var(--accent)}
-  .faq summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:1rem}
+  .faq summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r)}
   /* A chevron drawn from two borders, so it inherits the ink and needs no
      asset. Open flips it up, and the corner it pivots on moves with it. */
   .faq summary::after{
@@ -1204,12 +1242,32 @@
         <source media="(max-width:900px)" srcset="assets/hero-polestar-mobile.jpg" width="1374" height="2060">
         <img src="assets/hero-polestar.jpg" alt="Close crop of the nose and emblem of a silver Polestar" width="2940" height="1960" fetchpriority="high">
       </picture>
+      <!-- On desktop the film replaces both photographs. video-pingpong.mp4
+           is the source clip played forward then in reverse, baked into one
+           file — browsers can't run H.264 backwards themselves — so the
+           native loop turns at each end instead of jumping: the raw clip's
+           first and last frames never matched. A portrait crop of the 16:9
+           source is mush on a phone, so under 900px the pictures above stay
+           in charge and this never loads beyond its metadata. -->
+      <video class="shot shot-film" id="heroFilm" src="assets/video-pingpong.mp4"
+             poster="assets/film-poster.jpg" muted loop playsinline
+             preload="metadata" disablepictureinpicture tabindex="-1"
+             aria-label="A white Polestar 3 parked at dusk among glowing flowers, its light bar sweeping on"></video>
     </div>
+
+    <button class="hero-pause" id="heroPause" type="button" aria-label="Pause the film">
+      <svg class="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <rect x="6.5" y="5" width="3.6" height="14" rx="1.2"/>
+        <rect x="13.9" y="5" width="3.6" height="14" rx="1.2"/>
+      </svg>
+      <svg class="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8.2 5.4c0-.95 1.04-1.53 1.85-1.03l10.1 6.6c.74.48.74 1.58 0 2.06l-10.1 6.6c-.8.5-1.85-.08-1.85-1.03z" transform="scale(.9) translate(1.2 1.2)"/>
+      </svg>
+    </button>
 
     <div class="hero-inner">
       <div class="hero-copy">
         <img class="appicon" src="assets/app-icon.png" alt="Polaris app icon" width="1024" height="1024">
-        <div class="kicker">A native macOS app · for your Polestar</div>
         <h1>Your Polestar.<br><em>In the menu bar.</em></h1>
         <p class="lede">Battery, range and charging status — always one glance away.
         It taps you on the shoulder when charging finishes, and stays out of the way
@@ -1641,6 +1699,40 @@
   // and scroll slides it by whole copies — so the seam never arrives.
   const mq = document.getElementById('carWord');
   const mqStill = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  // The hero film loops on its own — the seam is baked into the file. The
+  // script decides whether it runs: not on phones, and not for visitors who
+  // asked for calm, who get the film standing on its first frame with the
+  // roundel offering play. Once the roundel has been touched, that choice
+  // outranks the environment until the page is left.
+  const film = document.getElementById('heroFilm');
+  const pauseBtn = document.getElementById('heroPause');
+  const wide = window.matchMedia('(min-width:901px)');
+  let userChose = null;
+
+  function paintPause() {
+    pauseBtn.classList.toggle('paused', film.paused);
+    pauseBtn.setAttribute('aria-label', film.paused ? 'Play the film' : 'Pause the film');
+  }
+  film.addEventListener('play', paintPause);
+  film.addEventListener('pause', paintPause);
+
+  pauseBtn.addEventListener('click', () => {
+    userChose = film.paused ? 'play' : 'pause';
+    if (film.paused) film.play().catch(() => {});
+    else film.pause();
+  });
+
+  function rollFilm() {
+    if (!wide.matches) { film.pause(); return; }
+    const run = userChose ? userChose === 'play' : !mqStill.matches;
+    if (run) film.play().catch(() => {});
+    else film.pause();
+    paintPause();
+  }
+  rollFilm();
+  wide.addEventListener('change', rollFilm);
+  mqStill.addEventListener('change', rollFilm);
 
   function fillMarquee() {
     mq.innerHTML = '<span>' + car.name + '</span>';
