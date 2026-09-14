@@ -34,7 +34,7 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#FFFFFF;
@@ -109,6 +109,10 @@
     }
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  /* Figtree is loaded up to 800 for the footer name alone. Default bold asks
+     for 700, which would now round up to 800 everywhere, so the elements
+     that lean on it keep the 600 they always rendered at. */
+  b,strong,h1,h2,h3,h4,h5,h6{font-weight:600}
   /* clip, not hidden: overflow-x:hidden makes body a scroll container,
      which silently disables position:sticky on the header. */
   html,body{overflow-x:clip}
@@ -857,34 +861,82 @@
     font:inherit;font-size:.78rem;cursor:pointer;padding:0;flex:none;
   }
   .way .cmd button:hover{color:var(--ink)}
-  .way .dl{
-    display:block;width:fit-content;margin-top:.5rem;color:var(--ink);font-size:.9rem;
-    text-decoration:none;border-bottom:1px solid var(--accent);
+  .get-buttons{display:flex;align-items:center;gap:1.4rem;flex-wrap:wrap;margin:1.9rem 0 0 2.7rem}
+  .get-dl{
+    display:inline-flex;align-items:center;gap:.6rem;
+    background:var(--accent);color:#fff;text-decoration:none;font-weight:500;font-size:.95rem;
+    padding:.8rem 1.4rem;border-radius:999px;transition:filter .2s,transform .2s;
+  }
+  .get-dl svg{width:14px;height:14px}
+  .get-dl:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .get-more{
+    appearance:none;border:0;background:transparent;padding:0;cursor:pointer;
+    font:inherit;font-size:.92rem;color:var(--dim);
+    border-bottom:1px solid var(--line);transition:color .2s,border-color .2s;
+  }
+  .get-more:hover{color:var(--ink);border-bottom-color:var(--accent)}
+  @media (max-width:600px){
+    .get-buttons{margin-left:0}
+  }
+
+  /* The other install methods, over the page. Sized to the Source command
+     rather than to the viewport, and scrolled inside itself on a short
+     screen so the close button never leaves. */
+  .install{
+    margin:auto;width:min(620px,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);
+    overflow:auto;border:1px solid var(--line);border-radius:1.4rem;
+    background:var(--paper);color:var(--ink);padding:1.6rem 1.7rem .6rem;
+    box-shadow:0 30px 80px -20px var(--shadow-strong);
+  }
+  .install::backdrop{background:rgba(0,0,0,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .install[open]{animation:install-in .35s cubic-bezier(.2,.7,.1,1)}
+  .install[open]::backdrop{animation:install-fade .35s ease}
+  @keyframes install-in{from{opacity:0;transform:translateY(14px) scale(.98)}}
+  @keyframes install-fade{from{opacity:0}}
+  .install-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.3rem}
+  .install-head h3{font-size:1.25rem;font-weight:600;letter-spacing:-.01em}
+  .install-close{
+    appearance:none;border:0;background:var(--panel);color:var(--dim);cursor:pointer;
+    width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;flex:none;
+  }
+  .install-close:hover{color:var(--ink)}
+  .install-close svg{width:14px;height:14px}
+  @media (prefers-reduced-motion:reduce){
+    .install[open],.install[open]::backdrop{animation:none}
+    .get-dl{transition:none}
+    .get-dl:hover{transform:none}
   }
 
   /* questions */
   .faq{border-top:1px solid var(--line);padding:clamp(4rem,10vh,7rem) 0;display:grid;grid-template-columns:1fr 1.2fr;gap:3.5rem}
   .faq > *{min-width:0}
-  .faq details{border-bottom:1px solid var(--line)}
-  .faq details:first-of-type{border-top:1px solid var(--line)}
+  /* The last section, so it also clears the footer name that stands above
+     the bar — roughly the cap height left showing. */
+  .faq{padding-bottom:calc(clamp(4rem,10vh,7rem) + 26vw)}
+  /* Each question is its own soft card rather than a row between rules:
+     quieter than hairlines stacked on hairlines, and the open one simply
+     grows. */
+  .faq .rv{display:grid;gap:.5rem;align-content:start}
+  .faq details{background:var(--panel);border-radius:1rem}
   .faq summary{
     list-style:none;cursor:pointer;position:relative;
-    padding:1.15rem 2.6rem 1.15rem 0;font-size:1.02rem;
+    padding:1.05rem 3rem 1.05rem 1.3rem;font-size:1rem;
   }
   .faq summary::-webkit-details-marker{display:none}
   .faq summary:hover{color:var(--accent)}
+  .faq summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:1rem}
   /* A chevron drawn from two borders, so it inherits the ink and needs no
      asset. Open flips it up, and the corner it pivots on moves with it. */
   .faq summary::after{
-    content:'';position:absolute;right:.5rem;top:50%;
-    width:.6rem;height:.6rem;margin-top:-.42rem;
+    content:'';position:absolute;right:1.3rem;top:50%;
+    width:.5rem;height:.5rem;margin-top:-.36rem;
     border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);
     transform:rotate(45deg);transition:transform .2s ease;
   }
-  .faq details[open] summary::after{transform:rotate(-135deg);margin-top:-.14rem}
+  .faq details[open] summary::after{transform:rotate(-135deg);margin-top:-.1rem}
   .faq details p{
-    color:var(--dim);font-size:.95rem;max-width:58ch;
-    padding:0 2.6rem 1.3rem 0;
+    color:var(--dim);font-size:.93rem;max-width:58ch;
+    padding:0 3rem 1.2rem 1.3rem;
   }
 
   /* A panel rather than a ruled-off strip: it closes the page instead of
@@ -920,6 +972,34 @@
   @media (prefers-reduced-motion:reduce){
     footer .donate{transition:none}
     footer .donate:hover{transform:none}
+  }
+
+  /* The name, as wide as the window, closing the page. It sits behind the
+     footer bar with its foot level with the bar's bottom edge, and each
+     letter rises in turn from the bottom of the page once the footer is on
+     screen — the page signs off rather than just stopping. The clip edge is
+     the end of the page, so no letter is ever cut where anyone can see it. */
+  .page-end{position:relative}
+  .page-end footer{position:relative;z-index:1}
+  .bigmark{
+    position:absolute;bottom:0;left:50%;translate:-50% 0;width:100vw;
+    display:flex;justify-content:center;overflow:clip;
+    font-weight:800;font-size:34vw;line-height:.74;
+    letter-spacing:-.045em;user-select:none;pointer-events:none;
+    /* Half-strength ink: the sign-off, not a headline competing with the bar. */
+    color:color-mix(in srgb, var(--ink) 50%, transparent);
+    /* Lifts the baseline to the bar's bottom edge. Where the bar stacks
+       taller than half the letters, the baseline climbs with it so the name
+       never disappears behind it. --bar is the bar's height, kept by JS. */
+    padding:.04em 0 calc(2.2rem + max(0px, var(--bar, 0px) - .36em));
+  }
+  .bigmark span{
+    display:block;translate:0 105%;
+    transition:translate 1s cubic-bezier(.2,.7,.1,1) calc(var(--i) * 35ms);
+  }
+  .bigmark.in span{translate:0 0}
+  @media (prefers-reduced-motion:reduce){
+    .bigmark span{translate:none;transition:none}
   }
 
   /* reveal motion */
@@ -1429,54 +1509,67 @@
       to Applications, sign in with your Polestar account, and Polaris is in
       the menu bar.</p>
     </div>
-    <div class="rv">
-      <div class="ways" role="tablist" aria-label="Install method">
-        <button type="button" role="tab" id="way-dmg" aria-controls="pane-dmg" aria-selected="true">Download</button>
-        <button type="button" role="tab" id="way-brew" aria-controls="pane-brew" aria-selected="false">Homebrew</button>
-        <button type="button" role="tab" id="way-src" aria-controls="pane-src" aria-selected="false">Source</button>
-      </div>
-
-      <div class="way" id="pane-dmg" role="tabpanel" aria-labelledby="way-dmg">
-        <ol class="steps">
-          <li><b>Download</b> — the disk image from the latest release.
-            <a class="dl" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">Polaris.dmg</a></li>
-          <li><b>Install</b> — open it, drag Polaris to Applications, launch it.</li>
-          <li><b>Sign in</b> — email, password and your car's VIN.</li>
-        </ol>
-      </div>
-
-      <div class="way" id="pane-brew" role="tabpanel" aria-labelledby="way-brew" hidden>
-        <ol class="steps">
-          <li><b>Install</b> — one command; the tap is added for you.
-            <div class="cmd">
-              <code>brew install --cask simonbusborg/polaris/polaris</code>
-              <button type="button" data-copy>Copy</button>
-            </div></li>
-          <li><b>Launch</b> — Polaris lands in Applications like any other cask.</li>
-          <li><b>Sign in</b> — email, password and your car's VIN.</li>
-        </ol>
-      </div>
-
-      <div class="way" id="pane-src" role="tabpanel" aria-labelledby="way-src" hidden>
-        <ol class="steps">
-          <li><b>Build</b> — clone it and run one make target.
-            <div class="cmd">
-              <code>git clone https://github.com/simonbusborg/polaris &amp;&amp; cd polaris &amp;&amp; make app</code>
-              <button type="button" data-copy>Copy</button>
-            </div>
-            <span class="note">Needs macOS 13+ and the Xcode Command Line Tools
-            (<code>xcode-select --install</code>).</span></li>
-          <li><b>Launch</b> — <code>open Polaris.app</code>, or move it to Applications first.
-            <span class="note">A local build isn't notarized, so the first
-            launch wants a right-click → Open.</span></li>
-          <li><b>Sign in</b> — email, password and your car's VIN.
-            <span class="note">The VIN is in the Polestar app under your car's
-            details, if it isn't on hand. Polaris keeps itself up to date from
-            here.</span></li>
-        </ol>
+    <div class="rv get-actions">
+      <ol class="steps">
+        <li><b>Download</b> — the latest Polaris for your Mac.</li>
+        <li><b>Install</b> — open it, drag Polaris to Applications, launch it.</li>
+        <li><b>Sign in</b> — email, password and your car's VIN.</li>
+      </ol>
+      <div class="get-buttons">
+        <a class="get-dl" id="getDownload" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
+          Download Polaris
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2v9M4 7.5 8 11.5l4-4M3 14h10"/></svg>
+        </a>
+        <button type="button" class="get-more" id="openInstall" aria-haspopup="dialog">Other ways to install</button>
       </div>
     </div>
   </section>
+
+  <!-- Homebrew and building from source are for the few who want them, so
+       they wait behind a button instead of greeting everyone with a terminal
+       command. -->
+  <dialog class="install" id="installDialog" aria-labelledby="installTitle">
+    <div class="install-head">
+      <h3 id="installTitle">Other ways to install</h3>
+      <button type="button" class="install-close" aria-label="Close" data-close>
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+      </button>
+    </div>
+    <div class="ways" role="tablist" aria-label="Install method">
+      <button type="button" role="tab" id="way-brew" aria-controls="pane-brew" aria-selected="true">Homebrew</button>
+      <button type="button" role="tab" id="way-src" aria-controls="pane-src" aria-selected="false">Source</button>
+    </div>
+    <div class="way" id="pane-brew" role="tabpanel" aria-labelledby="way-brew">
+      <ol class="steps">
+        <li><b>Install</b> — one command; the tap is added for you.
+          <div class="cmd">
+            <code>brew install --cask simonbusborg/polaris/polaris</code>
+            <button type="button" data-copy>Copy</button>
+          </div></li>
+        <li><b>Launch</b> — Polaris lands in Applications like any other cask.</li>
+        <li><b>Sign in</b> — email, password and your car's VIN.</li>
+      </ol>
+    </div>
+
+    <div class="way" id="pane-src" role="tabpanel" aria-labelledby="way-src" hidden>
+      <ol class="steps">
+        <li><b>Build</b> — clone it and run one make target.
+          <div class="cmd">
+            <code>git clone https://github.com/simonbusborg/polaris &amp;&amp; cd polaris &amp;&amp; make app</code>
+            <button type="button" data-copy>Copy</button>
+          </div>
+          <span class="note">Needs macOS 13+ and the Xcode Command Line Tools
+          (<code>xcode-select --install</code>).</span></li>
+        <li><b>Launch</b> — <code>open Polaris.app</code>, or move it to Applications first.
+          <span class="note">A local build isn't notarized, so the first
+          launch wants a right-click → Open.</span></li>
+        <li><b>Sign in</b> — email, password and your car's VIN.
+          <span class="note">The VIN is in the Polestar app under your car's
+          details, if it isn't on hand. Polaris keeps itself up to date from
+          here.</span></li>
+      </ol>
+    </div>
+  </dialog>
 
   <!-- What the install steps used to carry as small print. The answers are
        the same; a question only costs the reader who has it. -->
@@ -1514,17 +1607,20 @@
     </div>
   </section>
 
-  <footer>
-    <div>Polaris<span style="color:var(--accent)">.</span> — MIT licensed.
-      Not affiliated with Polestar.</div>
-    <div class="footer-right">
-      <div>
-        <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
-        <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photos via Unsplash</a>
+  <div class="page-end">
+    <div class="bigmark" id="bigmark" aria-hidden="true"><span style="--i:0">P</span><span style="--i:1">o</span><span style="--i:2">l</span><span style="--i:3">a</span><span style="--i:4">r</span><span style="--i:5">i</span><span style="--i:6">s</span></div>
+    <footer>
+      <div>Polaris<span style="color:var(--accent)">.</span> — MIT licensed.
+        Not affiliated with Polestar.</div>
+      <div class="footer-right">
+        <div>
+          <a href="https://github.com/simonbusborg/polaris">GitHub</a> ·
+          <a href="https://unsplash.com/photos/hyvUS_Bs0Rs">Hero photos via Unsplash</a>
+        </div>
+        <a class="donate" href="https://www.paypal.com/donate/?hosted_button_id=U6P5Y4A5ZHHVY">Donate</a>
       </div>
-      <a class="donate" href="https://www.paypal.com/donate/?hosted_button_id=U6P5Y4A5ZHHVY">Donate</a>
-    </div>
-  </footer>
+    </footer>
+  </div>
 </div>
 
 <script>
@@ -1808,7 +1904,6 @@
   // the commands are still readable — and copyable — with JS off.
   const ways = [...document.querySelectorAll('.ways button')];
   const moveWayPill = pillFor(document.querySelector('.ways'));
-  moveWayPill();
   ways.forEach(tab => tab.addEventListener('click', () => {
     ways.forEach(other => {
       const selected = other === tab;
@@ -1817,6 +1912,22 @@
     });
     moveWayPill();
   }));
+
+  // The pill is measured, and nothing in a closed dialog has a width — so
+  // it is placed again each time the dialog opens.
+  const installDialog = document.getElementById('installDialog');
+  document.getElementById('openInstall').addEventListener('click', () => {
+    installDialog.showModal();
+    installDialog.querySelector('.pill').classList.remove('placed');
+    moveWayPill();
+  });
+  installDialog.addEventListener('click', e => {
+    // The backdrop belongs to the dialog element, so a click outside its box
+    // is the only way to tell the two apart.
+    const r = installDialog.getBoundingClientRect();
+    const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    if (outside || e.target.closest('[data-close]')) installDialog.close();
+  });
 
   // Polaris is a Mac app, so on anything else the download button is a dead
   // end. iPadOS reports itself as a Mac, so touch support settles that case.
@@ -1834,6 +1945,7 @@
     dl.remove();
     // Same dead end in the bar as in the hero card.
     document.getElementById('navDownload').remove();
+    document.getElementById('getDownload').remove();
 
     note.hidden = false;
     note.textContent = 'Polaris runs on macOS 13 or later — there is no version for this device. Open this page on your Mac to install it.';
@@ -2189,6 +2301,14 @@ void main(){
     if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
   }), {threshold: .15});
   document.querySelectorAll('.rv').forEach(el => io.observe(el));
+
+  // The footer wordmark rises once, when the bottom of the page arrives.
+  const bigmark = document.getElementById('bigmark');
+  const bar = document.querySelector('.page-end footer');
+  new ResizeObserver(() => bigmark.style.setProperty('--bar', bar.offsetHeight + 'px')).observe(bar);
+  new IntersectionObserver(([e], obs) => {
+    if (e.isIntersecting) { bigmark.classList.add('in'); obs.disconnect(); }
+  }, {threshold: .35}).observe(bigmark);
 </script>
 <script type="module">
   // Polestar's markets, not Polaris users: the app has no analytics, so the
