@@ -127,5 +127,10 @@ can be promised before someone has tried it.
 - **Remote commands** (unlock, start charging, climate on) — Polaris is
   read-only by design. A menu bar app that can unlock a car is a different
   and much more careful piece of software.
-- **iOS / iPadOS** — this is a macOS menu bar app.
+- **iOS, iPadOS and watchOS** — waiting for an official Polestar API. An app
+  in the App Store built on an undocumented one is a risk to the project and to
+  the people using it, and iOS won't let an app poll the car in the background,
+  so charging notifications would need a server of ours in the middle. An
+  official API would likely settle both; until then this stays a macOS menu bar
+  app.
 - **Telemetry** — no analytics, no crash reporting, no phoning home.
