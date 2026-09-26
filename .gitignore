@@ -17,9 +17,3 @@ DerivedData/
 
 # Design mockups, not part of the build
 /mockups/
-
-# Polestar MCP server
-/mcp/node_modules/
-/mcp/dist/
-/mcp/.env
-/mcp/tokens.json

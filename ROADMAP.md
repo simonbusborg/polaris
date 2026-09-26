@@ -53,6 +53,13 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Ask Claude about your car** (unreleased) — a Claude tab in Settings adds
+  Polaris to Claude Desktop in one click, and Claude can then answer "what's my
+  battery?" or "can I get to Aarhus and back?" from what the app last fetched.
+  It is a small helper inside the app that reads the widget's snapshot: no
+  password, VIN or location ever reaches Claude, it makes no request of its own
+  to Polestar, and it can only read.
+
 - **Choose how often the car is polled** (v2.10.0) — a "Refresh while parked"
   setting in the menu bar pane: every 1, 2, 5, 10 or 15 minutes, applied the
   moment it's changed. Charging and driving still refresh every minute — those
@@ -133,4 +140,9 @@ can be promised before someone has tried it.
   so charging notifications would need a server of ours in the middle. An
   official API would likely settle both; until then this stays a macOS menu bar
   app.
+- **ChatGPT and other web-based AI clients** — they can only reach a server on
+  the internet, and Polaris keeps your car's data on your Mac. Serving it from a
+  public address would trade that away, and add an authentication problem to a
+  project that has none. If ChatGPT learns to launch a local helper the way
+  Claude Desktop does, it should work without changes.
 - **Telemetry** — no analytics, no crash reporting, no phoning home.

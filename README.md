@@ -26,6 +26,10 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   for those beside the studio render of your actual car, large for everything
   the menu shows about it. It reads what the app last fetched rather than
   polling on its own, so adding one doesn't add a request to your car
+- Ask Claude about your car: one click in Settings → Claude adds Polaris to
+  Claude Desktop, and it can then answer "what's my battery?" or "can I get to
+  Aarhus and back?". It reads what the app last fetched, read-only, and never
+  sees your password, VIN or location
 - Choose what the menu bar shows
 - Follows the system language in twelve languages: English, Danish, Swedish,
   Norwegian, German, Spanish, Italian, Dutch, Finnish, French, Portuguese and
