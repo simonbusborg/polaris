@@ -28,6 +28,8 @@ BUILD   = $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/
 # The widget extension, hand-assembled like the app bundle around it.
 WIDGET  = $(APP)/Contents/PlugIns/PolarisWidget.appex
 WIDGET_BINARY = .build/apple/Products/Release/PolarisWidget
+# The helper Claude launches. It only reads Polaris's snapshot.
+MCP_BINARY = .build/apple/Products/Release/PolarisMCP
 ENT     = build
 
 # Where SwiftPM unpacked Sparkle's xcframework. The version is in the path,
@@ -55,6 +57,10 @@ app: build entitlements
 	rm -rf $(APP)
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp $(BINARY) $(APP)/Contents/MacOS/Polaris
+	# The MCP helper sits beside the app binary so a Claude config can point
+	# at a stable path inside the bundle. It is signed with the app's
+	# entitlements below: reading the App Group container needs the group.
+	cp $(MCP_BINARY) $(APP)/Contents/MacOS/PolarisMCP
 	# The app reads back the App Group it was signed with rather than
 	# hard-coding a Team ID, so the identifier is substituted here too.
 	sed -e 's|__APP_GROUP__|$(APP_GROUP)|' \
@@ -95,11 +101,13 @@ endif
 	# contains it — and with its own entitlements, because the extension is
 	# sandboxed while Polaris is not.
 ifeq ($(IDENTITY),-)
+	codesign --force --entitlements $(ENT)/Polaris.entitlements -s - $(APP)/Contents/MacOS/PolarisMCP
 	codesign --force --entitlements $(ENT)/PolarisWidget.entitlements -s - $(WIDGET)
 	@$(SIGN_NESTED) --force -s -
 	codesign --force -s - $(APP)/Contents/Frameworks/Sparkle.framework
 	codesign --force --entitlements $(ENT)/Polaris.entitlements -s - $(APP)
 else
+	codesign --force --options runtime --timestamp --entitlements $(ENT)/Polaris.entitlements -s "$(IDENTITY)" $(APP)/Contents/MacOS/PolarisMCP
 	codesign --force --options runtime --timestamp --entitlements $(ENT)/PolarisWidget.entitlements -s "$(IDENTITY)" $(WIDGET)
 	@$(SIGN_NESTED) --force --options runtime --timestamp -s "$(IDENTITY)"
 	codesign --force --options runtime --timestamp -s "$(IDENTITY)" $(APP)/Contents/Frameworks/Sparkle.framework

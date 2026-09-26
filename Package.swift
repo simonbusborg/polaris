@@ -21,6 +21,19 @@ let package = Package(
             name: "PolarisShared",
             path: "Sources/PolarisShared"
         ),
+        // What Claude talks to. Split from its executable so the tools and
+        // the protocol are testable; like the widget it reads the snapshot
+        // and holds no session of its own.
+        .target(
+            name: "PolarisMCPKit",
+            dependencies: ["PolarisShared"],
+            path: "Sources/PolarisMCPKit"
+        ),
+        .executableTarget(
+            name: "PolarisMCP",
+            dependencies: ["PolarisMCPKit"],
+            path: "Sources/PolarisMCP"
+        ),
         .executableTarget(
             name: "Polaris",
             dependencies: [
@@ -49,7 +62,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PolarisTests",
-            dependencies: ["Polaris", "PolarisShared"],
+            dependencies: ["Polaris", "PolarisShared", "PolarisMCPKit"],
             path: "Tests/PolarisTests"
         )
     ]
