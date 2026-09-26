@@ -53,7 +53,7 @@ can be promised before someone has tried it.
 
 ## Shipped
 
-- **Ask Claude about your car** (unreleased) — a Claude tab in Settings adds
+- **Ask Claude about your car** (v2.11.0) — a Claude tab in Settings adds
   Polaris to Claude Desktop in one click, and Claude can then answer "what's my
   battery?" or "can I get to Aarhus and back?" from what the app last fetched.
   It is a small helper inside the app that reads the widget's snapshot: no
