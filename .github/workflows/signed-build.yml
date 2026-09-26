@@ -59,6 +59,8 @@ jobs:
           codesign -d --entitlements - Polaris.app 2>&1 | tail -12
           echo "— widget —"
           codesign -d --entitlements - Polaris.app/Contents/PlugIns/PolarisWidget.appex 2>&1 | tail -12
+          echo "— MCP helper —"
+          codesign -d --entitlements - Polaris.app/Contents/MacOS/PolarisMCP 2>&1 | tail -12
 
       - name: Notarize and staple
         if: env.HAS_SIGNING == 'true'

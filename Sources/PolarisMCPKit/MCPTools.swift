@@ -84,7 +84,7 @@ public enum MCPTools {
     }
 
     static func car(_ s: WidgetSnapshot) -> [String: Any] {
-        ["model": s.carTitle ?? s.modelName ?? NSNull()]
+        ["model": (s.carTitle ?? s.modelName).map { $0 as Any } ?? NSNull()]
     }
 
     public static func status(_ s: WidgetSnapshot, now: Date = Date()) -> [String: Any] {

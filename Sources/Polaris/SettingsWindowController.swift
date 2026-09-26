@@ -203,9 +203,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return item
     }
 
-    /// As wide as the toolbar needs and no wider: the five pane icons set
-    /// the width, not the widest field on any one pane.
-    private static let paneWidth: CGFloat = 360
+    /// As wide as the toolbar needs and no wider: the six pane icons set
+    /// the width, not the widest field on any one pane. At 360 the sixth tab
+    /// spilled into the » overflow menu and Updates and About went with it.
+    private static let paneWidth: CGFloat = 520
     private static let paneInset = NSSize(width: 24, height: 22)
     private static var contentWidth: CGFloat { paneWidth - paneInset.width * 2 }
 
