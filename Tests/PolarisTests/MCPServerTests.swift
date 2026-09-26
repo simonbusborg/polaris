@@ -92,9 +92,26 @@ final class MCPServerTests: XCTestCase {
         XCTAssertEqual(json["estimated_range_km"] as? Int, 309)
         XCTAssertEqual(json["plugged_in"] as? Bool, false)
         XCTAssertEqual(json["data_age_minutes"] as? Int, 10)
+        XCTAssertEqual(json["reported_ago"] as? String, "10 min ago")
+        XCTAssertNotNil(json["reported_at_local"])
         XCTAssertEqual(json["stale"] as? Bool, false)
         XCTAssertNotNil(json["polaris_last_updated"])
         XCTAssertNil(json["note"], "a fresh write needs no warning")
+    }
+
+    func testAgesAreReadableAsASentence() {
+        XCTAssertEqual(MCPTools.ago(minutes: 0), "just now")
+        XCTAssertEqual(MCPTools.ago(minutes: 35), "35 min ago")
+        XCTAssertEqual(MCPTools.ago(minutes: 60), "1 h ago")
+        XCTAssertEqual(MCPTools.ago(minutes: 537), "8 h 57 min ago")
+        XCTAssertEqual(MCPTools.ago(minutes: 24 * 60 + 3 * 60), "1 d 3 h ago")
+    }
+
+    func testLocalTimeUsesTheGivenZoneNotUTC() throws {
+        let cest = try XCTUnwrap(TimeZone(identifier: "Europe/Copenhagen"))
+        // 10:40 UTC in late September is 12:40 in Denmark.
+        let date = Date(timeIntervalSince1970: 1_790_419_200) // 2026-09-26T10:40:00Z
+        XCTAssertEqual(MCPTools.local(date, timeZone: cest), "2026-09-26 12:40 GMT+2")
     }
 
     func testStatusFlagsAnAppThatStoppedWriting() throws {

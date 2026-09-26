@@ -53,6 +53,13 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
     private let lowThresholdPopup = NSPopUpButton()
 
+    // MARK: Claude pane
+
+    private let claudeStatus = NSTextField(wrappingLabelWithString: "")
+    private let claudeError = NSTextField(wrappingLabelWithString: "")
+    private let claudeAddButton = NSButton(title: "", target: nil, action: nil)
+    private let claudeRemoveButton = NSButton(title: L("Remove from Claude Desktop"), target: nil, action: nil)
+
     // MARK: Updates pane
 
     private let autoCheckCheckbox = NSButton(checkboxWithTitle: L("Check automatically"), target: nil, action: nil)
@@ -143,7 +150,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         var items: [NSTabViewItem] = [
             pane(L("Account"), symbol: "person.crop.circle", view: accountPane()),
             pane(L("Menu Bar"), symbol: "menubar.rectangle", view: menuBarPane()),
-            pane(L("Notifications"), symbol: "bell", view: notificationsPane())
+            pane(L("Notifications"), symbol: "bell", view: notificationsPane()),
+            pane(L("Claude"), symbol: "sparkles", view: claudePane())
         ]
         if updater != nil {
             items.append(pane(L("Updates"), symbol: "arrow.down.circle", view: updatesPane()))
@@ -309,6 +317,89 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return stack
     }
 
+    private func claudePane() -> NSView {
+        let blurb = NSTextField(wrappingLabelWithString:
+            L("Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password, VIN or location."))
+        blurb.textColor = .secondaryLabelColor
+
+        claudeStatus.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        claudeError.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        claudeError.textColor = .systemRed
+        claudeAddButton.target = self;    claudeAddButton.action = #selector(claudeAddAction)
+        claudeRemoveButton.target = self; claudeRemoveButton.action = #selector(claudeRemoveAction)
+
+        let buttons = NSStackView(views: [claudeAddButton, claudeRemoveButton])
+        buttons.orientation = .horizontal
+        buttons.spacing = 8
+
+        let stack = NSStackView(views: [blurb, claudeStatus, buttons, claudeError])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 12
+        refreshClaudePane()
+        return stack
+    }
+
+    private func refreshClaudePane() {
+        claudeError.stringValue = ""
+        // Under `swift run` there is no bundle, so no stable path to give
+        // another app; say so instead of offering a button that can't work.
+        guard let helper = ClaudeDesktopConfig.helperPath else {
+            claudeStatus.stringValue = L("Only available in the packaged Polaris app.")
+            claudeAddButton.isHidden = true
+            claudeRemoveButton.isHidden = true
+            return
+        }
+        switch ClaudeDesktopConfig.currentState(helper: helper) {
+        case .notAdded:
+            claudeStatus.stringValue = L("Not added to Claude Desktop.")
+            claudeAddButton.title = L("Add to Claude Desktop")
+            claudeAddButton.isHidden = false
+            claudeRemoveButton.isHidden = true
+        case .added:
+            claudeStatus.stringValue = L("Added. Restart Claude Desktop to use it.")
+            claudeAddButton.isHidden = true
+            claudeRemoveButton.isHidden = false
+        case .outOfDate:
+            claudeStatus.stringValue = L("The entry points to an old location. Update it.")
+            claudeAddButton.title = L("Update Claude Desktop")
+            claudeAddButton.isHidden = false
+            claudeRemoveButton.isHidden = false
+        }
+    }
+
+    @objc private func claudeAddAction() {
+        guard let helper = ClaudeDesktopConfig.helperPath else { return }
+        // Writing into another app's settings is worth one question, however
+        // small the change.
+        let alert = NSAlert()
+        alert.messageText = L("Add Polaris to Claude Desktop?")
+        alert.informativeText = L("Polaris adds one entry to Claude Desktop's settings and keeps everything else. A backup of the original is saved next to the file.")
+        alert.addButton(withTitle: L("Add"))
+        alert.addButton(withTitle: L("Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        applyClaudeChange { try ClaudeDesktopConfig.install(helper: helper) }
+    }
+
+    @objc private func claudeRemoveAction() {
+        applyClaudeChange { try ClaudeDesktopConfig.remove() }
+    }
+
+    private func applyClaudeChange(_ change: () throws -> Void) {
+        do {
+            try change()
+            refreshClaudePane()
+        } catch let error as ClaudeDesktopConfig.ConfigError {
+            refreshClaudePane()
+            claudeError.stringValue = error == .claudeNotInstalled
+                ? L("Claude Desktop doesn't seem to be installed.")
+                : L("Claude Desktop's settings file couldn't be read, so Polaris left it alone.")
+        } catch {
+            refreshClaudePane()
+            claudeError.stringValue = L("Claude Desktop's settings couldn't be changed.")
+        }
+    }
+
     private func notificationsPane() -> NSView {
         lowThresholdPopup.removeAllItems()
         lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
@@ -419,6 +510,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
         refreshPopup.selectItem(at: RefreshInterval.allCases.firstIndex(of: Preferences.refreshInterval) ?? 0)
         launchCheckbox.state = Preferences.launchAtLogin ? .on : .off
+        refreshClaudePane()
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off

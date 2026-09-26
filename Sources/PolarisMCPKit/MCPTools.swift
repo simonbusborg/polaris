@@ -34,6 +34,27 @@ public enum MCPTools {
         ISO8601DateFormatter().string(from: date)
     }
 
+    /// "35 min ago", "9 h ago", "2 d 3 h ago". Claude reads these aloud, so
+    /// they are shaped for a sentence rather than for parsing.
+    static func ago(minutes: Int) -> String {
+        if minutes < 1 { return "just now" }
+        if minutes < 60 { return "\(minutes) min ago" }
+        let hours = minutes / 60, rest = minutes % 60
+        if hours < 24 { return rest == 0 ? "\(hours) h ago" : "\(hours) h \(rest) min ago" }
+        let days = hours / 24, h = hours % 24
+        return h == 0 ? "\(days) d ago" : "\(days) d \(h) h ago"
+    }
+
+    /// The reader's own clock, not UTC: "2026-09-26 12:40 GMT+2". The ISO
+    /// value stays alongside for anything that needs to compare exactly.
+    static func local(_ date: Date, timeZone: TimeZone = .current) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = timeZone
+        f.dateFormat = "yyyy-MM-dd HH:mm zzz"
+        return f.string(from: date)
+    }
+
     /// The car's own timestamp, how old it is, and whether that is too old.
     /// Both ages are reported because they mean different things: the car
     /// can be stale while Polaris is polling fine, or the reverse.
@@ -42,15 +63,20 @@ public enum MCPTools {
         if let reported = s.carReportedAt {
             let age = max(0, Int((now.timeIntervalSince(reported) / 60).rounded()))
             out["data_timestamp"] = iso(reported)
+            out["reported_at_local"] = local(reported)
+            out["reported_ago"] = ago(minutes: age)
             out["data_age_minutes"] = age
             out["stale"] = age > carStaleAfterMinutes
         } else {
             out["data_timestamp"] = NSNull()
+            out["reported_at_local"] = NSNull()
+            out["reported_ago"] = NSNull()
             out["data_age_minutes"] = NSNull()
             out["stale"] = NSNull()
         }
         let appAge = max(0, Int((now.timeIntervalSince(s.writtenAt) / 60).rounded()))
         out["polaris_last_updated"] = iso(s.writtenAt)
+        out["polaris_updated_ago"] = ago(minutes: appAge)
         if appAge > appStaleAfterMinutes {
             out["note"] = "Polaris has not refreshed for \(appAge) minutes; it may not be running, so this is its last reading."
         }

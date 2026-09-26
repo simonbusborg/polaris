@@ -129,3 +129,20 @@
 "Refresh while parked" = "Aggiornamento ad auto parcheggiata";
 "Every minute" = "Ogni minuto";
 "Every %d minutes" = "Ogni %d minuti";
+
+/* Claude pane: let Claude read the car through the MCP helper */
+"Claude" = "Claude";
+"Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password, VIN or location." = "Lascia che Claude legga batteria, autonomia e contachilometri della tua auto. Polaris condivide solo ciò che ha già recuperato, in sola lettura. Claude non vede mai la tua password, il tuo VIN o la tua posizione.";
+"Add to Claude Desktop" = "Aggiungi a Claude Desktop";
+"Update Claude Desktop" = "Aggiorna Claude Desktop";
+"Remove from Claude Desktop" = "Rimuovi da Claude Desktop";
+"Not added to Claude Desktop." = "Non aggiunto a Claude Desktop.";
+"Added. Restart Claude Desktop to use it." = "Aggiunto. Riavvia Claude Desktop per usarlo.";
+"The entry points to an old location. Update it." = "La voce punta a una posizione vecchia. Aggiornala.";
+"Add Polaris to Claude Desktop?" = "Aggiungere Polaris a Claude Desktop?";
+"Polaris adds one entry to Claude Desktop's settings and keeps everything else. A backup of the original is saved next to the file." = "Polaris aggiunge una voce alle impostazioni di Claude Desktop e mantiene tutto il resto. Una copia di backup dell'originale viene salvata accanto al file.";
+"Add" = "Aggiungi";
+"Claude Desktop doesn't seem to be installed." = "Claude Desktop non sembra installato.";
+"Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Impossibile leggere il file delle impostazioni di Claude Desktop, quindi Polaris lo ha lasciato com'era.";
+"Claude Desktop's settings couldn't be changed." = "Impossibile modificare le impostazioni di Claude Desktop.";
+"Only available in the packaged Polaris app." = "Disponibile solo nell'app Polaris pacchettizzata.";
