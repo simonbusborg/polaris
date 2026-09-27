@@ -170,7 +170,6 @@
 /* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
 "%.0f%% · the charger isn't connected" = "%.0f%% · laturia ei ole kytketty";
 "%@ open" = "%@ auki";
-"%d min left" = "%d min jäljellä";
 "Alarm triggered" = "Hälytys lauennut";
 "Charge limit" = "Latausraja";
 "Charge port lid" = "Latausluukku";
@@ -199,7 +198,6 @@
 "Rear left window" = "Vasen takaikkuna";
 "Rear right door" = "Oikea takaovi";
 "Rear right window" = "Oikea takaikkuna";
-"Running" = "Käynnissä";
 "S" = "E";
 "Set Home to the Car's Position" = "Aseta koti auton sijaintiin";
 "Starting" = "Käynnistyy";
@@ -214,3 +212,9 @@
 "not connected to power" = "ei kytketty virtaan";
 "reached its time limit" = "saavutti aikarajansa";
 "temporarily unavailable" = "tilapäisesti pois käytöstä";
+
+/* Climate row wording */
+"Heating to %@" = "Lämmittää %@:seen";
+"Cooling to %@" = "Jäähdyttää %@:seen";
+"%d min" = "%d min";
+"On" = "Päällä";

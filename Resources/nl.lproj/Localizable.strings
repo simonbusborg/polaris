@@ -170,7 +170,6 @@
 /* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
 "%.0f%% · the charger isn't connected" = "%.0f%% · de lader is niet aangesloten";
 "%@ open" = "%@ open";
-"%d min left" = "nog %d min";
 "Alarm triggered" = "Alarm afgegaan";
 "Charge limit" = "Laadlimiet";
 "Charge port lid" = "Laadklep";
@@ -199,7 +198,6 @@
 "Rear left window" = "Linkerachterraam";
 "Rear right door" = "Rechterachterdeur";
 "Rear right window" = "Rechterachterraam";
-"Running" = "Actief";
 "S" = "Z";
 "Set Home to the Car's Position" = "Thuis instellen op de positie van de auto";
 "Starting" = "Start";
@@ -214,3 +212,9 @@
 "not connected to power" = "niet aangesloten op stroom";
 "reached its time limit" = "heeft de tijdslimiet bereikt";
 "temporarily unavailable" = "tijdelijk niet beschikbaar";
+
+/* Climate row wording */
+"Heating to %@" = "Verwarmt naar %@";
+"Cooling to %@" = "Koelt naar %@";
+"%d min" = "%d min";
+"On" = "Aan";

@@ -170,7 +170,6 @@
 /* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
 "%.0f%% · the charger isn't connected" = "%.0f%% · el cargador no está conectado";
 "%@ open" = "%@ abierta";
-"%d min left" = "%d min restantes";
 "Alarm triggered" = "Alarma activada";
 "Charge limit" = "Límite de carga";
 "Charge port lid" = "Tapa de carga";
@@ -199,7 +198,6 @@
 "Rear left window" = "Ventanilla trasera izquierda";
 "Rear right door" = "Puerta trasera derecha";
 "Rear right window" = "Ventanilla trasera derecha";
-"Running" = "En marcha";
 "S" = "S";
 "Set Home to the Car's Position" = "Fijar casa en la posición del coche";
 "Starting" = "Iniciando";
@@ -214,3 +212,9 @@
 "not connected to power" = "sin conexión a la corriente";
 "reached its time limit" = "alcanzó su límite de tiempo";
 "temporarily unavailable" = "no disponible temporalmente";
+
+/* Climate row wording */
+"Heating to %@" = "Calentando a %@";
+"Cooling to %@" = "Enfriando a %@";
+"%d min" = "%d min";
+"On" = "Activo";

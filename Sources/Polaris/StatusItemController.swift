@@ -212,14 +212,19 @@ final class StatusItemController {
                                         minutesLeft: 18, problems: [], reportedAt: Date())
             }
             if let climate, climate.isRunning || climate.isPending {
+                // "Heating to 21 °C · 18 min": the target and the time, which
+                // is what you check for. The cabin's current temperature is
+                // dropped; it made the row too long to say anything.
                 var parts: [String] = []
-                parts.append(climate.isPending ? L("Starting") : Self.ventilationName(climate.ventilation))
-                if let want = climate.requestedCelsius {
-                    let target = Self.temperature(celsius: want)
-                    parts.append(climate.currentCelsius.map { "\(Self.temperature(celsius: $0)) → \(target)" } ?? target)
+                let target = climate.requestedCelsius.map(Self.temperature(celsius:))
+                if climate.isPending {
+                    parts.append(L("Starting"))
+                    if let target { parts.append(target) }
+                } else {
+                    parts.append(Self.climateVerb(climate.ventilation, target: target))
                 }
                 if let left = climate.minutesLeft, left > 0 {
-                    parts.append(String(format: L("%d min left"), left))
+                    parts.append(String(format: L("%d min"), left))
                 }
                 menu.addItem(kvItem(L("Climate"), parts.joined(separator: " · ")))
             }
@@ -383,11 +388,14 @@ final class StatusItemController {
                abs(l.longitude), l.longitude >= 0 ? L("E") : L("W"))
     }
 
-    static func ventilationName(_ key: String?) -> String {
-        switch key {
-        case "HEATING": return L("Heating")
-        case "COOLING": return L("Cooling")
-        default: return L("Running")
+    static func climateVerb(_ ventilation: String?, target: String?) -> String {
+        switch (ventilation, target) {
+        case ("HEATING", let t?): return String(format: L("Heating to %@"), t)
+        case ("COOLING", let t?): return String(format: L("Cooling to %@"), t)
+        case ("HEATING", nil): return L("Heating")
+        case ("COOLING", nil): return L("Cooling")
+        case (_, let t?): return L("On") + " · " + t
+        default: return L("On")
         }
     }
 

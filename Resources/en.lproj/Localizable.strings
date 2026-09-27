@@ -172,7 +172,6 @@
 /* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
 "%.0f%% · the charger isn't connected" = "%.0f%% · the charger isn't connected";
 "%@ open" = "%@ open";
-"%d min left" = "%d min left";
 "Alarm triggered" = "Alarm triggered";
 "Charge limit" = "Charge limit";
 "Charge port lid" = "Charge port lid";
@@ -201,7 +200,6 @@
 "Rear left window" = "Rear left window";
 "Rear right door" = "Rear right door";
 "Rear right window" = "Rear right window";
-"Running" = "Running";
 "S" = "S";
 "Set Home to the Car's Position" = "Set Home to the Car's Position";
 "Starting" = "Starting";
@@ -216,3 +214,9 @@
 "not connected to power" = "not connected to power";
 "reached its time limit" = "reached its time limit";
 "temporarily unavailable" = "temporarily unavailable";
+
+/* Climate row wording */
+"Heating to %@" = "Heating to %@";
+"Cooling to %@" = "Cooling to %@";
+"%d min" = "%d min";
+"On" = "On";

@@ -170,7 +170,6 @@
 /* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
 "%.0f%% · the charger isn't connected" = "%.0f%% · laddaren är inte ansluten";
 "%@ open" = "%@ öppen";
-"%d min left" = "%d min kvar";
 "Alarm triggered" = "Larm utlöst";
 "Charge limit" = "Laddgräns";
 "Charge port lid" = "Laddlucka";
@@ -199,7 +198,6 @@
 "Rear left window" = "Vänster bakruta";
 "Rear right door" = "Höger bakdörr";
 "Rear right window" = "Höger bakruta";
-"Running" = "Igång";
 "S" = "S";
 "Set Home to the Car's Position" = "Sätt hem till bilens position";
 "Starting" = "Startar";
@@ -214,3 +212,9 @@
 "not connected to power" = "inte ansluten till ström";
 "reached its time limit" = "nådde sin tidsgräns";
 "temporarily unavailable" = "tillfälligt otillgänglig";
+
+/* Climate row wording */
+"Heating to %@" = "Värmer till %@";
+"Cooling to %@" = "Kyler till %@";
+"%d min" = "%d min";
+"On" = "På";
