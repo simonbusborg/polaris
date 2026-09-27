@@ -201,7 +201,17 @@ final class StatusItemController {
             // Everything from here on is Data Portal only, and shows up as
             // the credential's scopes allow. Rows, not a section: the menu
             // reads as one car, not as two APIs.
-            if let climate = data.climate, climate.isRunning || climate.isPending {
+            // `defaults write com.weareheavy.polaris debug_climate -string HEATING`
+            // renders the climate row on an idle car, invented values and all,
+            // for the same reason as debug_charging_type: to see the layout
+            // without waiting for a frosty morning. COOLING and PENDING work too.
+            var climate = data.climate
+            if let fake = UserDefaults.standard.string(forKey: "debug_climate"), !fake.isEmpty {
+                climate = ClimateStatus(runningStatus: fake == "PENDING" ? "PENDING" : "ON",
+                                        ventilation: fake, currentCelsius: 12, requestedCelsius: 21,
+                                        minutesLeft: 18, problems: [], reportedAt: Date())
+            }
+            if let climate, climate.isRunning || climate.isPending {
                 var parts: [String] = []
                 parts.append(climate.isPending ? L("Starting") : Self.ventilationName(climate.ventilation))
                 if let want = climate.requestedCelsius {

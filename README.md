@@ -156,6 +156,10 @@ release is published and neither can fail it.
 
 ## Debug flags
 
+- `defaults write com.weareheavy.polaris debug_climate -string HEATING` — show
+  the Climate row on an idle car with made-up values (`COOLING` and `PENDING`
+  too). `defaults delete com.weareheavy.polaris debug_climate` to stop.
+
 Off by default, and none of them alter what the API returns:
 
 ```bash
