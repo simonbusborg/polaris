@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Polaris is wrong or crashed
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. A screenshot or the exact error text is
+        worth more than a description of what you expected.
+
+  - type: checkboxes
+    attributes:
+      label: Before you post
+      options:
+        - label: I have **not** included my VIN, Polestar password, or an access/refresh token anywhere below or in a screenshot.
+          required: true
+
+  - type: input
+    attributes:
+      label: Polaris version
+      description: Settings → About, or the DMG/cask you installed
+      placeholder: "2.11.0"
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.1"
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Logs or screenshots
+      description: |
+        Console.app, filtered to "Polaris", covers most of it. Redact any VIN
+        or token you see in the log before pasting.

@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Sparkle is the one runtime dependency; a stale version is the one thing
+  # here that could ship a real CVE to users.
+  - package-ecosystem: "swift"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Keeps the three workflows on current action versions without anyone
+  # having to remember to check.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
