@@ -50,7 +50,15 @@ final class StatusItemController {
         statusItem.button?.title = " …"
     }
 
+    private var lastRender: (data: CarData?, error: String?, authenticated: Bool)?
+
     func render(data: CarData?, error: String?, authenticated: Bool) {
+        lastRender = (data, error, authenticated)
+        // First render wires the preview's callback; the closure is idempotent.
+        LocationPreview.shared.onUpdate = { [weak self] in
+            guard let self, let last = self.lastRender else { return }
+            self.render(data: last.data, error: last.error, authenticated: last.authenticated)
+        }
         let symbol = Self.icon(for: data)
         statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Polaris")
         statusItem.button?.title = " " + barTitle(for: data)
@@ -222,18 +230,28 @@ final class StatusItemController {
                 }
             }
 
-            // The coordinate itself, not an address: turning it into one
-            // means sending the car's position to a geocoding service, and
-            // this app's promise is that it talks to Polestar and nobody
-            // else. Clicking opens Maps, which is the owner's choice to make.
+            // A map and a street, both from Apple, both arriving a moment
+            // after the first build; until then the row shows the coordinate.
+            // Either click opens Maps. The reading's age goes on the map when
+            // there is one, because "Hjallesevej 12, Odense · 20 hr ago" no
+            // longer fits a row.
             if let location = data.location {
-                let value = data.isAtHome == true
-                    ? L("Home") + Self.ageSuffix(location.reportedAt)
-                    : Self.coordinate(location) + Self.ageSuffix(location.reportedAt)
-                menu.addItem(kvItem(L("Location"), value, onClick: {
+                let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                LocationPreview.shared.prepare(location, dark: dark)
+                let preview = LocationPreview.shared.entry(for: location, dark: dark)
+                let age = Self.ageSuffix(location.reportedAt)
+                let open = {
                     let url = URL(string: "https://maps.apple.com/?ll=\(location.latitude),\(location.longitude)&q=Polestar")!
                     NSWorkspace.shared.open(url)
-                }))
+                }
+                if let map = preview?.map {
+                    let caption = age.replacingOccurrences(of: " · ", with: "")
+                    menu.addItem(Self.imageItem(LocationPreview.captioned(map, caption: caption),
+                                                description: L("Location"), onClick: open))
+                }
+                var place = data.isAtHome == true ? L("Home") : (preview?.address ?? Self.coordinate(location))
+                if preview?.map == nil { place += age }
+                menu.addItem(kvItem(L("Location"), place, onClick: open))
             }
 
             // Car stats
@@ -402,20 +420,28 @@ final class StatusItemController {
 
     // MARK: - Helpers
 
-    private static func imageItem(_ image: NSImage, description: String?) -> NSMenuItem {
+    private static func imageItem(_ image: NSImage, description: String?,
+                                  onClick: (() -> Void)? = nil) -> NSMenuItem {
         let width: CGFloat = 280
         let aspect = image.size.height / max(image.size.width, 1)
         let height = min(width * aspect, 180)
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width + 28, height: height + 8))
-        let imageView = NSImageView(frame: NSRect(x: 14, y: 4, width: width, height: height))
+        let imageView = ClickableImageView(frame: NSRect(x: 14, y: 4, width: width, height: height))
         imageView.image = image
+        imageView.onClick = onClick
         imageView.setAccessibilityLabel(description)
         imageView.imageScaling = .scaleProportionallyUpOrDown
+        // Maps come back square-cornered; the car render is on transparency
+        // and doesn't care.
+        imageView.wantsLayer = true
+        imageView.layer?.cornerRadius = onClick == nil ? 0 : 6
+        imageView.layer?.masksToBounds = true
         container.addSubview(imageView)
 
         let item = NSMenuItem()
         item.view = container
+        if onClick != nil { item.toolTip = L("Click to open in Maps") }
         return item
     }
 
@@ -562,6 +588,18 @@ final class KVRowView: NSView {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(copyText, forType: .string)
         enclosingMenuItem?.menu?.cancelTracking()
+    }
+}
+
+/// An image row that can act on a click, for the map. Same rule as the KV
+/// rows: clicking closes the menu first, so Maps comes up in front of it.
+final class ClickableImageView: NSImageView {
+    var onClick: (() -> Void)?
+
+    override func mouseUp(with event: NSEvent) {
+        guard let onClick else { return super.mouseUp(with: event) }
+        enclosingMenuItem?.menu?.cancelTracking()
+        onClick()
     }
 }
 

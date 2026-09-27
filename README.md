@@ -5,7 +5,9 @@ Your Polestar, in the menu bar.
 Polaris is a tiny native macOS app that shows your Polestar's battery, range,
 and charging status in the menu bar, and on the desktop as a widget. Pure
 AppKit — no Electron, no background services; the widget is SwiftUI because
-WidgetKit leaves no choice. It talks only to Polestar's official API.
+WidgetKit leaves no choice. It talks to Polestar's API and, if you turn on
+the Data Portal's location scope, to Apple's geocoder and MapKit for the
+street name and the map thumbnail — nothing else.
 
 Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 (the same app for Tesla).
@@ -26,7 +28,8 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   the credential stops working. With the portal the menu also gets, scope by
   scope: whether the car is in use (from the car, not inferred), the parking
   climate with its countdown, the charge limit, locks and anything left open,
-  and the car's position, which opens in Maps
+  and where the car is: a small map and the street, both from Apple, which
+  open in Maps on click
 - Optional, with the portal: a reminder when the car has been parked at home
   for ten minutes without the charger connected. Home is a point you save
   from the car's own position; no address is looked up or stored
