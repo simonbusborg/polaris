@@ -20,7 +20,7 @@ jobs:
   signed-build:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check for signing secrets
         env:

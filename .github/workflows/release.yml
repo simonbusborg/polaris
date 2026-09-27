@@ -21,7 +21,7 @@ jobs:
     steps:
       # Full history and tags: the release notes are built from the commits
       # since the previous tag, which a shallow clone doesn't have.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
