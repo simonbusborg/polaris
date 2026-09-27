@@ -602,6 +602,11 @@
   .panel.swap #panelLive,.panel.swap #panelStats{animation:swapIn .34s cubic-bezier(.2,.6,.2,1)}
   .panel .row .warn{color:#FF9F0A}
   .panel .warnrow{padding:.22rem .6rem;color:#FF9F0A}
+  /* The map the app draws above the Location row: a MapKit snapshot with a
+     pin. Drawn here as a stylised SVG rather than a real tile — the mock
+     must not ship a real street, and a tile would be one more request. */
+  .panel .maprow{padding:.3rem .6rem}
+  .panel .maprow svg{display:block;width:100%;height:auto;border-radius:6px}
   /* The status dot is the accent only while charging; other states get
      their own colour so the tabs read apart at a glance. */
   .dot{display:inline-flex;align-items:center;gap:.4rem;font-weight:500}
@@ -1230,7 +1235,8 @@
         <h2>Polaris</h2>
         <div class="meta">Free &amp; open source · macOS 13+ · Apple silicon &amp; Intel</div>
         <p>Signs in with your Polestar account, keeps the session in the
-        Keychain, and talks to nothing but Polestar's own API.</p>
+        Keychain, and talks to Polestar's own APIs — the app's, and the
+        official Data Portal if you connect it.</p>
         <div class="cta-row" id="ctaRow">
           <a class="btn" id="ctaDownload" href="https://github.com/simonbusborg/polaris/releases/latest/download/Polaris.dmg">
             Download for macOS
@@ -1265,6 +1271,10 @@
           <p>Every row is rendered by the app from the live Polestar API —
           battery, range, charging state, odometer and service data, topped by a
           studio image of <b>your exact car</b>. Click the plate or VIN to copy them.</p>
+          <p>Connect Polestar's official <b>Data Portal</b> and the menu grows:
+          whether the car is in use, the parking climate and its countdown,
+          the charge limit, the locks, anything left open, and where it's
+          parked — on a map that opens in Maps.</p>
           <p>Keep scrolling and the menu moves through the states it actually
           shows: charging, idle, in use, and the one you want to know about.</p>
           <div class="states" role="tablist" id="states"></div>
@@ -1437,6 +1447,9 @@
               <div class="wg-grid">
                 <div><span class="wg-k">Charger</span><span class="wg-v">Disconnected</span></div>
                 <div><span class="wg-k">Odometer</span><span class="wg-v">3.097 km</span></div>
+                <div><span class="wg-k">Charge limit</span><span class="wg-v">80%</span></div>
+                <div><span class="wg-k">Doors</span><span class="wg-v">Locked</span></div>
+                <div><span class="wg-k">Location</span><span class="wg-v">Jagtvej 37, Odense C</span></div>
               </div>
               <div class="wg-updated">Updated 5 hr ago</div>
             </div>
@@ -1456,14 +1469,16 @@
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="17" height="9" rx="2"/><path d="M21 11v3"/><path d="M6 11v3M10 11v3"/></svg>
         <h3>Glanceable state of charge</h3>
-        <p>Battery %, range, charging status and time-to-full.
-        You choose what the menu bar shows.</p>
+        <p>Battery %, range, charging status and time-to-full. With the Data
+        Portal, also the charge limit, the climate, the locks and where the
+        car is. You choose what the menu bar shows.</p>
       </div>
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
         <h3>Charging notifications</h3>
         <p>A quiet nudge when charging starts, completes, or the charger
-        reports a fault. Nothing else, ever.</p>
+        reports a fault — and, if you ask for it, when the car has sat at
+        home ten minutes without being plugged in.</p>
       </div>
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1473,9 +1488,10 @@
       </div>
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4.9 12.5H11L9.9 22 19 10.5h-6.2z"/></svg>
-        <h3>Official API only</h3>
-        <p>OAuth2/OIDC with PKCE against Polestar's own endpoints.
-        No third-party servers, no analytics, no tracking.</p>
+        <h3>Official APIs only</h3>
+        <p>Polestar's own endpoints, and the Data Portal Polestar opened
+        under the EU Data Act — your credential, pasted once. No servers of
+        ours, no analytics, no tracking.</p>
       </div>
       <div class="cell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
@@ -1622,7 +1638,20 @@
         <p>Your password goes into your Mac's keychain and to Polestar when
         Polaris signs in — nowhere else. There's no Polaris account and
         nothing in between: the app talks to Polestar directly, from your
-        machine.</p>
+        machine. A Data Portal credential is kept the same way.</p>
+      </details>
+      <details>
+        <summary>What is the Data Portal, and do I need it?</summary>
+        <p>Polestar's official API for owners, opened in September 2026 under
+        the EU Data Act. You don't need it: Polaris works from your login
+        alone. Connect it under Settings → Data Portal and the app reads the
+        car through the supported API instead, and the menu gains the climate,
+        the charge limit, the locks and the car's position. If the credential
+        ever stops working, the login quietly takes over again.</p>
+        <p>One honest note: to show a street name and a map, the car's
+        position goes to Apple's geocoder and MapKit. That happens only with
+        the location scope on, and it's the one thing Polaris sends anywhere
+        but Polestar.</p>
       </details>
       <details>
         <summary>How does it stay up to date?</summary>
@@ -1726,6 +1755,10 @@
         ['Charger', 'Connected'],
         ['Power', '11 kW · AC'],
         ['Full in', '1h05m · 15:37'],
+        ['Charge limit', '80%'],
+        ['Doors', 'Locked'],
+        ['__map__'],
+        ['Location', 'Home'],
       ],
       stats: [['Odometer', '23.412 km'], ['Service', 'in 208 days / 17.500 km']],
     },
@@ -1736,6 +1769,11 @@
         ['Range', '318 km'],
         ['Status', '<span class="dot" style="color:rgba(255,255,255,.55)">Idle</span>'],
         ['Charger', 'Disconnected'],
+        ['Charge limit', '80%'],
+        ['Climate', 'Heating to 21 °C · 18 min'],
+        ['Doors', 'Locked · 9 hr ago'],
+        ['__map__'],
+        ['Location', 'Jagtvej 37, Odense C'],
       ],
       stats: [['Odometer', '23.401 km'], ['Service', 'in 208 days / 17.500 km']],
     },
@@ -1745,6 +1783,7 @@
       rows: [
         ['Range', '204 km'],
         ['Status', '<span class="dot live" style="color:#30D158">In use</span>'],
+        ['Charge limit', '80%'],
       ],
       stats: [['Odometer', '23.455 km'], ['Service', 'in 206 days / 17.500 km']],
     },
@@ -1755,6 +1794,8 @@
         ['Range', '84 km'],
         ['Status', '<span class="dot" style="color:rgba(255,255,255,.55)">Idle</span>'],
         ['Charger', '<span class="warn">Fault</span>'],
+        ['Doors', '<span class="warn">Unlocked</span>'],
+        ['__warn__', 'Tailgate open'],
       ],
       stats: [['Odometer', '29.980 km'], ['Service', '<span class="warn">in 11 days / 20 km</span>']],
       warnings: ['Service warning', 'Washer fluid low'],
@@ -1782,7 +1823,33 @@
     return move;
   }
 
-  const rowHTML = ([k, v]) => '<div class="row"><span class="k">' + k + '</span><span>' + v + '</span></div>';
+  // A neighbourhood that exists nowhere: a grid of streets with invented
+  // names, in MapKit's dark palette, with the app's pin in the middle.
+  const MAP_SVG =
+    '<svg viewBox="0 0 280 140" aria-label="Map of where the car is parked" role="img">' +
+    '<rect width="280" height="140" fill="#2a3040"/>' +
+    '<path d="M0 78 L280 62" stroke="#4a5266" stroke-width="7" fill="none"/>' +
+    '<path d="M0 118 L280 104" stroke="#414960" stroke-width="5" fill="none"/>' +
+    '<path d="M0 34 L280 20" stroke="#414960" stroke-width="5" fill="none"/>' +
+    '<path d="M62 0 L48 140" stroke="#414960" stroke-width="5" fill="none"/>' +
+    '<path d="M168 0 L156 140" stroke="#4a5266" stroke-width="6" fill="none"/>' +
+    '<path d="M244 0 L236 140" stroke="#414960" stroke-width="4" fill="none"/>' +
+    '<rect x="196" y="76" width="30" height="22" fill="#2f4a3f" opacity=".85"/>' +
+    '<rect x="8" y="6" width="34" height="18" fill="#2f4a3f" opacity=".7"/>' +
+    '<g font-family="-apple-system,Helvetica Neue,sans-serif" font-size="7.5" font-weight="600" fill="#c2c8d6" letter-spacing=".6">' +
+    '<text x="72" y="72" transform="rotate(-3.3 72 72)">BIRKEVEJ</text>' +
+    '<text x="184" y="66" transform="rotate(-3.3 184 66)">BIRKEVEJ</text>' +
+    '<text x="70" y="113" transform="rotate(-2.9 70 113)">LINDEGADE</text>' +
+    '<text x="90" y="30" transform="rotate(-2.9 90 30)">ALLÉVEJ</text>' +
+    '<text x="164" y="132" transform="rotate(-85 164 132)">HAVNEGADE</text>' +
+    '</g>' +
+    '<circle cx="140" cy="70" r="8" fill="#fff"/><circle cx="140" cy="70" r="5.5" fill="#0A84FF"/>' +
+    '</svg>';
+  const rowHTML = ([k, v]) => {
+    if (k === '__map__') return '<div class="maprow">' + MAP_SVG + '</div>';
+    if (k === '__warn__') return '<div class="warnrow">⚠︎ ' + v + '</div>';
+    return '<div class="row"><span class="k">' + k + '</span><span>' + v + '</span></div>';
+  };
   const live = document.getElementById('panelLive');
   const statsEl = document.getElementById('panelStats');
   const updatedEl = document.getElementById('panelUpdated');
@@ -1876,7 +1943,7 @@
   const wSizes = [
     {id: 's', tab: 'Small',  text: 'Battery, range, and what the car is doing.'},
     {id: 'm', tab: 'Medium', text: 'The same, beside the render of your car.'},
-    {id: 'l', tab: 'Large',  text: 'Everything else the menu knows about it.'},
+    {id: 'l', tab: 'Large',  text: 'Everything else the menu knows about it — the Data Portal rows included.'},
   ];
   const wCard = document.getElementById('wCard');
   const wTabs = document.getElementById('wStates');

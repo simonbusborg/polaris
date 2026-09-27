@@ -32,35 +32,50 @@ comment describing where it now stands.
 
 ## Next
 
-- **[A better "in use" signal](https://github.com/simonbusborg/polaris/issues/3)** — the API's charging status reads `IDLE`
-  whether the car is parked or on the motorway, so driving is inferred from
-  the odometer moving. v2.8.1 made that inference sharper — metres rather
-  than whole kilometres, and readings too far apart to describe the present
-  are no longer treated as movement — but it is still an inference. Closing
-  this needs a field that reports drive state directly, and neither the
-  GraphQL telematics nor the gRPC battery service has one.
+- **Data Portal as a registered third party** — today the owner creates a
+  credential and pastes three values. Polestar's portal lets owners share
+  access with registered apps instead, which would make setup a consent
+  click and keep the secret out of everyone's hands. Registration has been
+  requested; this waits on Polestar's answer.
+- **A map widget** — the menu has the map; a widget size built around it is
+  a different piece of work and waits until the rows above have settled.
 
 ## Being looked at
-
-- **Polestar Data Portal** — Polestar's official API arrived in September
-  2026. Reading through it is now an opt-in under Settings → Data Portal, with
-  the login kept for the car's name and picture, and it already answers two
-  of the items above: the availability domain reports whether the car is in
-  use, and parking climatisation is a row in the menu. Next: register Polaris
-  as a third party so owners can share access from the portal instead of
-  pasting a secret.
 
 These depend on what the API actually exposes, which is not something that
 can be promised before someone has tried it.
 
 - **[Charging history](https://github.com/simonbusborg/polaris/issues/5)** — a log of recent sessions rather than only what's
-  happening right now.
-- **[Climate / preconditioning status](https://github.com/simonbusborg/polaris/issues/6)** — whether the car reports it at all is
-  still an open question.
+  happening right now. The Data Portal keeps no history either, so this is
+  ours to record.
 - **[Multiple accounts](https://github.com/simonbusborg/polaris/issues/7)** — distinct from multiple cars, which already works.
 
 ## Shipped
 
+- **Polestar Data Portal** (v3.0.0) — Polaris can read your car through
+  Polestar's official Data Portal API. Create a credential at
+  data-portal.polestar.com, paste it under Settings → Data Portal, and
+  battery, charging, odometer and health come from the supported API; your
+  login stays for the car's name and picture, and takes over again if the
+  credential stops working.
+- **In use, from the car** (v3.0.0) — with the Data Portal the car says
+  outright whether it's being driven, instead of Polaris inferring it from
+  the odometer. Closes the long-standing "in use" issue.
+- **Climate, charge limit, doors and where it's parked** (v3.0.0) — new
+  rows in the menu, each appearing as its Data Portal scope allows: the
+  parking climate with its target and countdown, the charge limit, the
+  locks and anything left open, and the car's position as a street and a
+  small map that opens in Maps. Readings older than half an hour say so.
+  The large widget carries the same rows; the medium one adds a line only
+  when something needs attention. Claude gets the same facts, minus the
+  location.
+- **Parked at home, not charging** (v3.0.0) — an optional reminder when the
+  car has sat at home for ten minutes with the charger disconnected. Home
+  is a point you save from the car's own position, under Notifications.
+- **One honest change to the privacy line** (v3.0.0) — to show a street
+  name and a map, the car's position goes to Apple's geocoder and MapKit.
+  That happens only with the Data Portal's location scope on, and it's the
+  one thing Polaris sends anywhere but Polestar.
 - **Ask Claude about your car** (v2.11.0) — a Claude tab in Settings adds
   Polaris to Claude Desktop in one click, and Claude can then answer "what's my
   battery?" or "can I get to Aarhus and back?" from what the app last fetched.
