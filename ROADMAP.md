@@ -61,6 +61,11 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Claude can say where the car is** (v3.1.0) — a switch under Settings →
+  Claude, off by default, lets the helper answer "where is my car?" with the
+  same words the widget shows: Home, or a street and town. Never a
+  coordinate, never inside the status answer, and the privacy line in the
+  pane now says exactly that.
 - **Polestar Data Portal** (v3.0.0) — Polaris can read your car through
   Polestar's official Data Portal API. Create a credential at
   data-portal.polestar.com, paste it under Settings → Data Portal, and

@@ -2,14 +2,15 @@
 //  MCPTools.swift
 //  PolarisMCPKit
 //
-//  What the three tools answer, worked out from the widget snapshot and
+//  What the four tools answer, worked out from the widget snapshot and
 //  nothing else. Pure functions, no I/O: the range maths is the one part of
 //  this a wrong answer from could strand someone, so it is testable without
 //  a car or a running app.
 //
 //  The snapshot is deliberately all this reads. It carries no VIN, no
-//  location and no tokens, so a Claude conversation can never be handed any
-//  of them by this helper.
+//  coordinate and no tokens, so a Claude conversation can never be handed
+//  any of them by this helper. The one place it names is the widget's
+//  wording of where the car is, and only when the owner opted in.
 //
 
 import Foundation
@@ -101,8 +102,8 @@ public enum MCPTools {
             "time_to_full_minutes": s.isCharging ? (s.fullInMinutes.map { $0 as Any } ?? NSNull()) : NSNull(),
         ]
         // Data Portal facts, present only when the owner granted the scope.
-        // The car's position is deliberately not among them: the Settings
-        // pane promises Claude never sees it.
+        // The car's position is deliberately not among them: it has its own
+        // tool, behind its own switch, so a status question never leaks it.
         if let target = s.targetSoc { out["charge_limit_percent"] = target }
         if let locked = s.doorsLocked { out["doors_locked"] = locked }
         if let open = s.openingsCount { out["openings_count"] = open }
@@ -118,6 +119,22 @@ public enum MCPTools {
         // Polaris's own staleness note, if any, is the more urgent one.
         if s.odometerKm == nil, out["note"] == nil {
             out["note"] = "Polaris has no odometer reading for this car."
+        }
+        return out
+    }
+
+    /// The widget's words for where the car is, nothing more precise. The
+    /// caller has already checked the owner said yes; this only reports what
+    /// there is, or why there is nothing.
+    public static func location(_ s: WidgetSnapshot, now: Date = Date()) -> [String: Any] {
+        var out = freshness(s, now: now)
+        out["car"] = car(s)
+        out["location"] = s.locationText.map { $0 as Any } ?? NSNull()
+        out["at_home"] = s.isAtHome.map { $0 as Any } ?? NSNull()
+        out["in_use"] = s.isDriving
+        out["precision"] = "Street and town at best, from the car's last report. No coordinate is available."
+        if s.locationText == nil, out["note"] == nil {
+            out["note"] = "Polaris has no position for this car. It needs a Data Portal credential with the location scope, and a moment for the address to resolve."
         }
         return out
     }

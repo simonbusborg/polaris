@@ -118,6 +118,13 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_parked_at_home") }
     }
 
+    /// Off until the owner turns it on: the Claude pane promised for two
+    /// versions that the position stays private, so sharing it is a choice.
+    static var shareLocationWithClaude: Bool {
+        get { d.bool(forKey: "share_location_with_claude") }
+        set { d.set(newValue, forKey: "share_location_with_claude") }
+    }
+
     /// Where the car lives, as the owner saved it from a reading. nil until
     /// they do. Stored as two numbers, nothing that could name the place.
     static var home: CarLocation? {

@@ -17,7 +17,8 @@ final class MCPServerTests: XCTestCase {
 
     private func snapshot(battery: Double = 67, range: Int = 309, status: String = "IDLE",
                           reported: Date? = nil, written: Date? = nil,
-                          odometer: Int? = 23_412) -> WidgetSnapshot {
+                          odometer: Int? = 23_412, location: String? = nil,
+                          shareLocation: Bool? = nil, atHome: Bool? = nil) -> WidgetSnapshot {
         WidgetSnapshot(batteryPercentage: battery, rangeKm: range, statusKey: status,
                        isDriving: false, isPluggedIn: false, fullInMinutes: nil,
                        chargingPowerWatts: nil, carTitle: "Polestar 4 · 2026",
@@ -25,7 +26,9 @@ final class MCPServerTests: XCTestCase {
                        odometerKm: odometer,
                        carReportedAt: reported ?? now.addingTimeInterval(-600),
                        writtenAt: written ?? now.addingTimeInterval(-60),
-                       unit: .kilometers, hasImage: false)
+                       unit: .kilometers, hasImage: false,
+                       locationText: location, locationSharedWithClaude: shareLocation,
+                       isAtHome: atHome)
     }
 
     private func server(_ state: SharedStore.SnapshotState) -> MCPServer {
@@ -61,10 +64,10 @@ final class MCPServerTests: XCTestCase {
         XCTAssertNil(server(.noFile).handle(line: #"{"jsonrpc":"2.0","method":"notifications/initialized"}"#))
     }
 
-    func testListsExactlyTheThreeReadOnlyTools() throws {
+    func testListsExactlyTheFourReadOnlyTools() throws {
         let r = try reply(server(.noFile), #"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#)
         let tools = try XCTUnwrap((r["result"] as? [String: Any])?["tools"] as? [[String: Any]])
-        XCTAssertEqual(tools.compactMap { $0["name"] as? String }, ["get_status", "get_odometer", "check_trip"])
+        XCTAssertEqual(tools.compactMap { $0["name"] as? String }, ["get_status", "get_odometer", "get_location", "check_trip"])
         for tool in tools {
             let annotations = try XCTUnwrap(tool["annotations"] as? [String: Any])
             XCTAssertEqual(annotations["readOnlyHint"] as? Bool, true)
@@ -129,6 +132,46 @@ final class MCPServerTests: XCTestCase {
     func testOdometer() throws {
         let json = try toolJSON(call(server(.ok(snapshot())), "get_odometer"))
         XCTAssertEqual(json["odometer_km"] as? Int, 23_412)
+    }
+
+    // MARK: - get_location
+
+    /// The default, and what an app older than the switch writes: the
+    /// snapshot may carry the words, and the helper still hands out none.
+    func testLocationIsRefusedUntilTheOwnerOptsIn() throws {
+        for share in [nil, false] as [Bool?] {
+            let r = try reply(server(.ok(snapshot(location: "Åboulevarden, Aarhus", shareLocation: share))),
+                              #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_location","arguments":{}}}"#)
+            let result = try XCTUnwrap(r["result"] as? [String: Any])
+            XCTAssertEqual(result["isError"] as? Bool, true)
+            let text = try XCTUnwrap((result["content"] as? [[String: Any]])?.first?["text"] as? String)
+            XCTAssertTrue(text.contains("Settings → Claude"), text)
+            XCTAssertFalse(text.contains("Aarhus"))
+        }
+    }
+
+    func testLocationIsTheWidgetsWordsOnceSharedNeverACoordinate() throws {
+        let json = try toolJSON(call(server(.ok(snapshot(location: "Åboulevarden, Aarhus",
+                                                         shareLocation: true, atHome: false))),
+                                     "get_location"))
+        XCTAssertEqual(json["location"] as? String, "Åboulevarden, Aarhus")
+        XCTAssertEqual(json["at_home"] as? Bool, false)
+        XCTAssertNil(json["latitude"]); XCTAssertNil(json["longitude"])
+        XCTAssertNotNil(json["reported_ago"])
+    }
+
+    func testLocationSharedButUnknownSaysWhy() throws {
+        let json = try toolJSON(call(server(.ok(snapshot(shareLocation: true))), "get_location"))
+        XCTAssertTrue(json["location"] is NSNull)
+        XCTAssertTrue((json["note"] as? String ?? "").contains("location scope"))
+    }
+
+    /// The status tool must not become a back door to the position.
+    func testStatusNeverCarriesTheLocationEvenWhenShared() throws {
+        let json = try toolJSON(call(server(.ok(snapshot(location: "Åboulevarden, Aarhus",
+                                                         shareLocation: true))), "get_status"))
+        XCTAssertNil(json["location"])
+        XCTAssertFalse(json.values.contains { ($0 as? String)?.contains("Aarhus") == true })
     }
 
     // MARK: - check_trip

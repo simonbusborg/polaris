@@ -50,6 +50,14 @@ public struct WidgetSnapshot: Codable, Equatable {
     public var climateText: String?
     /// "Home", or the street and town. Never the raw coordinate.
     public var locationText: String?
+    /// The owner's choice under Settings → Claude. The helper reads only
+    /// this file, so the choice has to travel with the data; absent means
+    /// off, which is also what an older app writes.
+    public var locationSharedWithClaude: Bool?
+    /// Whether the position matched the saved home. Stored as its own fact
+    /// because `locationText` is already localised, and the helper runs
+    /// under whatever language Claude Desktop has, not the app's.
+    public var isAtHome: Bool?
 
     public init(batteryPercentage: Double, rangeKm: Int, statusKey: String,
                 isDriving: Bool, isPluggedIn: Bool?, fullInMinutes: Int?,
@@ -58,7 +66,8 @@ public struct WidgetSnapshot: Codable, Equatable {
                 odometerKm: Int?, carReportedAt: Date?, writtenAt: Date,
                 unit: DistanceUnit, hasImage: Bool,
                 targetSoc: Int? = nil, doorsLocked: Bool? = nil, openingsCount: Int? = nil,
-                climateText: String? = nil, locationText: String? = nil) {
+                climateText: String? = nil, locationText: String? = nil,
+                locationSharedWithClaude: Bool? = nil, isAtHome: Bool? = nil) {
         self.batteryPercentage = batteryPercentage
         self.rangeKm = rangeKm
         self.statusKey = statusKey
@@ -79,6 +88,8 @@ public struct WidgetSnapshot: Codable, Equatable {
         self.openingsCount = openingsCount
         self.climateText = climateText
         self.locationText = locationText
+        self.locationSharedWithClaude = locationSharedWithClaude
+        self.isAtHome = isAtHome
     }
 
     /// The one thing worth a line on the medium widget beyond the battery:

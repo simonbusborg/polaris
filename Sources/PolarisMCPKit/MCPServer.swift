@@ -2,7 +2,7 @@
 //  MCPServer.swift
 //  PolarisMCPKit
 //
-//  Just enough of the Model Context Protocol to serve three read-only tools
+//  Just enough of the Model Context Protocol to serve four read-only tools
 //  over stdio: newline-delimited JSON-RPC, initialize, tools/list and
 //  tools/call. Hand-rolled rather than pulling in an SDK, because the whole
 //  surface is a page and a dependency here would ship inside the app bundle.
@@ -46,6 +46,13 @@ public struct MCPServer {
             "name": "get_odometer",
             "title": "Odometer",
             "description": "Total distance driven, in km, with the timestamp of the car's last report.",
+            "inputSchema": ["type": "object", "properties": [String: Any]()],
+            "annotations": readOnly,
+        ],
+        [
+            "name": "get_location",
+            "title": "Where the car is parked",
+            "description": "Where the car was last seen, as \"Home\" or a street and town — never a coordinate. Only answers when the owner turned on location sharing under Settings → Claude in Polaris; otherwise says so. Use it as the origin when estimating a trip's distance.",
             "inputSchema": ["type": "object", "properties": [String: Any]()],
             "annotations": readOnly,
         ],
@@ -144,6 +151,13 @@ public struct MCPServer {
         switch name {
         case "get_status": return success(MCPTools.status(snapshot, now: current))
         case "get_odometer": return success(MCPTools.odometer(snapshot, now: current))
+        case "get_location":
+            // A refusal, not a failure: the owner said no, and Claude should
+            // be able to tell them where to say yes.
+            guard snapshot.locationSharedWithClaude == true else {
+                return failure("The owner has not shared the car's location with Claude. It can be turned on in Polaris under Settings → Claude.")
+            }
+            return success(MCPTools.location(snapshot, now: current))
         default:
             let t = trip!
             return success(MCPTools.tripCheck(snapshot, destination: t.destination,

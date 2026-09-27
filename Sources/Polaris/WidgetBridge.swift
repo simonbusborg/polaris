@@ -64,7 +64,9 @@ enum WidgetBridge {
             // otherwise: a coordinate on a widget helps nobody.
             locationText: data.isAtHome == true
                 ? L("Home")
-                : data.location.flatMap { LocationPreview.shared.address(for: $0) }
+                : data.location.flatMap { LocationPreview.shared.address(for: $0) },
+            locationSharedWithClaude: Preferences.shareLocationWithClaude,
+            isAtHome: data.isAtHome
         )
 
         // A poll every five minutes that changed nothing is not worth a

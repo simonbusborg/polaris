@@ -29,12 +29,14 @@ final class WidgetSnapshotTests: XCTestCase {
     func testDecodesASnapshotWithoutTheDataPortalFields() throws {
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
         var json = try JSONSerialization.jsonObject(with: encoder.encode(snapshot())) as! [String: Any]
-        for key in ["targetSoc", "doorsLocked", "openingsCount", "climateText", "locationText"] {
+        for key in ["targetSoc", "doorsLocked", "openingsCount", "climateText", "locationText",
+                    "locationSharedWithClaude", "isAtHome"] {
             json.removeValue(forKey: key)
         }
         let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
         let old = try decoder.decode(WidgetSnapshot.self, from: JSONSerialization.data(withJSONObject: json))
         XCTAssertNil(old.targetSoc)
+        XCTAssertNil(old.locationSharedWithClaude)
         XCTAssertNil(old.doorsText)
         XCTAssertNil(old.attentionText)
     }

@@ -134,7 +134,9 @@
 
 /* Claude pane: let Claude read the car through the MCP helper */
 "Claude" = "Claude";
-"Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password, VIN or location." = "Lad Claude læse din bils batteri, rækkevidde og kilometertæller. Polaris deler kun det, den allerede har hentet, og kun til læsning. Claude ser aldrig din adgangskode, dit stelnummer eller din placering.";
+"Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password or VIN, and sees where the car is only if you allow it below." = "Lad Claude læse din bils batteri, rækkevidde og kilometertæller. Polaris deler kun det, den allerede har hentet, og kun til læsning. Claude ser aldrig din adgangskode eller dit stelnummer, og ser kun hvor bilen holder, hvis du tillader det nedenfor.";
+"Let Claude see where the car is parked" = "Lad Claude se, hvor bilen holder parkeret";
+"Off by default. When on, Claude gets the same words the widget shows, Home or a street and town, never a coordinate. Needs the Data Portal's location scope." = "Slået fra som standard. Når det er slået til, får Claude de samme ord, som widgetten viser, Hjem eller en gade og by, aldrig en koordinat. Kræver Data Portalens placeringsadgang.";
 "Add to Claude Desktop" = "Føj til Claude Desktop";
 "Update Claude Desktop" = "Opdater Claude Desktop";
 "Remove from Claude Desktop" = "Fjern fra Claude Desktop";

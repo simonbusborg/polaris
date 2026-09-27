@@ -72,6 +72,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let claudeError = NSTextField(wrappingLabelWithString: "")
     private let claudeAddButton = NSButton(title: "", target: nil, action: nil)
     private let claudeRemoveButton = NSButton(title: L("Remove from Claude Desktop"), target: nil, action: nil)
+    private let claudeLocationCheckbox = NSButton(checkboxWithTitle: L("Let Claude see where the car is parked"), target: nil, action: nil)
+    private let claudeLocationNote = NSTextField(wrappingLabelWithString:
+        L("Off by default. When on, Claude gets the same words the widget shows, Home or a street and town, never a coordinate. Needs the Data Portal's location scope."))
 
     // MARK: Updates pane
 
@@ -483,8 +486,12 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func claudePane() -> NSView {
         let blurb = NSTextField(wrappingLabelWithString:
-            L("Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password, VIN or location."))
+            L("Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password or VIN, and sees where the car is only if you allow it below."))
         blurb.textColor = .secondaryLabelColor
+        claudeLocationNote.textColor = .secondaryLabelColor
+        claudeLocationNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        claudeLocationCheckbox.target = self
+        claudeLocationCheckbox.action = #selector(claudeLocationChanged)
 
         claudeStatus.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         claudeError.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
@@ -496,7 +503,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         buttons.orientation = .horizontal
         buttons.spacing = 8
 
-        let stack = NSStackView(views: [blurb, claudeStatus, buttons, claudeError])
+        let stack = NSStackView(views: [blurb, claudeStatus, buttons, claudeError,
+                                        claudeLocationCheckbox, claudeLocationNote])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
@@ -543,6 +551,15 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         alert.addButton(withTitle: L("Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         applyClaudeChange { try ClaudeDesktopConfig.install(helper: helper) }
+    }
+
+    /// The helper only ever reads the snapshot, so the choice is written
+    /// into it straight away rather than waiting for the next poll — and
+    /// turning it off has to take the words out of the file, not just stop
+    /// adding them.
+    @objc private func claudeLocationChanged() {
+        Preferences.shareLocationWithClaude = (claudeLocationCheckbox.state == .on)
+        if let data = latestData { WidgetBridge.publish(data) }
     }
 
     @objc private func claudeRemoveAction() {
@@ -720,6 +737,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
         refreshPopup.selectItem(at: RefreshInterval.allCases.firstIndex(of: Preferences.refreshInterval) ?? 0)
         launchCheckbox.state = Preferences.launchAtLogin ? .on : .off
+        claudeLocationCheckbox.state = Preferences.shareLocationWithClaude ? .on : .off
         refreshClaudePane()
         notifyStartCheckbox.state = Preferences.notifyChargingStarted ? .on : .off
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
