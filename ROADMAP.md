@@ -37,6 +37,16 @@ comment describing where it now stands.
   access with registered apps instead, which would make setup a consent
   click and keep the secret out of everyone's hands. Registration has been
   requested; this waits on Polestar's answer.
+- **[Something left open](https://github.com/simonbusborg/polaris/issues/14)** — the Doors row already says which door, the
+  tailgate or a window is ajar. This makes it a reminder: the car has been
+  parked a few minutes with something open, or unlocked, and nobody is in
+  it. Opt-in under Notifications like the parked-at-home reminder, once per
+  stay, and quiet while the car is in use.
+- **[Tyres and the 12V battery](https://github.com/simonbusborg/polaris/issues/15)** — the Data Portal's health domain reports
+  tyre pressure per wheel, the 12V battery and the lights, and Polaris reads
+  only the service interval and fluids from it. A tyre warning becomes a row
+  and a notification; a failing 12V battery is the one fault that strands an
+  EV, so it gets the same.
 - **A map widget** — the menu has the map; a widget size built around it is
   a different piece of work and waits until the rows above have settled.
 
@@ -48,7 +58,6 @@ can be promised before someone has tried it.
 - **[Charging history](https://github.com/simonbusborg/polaris/issues/5)** — a log of recent sessions rather than only what's
   happening right now. The Data Portal keeps no history either, so this is
   ours to record.
-- **[Multiple accounts](https://github.com/simonbusborg/polaris/issues/7)** — distinct from multiple cars, which already works.
 
 ## Shipped
 
