@@ -220,7 +220,7 @@ final class StatusItemController {
             if let exterior = data.exterior {
                 if let locked = exterior.locked {
                     let value = (locked ? L("Locked") : L("Unlocked")) + Self.ageSuffix(exterior.reportedAt)
-                    menu.addItem(kvItem(L("Locks"), value, valueWarning: !locked))
+                    menu.addItem(kvItem(L("Doors"), value, valueWarning: !locked))
                 }
                 exterior.openings.forEach {
                     menu.addItem(rowItem("⚠︎ " + String(format: L("%@ open"), Self.openingName($0)), warning: true))

@@ -189,7 +189,7 @@
 "Hood" = "Maska";
 "Location" = "Lokalizacja";
 "Locked" = "Zamknięty";
-"Locks" = "Zamki";
+"Doors" = "Drzwi";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Wymaga lokalizacji samochodu, dostępnej z poświadczeniem Data Portal.";
 "Not set. Park at home, then press the button." = "Nie ustawiono. Zaparkuj w domu i naciśnij przycisk.";

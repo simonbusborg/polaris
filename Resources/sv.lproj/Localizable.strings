@@ -189,7 +189,7 @@
 "Hood" = "Motorhuv";
 "Location" = "Plats";
 "Locked" = "Låst";
-"Locks" = "Lås";
+"Doors" = "Dörrar";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Kräver bilens plats, som följer med en Data Portal-uppgift.";
 "Not set. Park at home, then press the button." = "Inte satt. Parkera hemma och tryck sedan på knappen.";

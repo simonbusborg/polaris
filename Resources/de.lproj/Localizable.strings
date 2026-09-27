@@ -189,7 +189,7 @@
 "Hood" = "Motorhaube";
 "Location" = "Standort";
 "Locked" = "Verriegelt";
-"Locks" = "Schlösser";
+"Doors" = "Türen";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Braucht den Standort des Autos, den ein Data-Portal-Zugang liefert.";
 "Not set. Park at home, then press the button." = "Nicht gesetzt. Zuhause parken, dann die Taste drücken.";

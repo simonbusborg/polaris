@@ -191,7 +191,7 @@
 "Hood" = "Motorhjelm";
 "Location" = "Placering";
 "Locked" = "Låst";
-"Locks" = "Låse";
+"Doors" = "Døre";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Kræver bilens placering, som følger med en Data Portal-legitimation.";
 "Not set. Park at home, then press the button." = "Ikke sat. Parkér hjemme, og tryk så på knappen.";

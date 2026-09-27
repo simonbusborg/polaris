@@ -191,7 +191,7 @@
 "Hood" = "Hood";
 "Location" = "Location";
 "Locked" = "Locked";
-"Locks" = "Locks";
+"Doors" = "Doors";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Needs the car's location, which comes with a Data Portal credential.";
 "Not set. Park at home, then press the button." = "Not set. Park at home, then press the button.";

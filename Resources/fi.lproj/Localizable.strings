@@ -189,7 +189,7 @@
 "Hood" = "Konepelti";
 "Location" = "Sijainti";
 "Locked" = "Lukittu";
-"Locks" = "Lukot";
+"Doors" = "Ovet";
 "N" = "P";
 "Needs the car's location, which comes with a Data Portal credential." = "Vaatii auton sijainnin, joka tulee Data Portal -tunnistetietojen mukana.";
 "Not set. Park at home, then press the button." = "Ei asetettu. Pysäköi kotiin ja paina sitten painiketta.";

@@ -189,7 +189,7 @@
 "Hood" = "Motorkap";
 "Location" = "Locatie";
 "Locked" = "Vergrendeld";
-"Locks" = "Sloten";
+"Doors" = "Deuren";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Heeft de locatie van de auto nodig, die meekomt met een Data Portal-gegeven.";
 "Not set. Park at home, then press the button." = "Niet ingesteld. Parkeer thuis en druk dan op de knop.";

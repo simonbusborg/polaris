@@ -189,7 +189,7 @@
 "Hood" = "Cofano";
 "Location" = "Posizione";
 "Locked" = "Bloccata";
-"Locks" = "Serrature";
+"Doors" = "Portiere";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Serve la posizione dell'auto, che arriva con una credenziale Data Portal.";
 "Not set. Park at home, then press the button." = "Non impostata. Parcheggia a casa, poi premi il pulsante.";

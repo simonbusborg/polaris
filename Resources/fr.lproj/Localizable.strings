@@ -189,7 +189,7 @@
 "Hood" = "Capot";
 "Location" = "Position";
 "Locked" = "Verrouillée";
-"Locks" = "Verrouillage";
+"Doors" = "Portes";
 "N" = "N";
 "Needs the car's location, which comes with a Data Portal credential." = "Nécessite la position de la voiture, fournie avec un identifiant Data Portal.";
 "Not set. Park at home, then press the button." = "Non défini. Garez-vous chez vous, puis appuyez sur le bouton.";
