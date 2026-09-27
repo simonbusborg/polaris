@@ -755,11 +755,14 @@
   .wg-ago{color:rgba(255,255,255,.4);white-space:nowrap}
   .wg-car{display:block;width:100%;height:auto}
   .wc-m .wg-car{width:132px;flex:none}
-  .wc-l .wg-car{margin:6px 0 2px}
+  /* Like the real large widget: the render takes whatever the rows below
+     leave, so a third grid row (the Data Portal fields) costs the car
+     height rather than pushing the timestamp off the card. */
+  .wc-l .wg-car{margin:4px 0 2px;flex:1 1 0;min-height:0;width:auto;max-width:100%;object-fit:contain;align-self:center}
   .wg-col{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
   .wg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .wg-head .wg-state{font-size:10px}
-  .wg-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 10px;margin-top:11px}
+  .wg-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;margin-top:9px}
   .wg-k{display:block;font-size:10px;color:rgba(255,255,255,.4)}
   .wg-v{display:block;font-size:12px;font-weight:500;margin-top:1px}
   .wg-updated{font-size:10px;color:rgba(255,255,255,.4);margin-top:auto}
@@ -1449,7 +1452,7 @@
                 <div><span class="wg-k">Odometer</span><span class="wg-v">3.097 km</span></div>
                 <div><span class="wg-k">Charge limit</span><span class="wg-v">80%</span></div>
                 <div><span class="wg-k">Doors</span><span class="wg-v">Locked</span></div>
-                <div><span class="wg-k">Location</span><span class="wg-v">Jagtvej 37, Odense C</span></div>
+                <div><span class="wg-k">Location</span><span class="wg-v">Strandvejen 8, Aarhus C</span></div>
               </div>
               <div class="wg-updated">Updated 5 hr ago</div>
             </div>
@@ -1773,7 +1776,7 @@
         ['Climate', 'Heating to 21 °C · 18 min'],
         ['Doors', 'Locked · 9 hr ago'],
         ['__map__'],
-        ['Location', 'Jagtvej 37, Odense C'],
+        ['Location', 'Strandvejen 8, Aarhus C'],
       ],
       stats: [['Odometer', '23.401 km'], ['Service', 'in 208 days / 17.500 km']],
     },
