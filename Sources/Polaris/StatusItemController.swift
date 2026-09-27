@@ -58,6 +58,9 @@ final class StatusItemController {
         LocationPreview.shared.onUpdate = { [weak self] in
             guard let self, let last = self.lastRender else { return }
             self.render(data: last.data, error: last.error, authenticated: last.authenticated)
+            // The widget was published before the street was known; publish
+            // again now that it is. sameData() makes a no-op of the rest.
+            if let data = last.data { WidgetBridge.publish(data) }
         }
         let symbol = Self.icon(for: data)
         statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Polaris")
@@ -211,22 +214,8 @@ final class StatusItemController {
                                         ventilation: fake, currentCelsius: 12, requestedCelsius: 21,
                                         minutesLeft: 18, problems: [], reportedAt: Date())
             }
-            if let climate, climate.isRunning || climate.isPending {
-                // "Heating to 21 °C · 18 min": the target and the time, which
-                // is what you check for. The cabin's current temperature is
-                // dropped; it made the row too long to say anything.
-                var parts: [String] = []
-                let target = climate.requestedCelsius.map(Self.temperature(celsius:))
-                if climate.isPending {
-                    parts.append(L("Starting"))
-                    if let target { parts.append(target) }
-                } else {
-                    parts.append(Self.climateVerb(climate.ventilation, target: target))
-                }
-                if let left = climate.minutesLeft, left > 0 {
-                    parts.append(String(format: L("%d min"), left))
-                }
-                menu.addItem(kvItem(L("Climate"), parts.joined(separator: " · ")))
+            if let climate, let text = Self.climateText(climate) {
+                menu.addItem(kvItem(L("Climate"), text))
             }
             data.climate?.problems.forEach {
                 menu.addItem(rowItem("⚠︎ " + String(format: L("Climate: %@"), Self.climateProblem($0)), warning: true))
@@ -386,6 +375,26 @@ final class StatusItemController {
         String(format: "%.4f° %@, %.4f° %@",
                abs(l.latitude), l.latitude >= 0 ? L("N") : L("S"),
                abs(l.longitude), l.longitude >= 0 ? L("E") : L("W"))
+    }
+
+    /// "Heating to 21 °C · 18 min": the target and the time, which is what
+    /// you check for. The cabin's current temperature is dropped; it made
+    /// the row too long to say anything. nil when the climate is off, so
+    /// the row and the widget line simply don't appear.
+    static func climateText(_ climate: ClimateStatus) -> String? {
+        guard climate.isRunning || climate.isPending else { return nil }
+        var parts: [String] = []
+        let target = climate.requestedCelsius.map(temperature(celsius:))
+        if climate.isPending {
+            parts.append(L("Starting"))
+            if let target { parts.append(target) }
+        } else {
+            parts.append(climateVerb(climate.ventilation, target: target))
+        }
+        if let left = climate.minutesLeft, left > 0 {
+            parts.append(String(format: L("%d min"), left))
+        }
+        return parts.joined(separator: " · ")
     }
 
     static func climateVerb(_ ventilation: String?, target: String?) -> String {

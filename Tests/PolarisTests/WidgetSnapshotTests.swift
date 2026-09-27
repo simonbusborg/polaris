@@ -24,6 +24,36 @@ final class WidgetSnapshotTests: XCTestCase {
                        unit: unit, hasImage: false)
     }
 
+    /// A file written by an app from before the Data Portal has none of the
+    /// new keys, and a widget that refused it would go blank on upgrade.
+    func testDecodesASnapshotWithoutTheDataPortalFields() throws {
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        var json = try JSONSerialization.jsonObject(with: encoder.encode(snapshot())) as! [String: Any]
+        for key in ["targetSoc", "doorsLocked", "openingsCount", "climateText", "locationText"] {
+            json.removeValue(forKey: key)
+        }
+        let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
+        let old = try decoder.decode(WidgetSnapshot.self, from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(old.targetSoc)
+        XCTAssertNil(old.doorsText)
+        XCTAssertNil(old.attentionText)
+    }
+
+    func testAttentionPrefersClimateThenOpeningsThenUnlocked() {
+        var s = snapshot()
+        XCTAssertNil(s.attentionText)
+        s.doorsLocked = false
+        XCTAssertEqual(s.attentionText, "Unlocked")
+        s.openingsCount = 2
+        XCTAssertEqual(s.attentionText, "2 open")
+        XCTAssertEqual(s.doorsText, "2 open")
+        s.climateText = "Heating to 21 °C · 18 min"
+        XCTAssertEqual(s.attentionText, "Heating to 21 °C · 18 min")
+        s.openingsCount = 0; s.climateText = nil; s.doorsLocked = true
+        XCTAssertEqual(s.doorsText, "Locked")
+        XCTAssertNil(s.attentionText)
+    }
+
     func testSurvivesARoundTrip() throws {
         let original = snapshot()
         let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601

@@ -139,6 +139,13 @@ private extension WidgetSnapshot {
 
     /// What the car itself last said, falling back to when we wrote the file.
     var asOf: Date { carReportedAt ?? writtenAt }
+
+    /// The glyph beside `attentionText`, matched to which thing it is.
+    var attentionSymbol: String {
+        if climateText != nil { return "fan" }
+        if let open = openingsCount, open > 0 { return "car.side.front.open" }
+        return "lock.open"
+    }
 }
 
 /// A flat capacity bar. Deliberately not a Gauge: those pick up the system
@@ -334,6 +341,18 @@ struct MediumCarView: View {
 
                 Spacer(minLength: 2)
 
+                // One extra line, only when the car has something to say:
+                // the climate running, a door open, the car unlocked. The
+                // medium widget lives on a desktop all day; a line that was
+                // always there would be a line nobody read.
+                if let attention = snapshot.attentionText {
+                    Label(attention, systemImage: snapshot.attentionSymbol)
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption)
+                        .foregroundStyle(snapshot.climateText != nil ? Color.secondary : Color.orange)
+                        .lineLimit(1)
+                }
+
                 HStack(spacing: 4) {
                     StatusLabel(snapshot: snapshot)
                     Spacer(minLength: 0)
@@ -378,6 +397,21 @@ struct LargeCarView: View {
             rows.append(Field(key: L("Odometer"),
                               value: CarFormat.distance(km: odometer, grouped: true,
                                                         unit: snapshot.unit)))
+        }
+        // Data Portal rows, in the menu's order. Each is absent until the
+        // owner grants its scope, so an idle car on the login path still
+        // gets the four-slot grid it always had.
+        if let target = snapshot.targetSoc {
+            rows.append(Field(key: L("Charge limit"), value: "\(target)%"))
+        }
+        if let climate = snapshot.climateText {
+            rows.append(Field(key: L("Climate"), value: climate))
+        }
+        if let doors = snapshot.doorsText {
+            rows.append(Field(key: L("Doors"), value: doors))
+        }
+        if let place = snapshot.locationText {
+            rows.append(Field(key: L("Location"), value: place))
         }
         return rows
     }

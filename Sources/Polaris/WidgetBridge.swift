@@ -55,7 +55,16 @@ enum WidgetBridge {
             carReportedAt: data.carReportedAt,
             writtenAt: Date(),
             unit: Preferences.distanceUnit,
-            hasImage: SharedStore.hasImage
+            hasImage: SharedStore.hasImage,
+            targetSoc: data.targetSoc.flatMap { $0 > 0 && $0 < 100 ? $0 : nil },
+            doorsLocked: data.exterior?.locked,
+            openingsCount: data.exterior.map { $0.openings.count },
+            climateText: data.climate.flatMap(StatusItemController.climateText),
+            // The street when Apple has answered, "Home" when it is, nothing
+            // otherwise: a coordinate on a widget helps nobody.
+            locationText: data.isAtHome == true
+                ? L("Home")
+                : data.location.flatMap { LocationPreview.shared.address(for: $0) }
         )
 
         // A poll every five minutes that changed nothing is not worth a

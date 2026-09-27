@@ -51,6 +51,13 @@ final class LocationPreview {
         entries[Self.key(location, dark: dark)]
     }
 
+    /// The street for this position from whichever appearance looked it up.
+    /// The geocoder doesn't care about dark mode; only the map key does.
+    func address(for location: CarLocation) -> String? {
+        entries[Self.key(location, dark: true)]?.address
+            ?? entries[Self.key(location, dark: false)]?.address
+    }
+
     /// Starts whatever is missing for this position. Safe to call on every
     /// menu build; it returns at once when the entry is complete or pending.
     func prepare(_ location: CarLocation, dark: Bool) {

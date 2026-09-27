@@ -100,6 +100,13 @@ public enum MCPTools {
                 : 0,
             "time_to_full_minutes": s.isCharging ? (s.fullInMinutes.map { $0 as Any } ?? NSNull()) : NSNull(),
         ]
+        // Data Portal facts, present only when the owner granted the scope.
+        // The car's position is deliberately not among them: the Settings
+        // pane promises Claude never sees it.
+        if let target = s.targetSoc { out["charge_limit_percent"] = target }
+        if let locked = s.doorsLocked { out["doors_locked"] = locked }
+        if let open = s.openingsCount { out["openings_count"] = open }
+        if let climate = s.climateText { out["climate"] = climate }
         out.merge(freshness(s, now: now)) { _, new in new }
         return out
     }

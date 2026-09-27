@@ -37,12 +37,28 @@ public struct WidgetSnapshot: Codable, Equatable {
     public var unit: DistanceUnit
     public var hasImage: Bool
 
+    // Data Portal only, and all optional: a snapshot from the login path,
+    // or from an app older than these fields, decodes with them nil.
+    /// Charge limit in percent, when the owner set one below 100.
+    public var targetSoc: Int?
+    public var doorsLocked: Bool?
+    /// Doors, windows and lids open or ajar. nil when the car didn't say.
+    public var openingsCount: Int?
+    /// The menu's climate row, already worded ("Heating to 21 °C · 18 min"),
+    /// nil when the climate is off. Written by the app so the widget and the
+    /// menu can never disagree on the phrasing.
+    public var climateText: String?
+    /// "Home", or the street and town. Never the raw coordinate.
+    public var locationText: String?
+
     public init(batteryPercentage: Double, rangeKm: Int, statusKey: String,
                 isDriving: Bool, isPluggedIn: Bool?, fullInMinutes: Int?,
                 chargingPowerWatts: Int?, carTitle: String?, modelName: String?,
                 registrationNo: String?,
                 odometerKm: Int?, carReportedAt: Date?, writtenAt: Date,
-                unit: DistanceUnit, hasImage: Bool) {
+                unit: DistanceUnit, hasImage: Bool,
+                targetSoc: Int? = nil, doorsLocked: Bool? = nil, openingsCount: Int? = nil,
+                climateText: String? = nil, locationText: String? = nil) {
         self.batteryPercentage = batteryPercentage
         self.rangeKm = rangeKm
         self.statusKey = statusKey
@@ -58,6 +74,30 @@ public struct WidgetSnapshot: Codable, Equatable {
         self.writtenAt = writtenAt
         self.unit = unit
         self.hasImage = hasImage
+        self.targetSoc = targetSoc
+        self.doorsLocked = doorsLocked
+        self.openingsCount = openingsCount
+        self.climateText = climateText
+        self.locationText = locationText
+    }
+
+    /// The one thing worth a line on the medium widget beyond the battery:
+    /// a running climate, something left open, or an unlocked car. nil when
+    /// all is quiet, which is most of the time.
+    public var attentionText: String? {
+        if let climateText { return climateText }
+        if let open = openingsCount, open > 0 {
+            return String(format: L("%d open"), open)
+        }
+        if doorsLocked == false { return L("Unlocked") }
+        return nil
+    }
+
+    /// "Locked", "Unlocked", or "2 open" — what the Doors field shows.
+    public var doorsText: String? {
+        if let open = openingsCount, open > 0 { return String(format: L("%d open"), open) }
+        guard let doorsLocked else { return nil }
+        return doorsLocked ? L("Locked") : L("Unlocked")
     }
 
     public var isCharging: Bool {
