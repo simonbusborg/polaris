@@ -153,12 +153,7 @@
 "Remove Credential" = "Gegevens verwijderen";
 "Open Data Portal…" = "Data Portal openen…";
 "Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Lees je auto via Polestars officiële Data Portal-API in plaats van de aanmelding van de app. Maak op data-portal.polestar.com een API-gegeven aan met de scopes batterij, kilometerstand en conditie, en plak het hier. Je aanmelding blijft; die levert nog steeds de naam en afbeelding van de auto.";
-"App client ID" = "App client ID";
 "Client secret (shown once in the portal)" = "Client secret (wordt in het portaal maar één keer getoond)";
-"Account ID / x-client-id" = "Account ID / x-client-id";
-"Client ID" = "Client ID";
-"Client secret" = "Client secret";
-"Account ID" = "Account ID";
 "Not set up. Polaris reads your car through your login." = "Niet ingesteld. Polaris leest je auto via je aanmelding.";
 "Falling back to your login: %@" = "Terugvallen op je aanmelding: %@";
 "Reading your car through the Data Portal." = "Je auto wordt gelezen via het Data Portal.";

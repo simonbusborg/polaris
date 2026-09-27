@@ -352,18 +352,18 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             L("Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture."))
         blurb.textColor = .secondaryLabelColor
 
-        portalClientIdField.placeholderString = L("App client ID")
+        // Same labels, same order as the portal's Credential page, so the
+        // three values can be copied top to bottom without re-reading.
         portalSecretField.placeholderString = L("Client secret (shown once in the portal)")
-        portalAccountIdField.placeholderString = L("Account ID / x-client-id")
         for field in [portalClientIdField, portalSecretField, portalAccountIdField] {
             field.translatesAutoresizingMaskIntoConstraints = false
             field.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
         }
 
         let form = NSStackView(views: [
-            field(L("Client ID"), portalClientIdField),
-            field(L("Client secret"), portalSecretField),
-            field(L("Account ID"), portalAccountIdField)
+            field("App client ID", portalClientIdField),
+            field("Expected x-client-id", portalAccountIdField),
+            field("Client secret", portalSecretField)
         ])
         form.orientation = .vertical
         form.alignment = .leading
