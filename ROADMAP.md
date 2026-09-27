@@ -47,6 +47,10 @@ comment describing where it now stands.
   only the service interval and fluids from it. A tyre warning becomes a row
   and a notification; a failing 12V battery is the one fault that strands an
   EV, so it gets the same.
+- **[Credential expiry](https://github.com/simonbusborg/polaris/issues/16)** — a Data Portal
+  credential lives 90 days and Polaris doesn't know when it dies. An expiry
+  date in Settings, a reminder a week before and on the day with a button to
+  the portal, and a failure row that says "expired" instead of "rejected".
 - **A map widget** — the menu has the map; a widget size built around it is
   a different piece of work and waits until the rows above have settled.
 
