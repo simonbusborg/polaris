@@ -184,6 +184,57 @@ final class StatusItemController {
                 menu.addItem(kvItem(L("Full in"),
                                     "\(Self.shortDuration(minutes: minutes)) · \(timeFormatter.string(from: fullAt))"))
             }
+            // 100 is the default and says nothing; a lower limit is a choice
+            // the owner made, and explains why "full" stops short.
+            if let target = data.targetSoc, target > 0, target < 100 {
+                menu.addItem(kvItem(L("Charge limit"), "\(target)%"))
+            }
+
+            // Everything from here on is Data Portal only, and shows up as
+            // the credential's scopes allow. Rows, not a section: the menu
+            // reads as one car, not as two APIs.
+            if let climate = data.climate, climate.isRunning || climate.isPending {
+                var parts: [String] = []
+                parts.append(climate.isPending ? L("Starting") : Self.ventilationName(climate.ventilation))
+                if let want = climate.requestedCelsius {
+                    let target = Self.temperature(celsius: want)
+                    parts.append(climate.currentCelsius.map { "\(Self.temperature(celsius: $0)) → \(target)" } ?? target)
+                }
+                if let left = climate.minutesLeft, left > 0 {
+                    parts.append(String(format: L("%d min left"), left))
+                }
+                menu.addItem(kvItem(L("Climate"), parts.joined(separator: " · ")))
+            }
+            data.climate?.problems.forEach {
+                menu.addItem(rowItem("⚠︎ " + String(format: L("Climate: %@"), Self.climateProblem($0)), warning: true))
+            }
+
+            if let exterior = data.exterior {
+                if let locked = exterior.locked {
+                    let value = (locked ? L("Locked") : L("Unlocked")) + Self.ageSuffix(exterior.reportedAt)
+                    menu.addItem(kvItem(L("Locks"), value, valueWarning: !locked))
+                }
+                exterior.openings.forEach {
+                    menu.addItem(rowItem("⚠︎ " + String(format: L("%@ open"), Self.openingName($0)), warning: true))
+                }
+                if exterior.alarmTriggered {
+                    menu.addItem(rowItem("⚠︎ " + L("Alarm triggered"), warning: true))
+                }
+            }
+
+            // The coordinate itself, not an address: turning it into one
+            // means sending the car's position to a geocoding service, and
+            // this app's promise is that it talks to Polestar and nobody
+            // else. Clicking opens Maps, which is the owner's choice to make.
+            if let location = data.location {
+                let value = data.isAtHome == true
+                    ? L("Home") + Self.ageSuffix(location.reportedAt)
+                    : Self.coordinate(location) + Self.ageSuffix(location.reportedAt)
+                menu.addItem(kvItem(L("Location"), value, onClick: {
+                    let url = URL(string: "https://maps.apple.com/?ll=\(location.latitude),\(location.longitude)&q=Polestar")!
+                    NSWorkspace.shared.open(url)
+                }))
+            }
 
             // Car stats
             var stats: [(String, String)] = []
@@ -261,12 +312,86 @@ final class StatusItemController {
     static let rowWidth: CGFloat = 308
 
     private func kvItem(_ key: String, _ value: String, copyable: Bool = false,
-                        valueWarning: Bool = false) -> NSMenuItem {
+                        valueWarning: Bool = false, onClick: (() -> Void)? = nil) -> NSMenuItem {
         let item = NSMenuItem()
         item.view = KVRowView(key: key, value: value, valueWarning: valueWarning,
-                              copyText: copyable ? value : nil)
+                              copyText: copyable ? value : nil, onClick: onClick)
         if copyable { item.toolTip = L("Click to copy") }
+        if onClick != nil { item.toolTip = L("Click to open in Maps") }
         return item
+    }
+
+    // MARK: - Data Portal row wording
+
+    private static let relativeFormatter: RelativeDateTimeFormatter = {
+        let f = RelativeDateTimeFormatter()
+        f.unitsStyle = .short
+        return f
+    }()
+
+    /// " · 3 hr. ago" once a reading is old enough that showing it as the
+    /// present would mislead. Doors and location can lag hours behind the
+    /// battery; the owner should see that, not a confident "Locked".
+    static func ageSuffix(_ reportedAt: Date?, now: Date = Date()) -> String {
+        guard let reportedAt, now.timeIntervalSince(reportedAt) > 30 * 60 else { return "" }
+        return " · " + relativeFormatter.localizedString(for: reportedAt, relativeTo: now)
+    }
+
+    private static let temperatureFormatter: MeasurementFormatter = {
+        let f = MeasurementFormatter()
+        f.numberFormatter.maximumFractionDigits = 0
+        return f
+    }()
+
+    static func temperature(celsius: Double) -> String {
+        temperatureFormatter.string(from: Measurement(value: celsius, unit: UnitTemperature.celsius))
+    }
+
+    /// "55.6761° N, 12.5683° E": four decimals is about ten metres, which
+    /// is what the car's GPS is good for.
+    static func coordinate(_ l: CarLocation) -> String {
+        String(format: "%.4f° %@, %.4f° %@",
+               abs(l.latitude), l.latitude >= 0 ? L("N") : L("S"),
+               abs(l.longitude), l.longitude >= 0 ? L("E") : L("W"))
+    }
+
+    static func ventilationName(_ key: String?) -> String {
+        switch key {
+        case "HEATING": return L("Heating")
+        case "COOLING": return L("Cooling")
+        default: return L("Running")
+        }
+    }
+
+    static func openingName(_ part: String) -> String {
+        switch part {
+        case "frontLeftDoor": return L("Front left door")
+        case "frontRightDoor": return L("Front right door")
+        case "rearLeftDoor": return L("Rear left door")
+        case "rearRightDoor": return L("Rear right door")
+        case "hood": return L("Hood")
+        case "tailgate": return L("Tailgate")
+        case "tankLid": return L("Charge port lid")
+        case "sunroof": return L("Sunroof")
+        case "frontLeftWindow": return L("Front left window")
+        case "frontRightWindow": return L("Front right window")
+        case "rearLeftWindow": return L("Rear left window")
+        case "rearRightWindow": return L("Rear right window")
+        default: return part
+        }
+    }
+
+    static func climateProblem(_ key: String) -> String {
+        switch key {
+        case "NOT_CONNECTED_TO_POWER": return L("not connected to power")
+        case "BATTERY_LOW": return L("battery too low")
+        case "INTERRUPTED": return L("interrupted")
+        case "REACHED_MAX_RUNTIME": return L("reached its time limit")
+        case "RUN_TIME_NEARING_LIMIT": return L("nearing its time limit")
+        case "SERVICE_REQUIRED": return L("needs service")
+        case "TEMPORARILY_NOT_AVAILABLE": return L("temporarily unavailable")
+        default: return key.replacingOccurrences(of: "_", with: " ").lowercased()
+        }
     }
 
     private func rowItem(_ text: String, bold: Bool = false, warning: Bool = false) -> NSMenuItem {
@@ -352,15 +477,18 @@ final class StatusItemController {
 
 /// A menu row rendered as a custom view: key on the left, value right-aligned,
 /// consistent colors regardless of enabled state, fixed width matching the
-/// car image. Rows with `copyText` highlight on hover and copy on click.
+/// car image. Rows with `copyText` or `onClick` highlight on hover and act
+/// on click.
 final class KVRowView: NSView {
 
     private let copyText: String?
+    private let onClick: (() -> Void)?
     private static let sidePad: CGFloat = 14
 
     init(key: String, value: String?, bold: Bool = false, warning: Bool = false,
-         valueWarning: Bool = false, copyText: String? = nil) {
+         valueWarning: Bool = false, copyText: String? = nil, onClick: (() -> Void)? = nil) {
         self.copyText = copyText
+        self.onClick = onClick
         let height: CGFloat = bold ? 26 : 24
         super.init(frame: NSRect(x: 0, y: 0, width: StatusItemController.rowWidth, height: height))
         wantsLayer = true
@@ -408,7 +536,7 @@ final class KVRowView: NSView {
 
     override func updateTrackingAreas() {
         trackingAreas.forEach(removeTrackingArea)
-        if copyText != nil {
+        if copyText != nil || onClick != nil {
             addTrackingArea(NSTrackingArea(rect: bounds,
                                            options: [.mouseEnteredAndExited, .activeAlways],
                                            owner: self, userInfo: nil))
@@ -425,6 +553,11 @@ final class KVRowView: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        if let onClick {
+            enclosingMenuItem?.menu?.cancelTracking()
+            onClick()
+            return
+        }
         guard let copyText else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(copyText, forType: .string)

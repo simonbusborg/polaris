@@ -44,10 +44,11 @@ comment describing where it now stands.
 
 - **Polestar Data Portal** — Polestar's official API arrived in September
   2026. Reading through it is now an opt-in under Settings → Data Portal, with
-  the login kept for the car's name and picture. Next: register Polaris as a
-  third party so owners can share access from the portal instead of pasting a
-  secret, and move more of the menu over as the response shapes are confirmed
-  on real cars.
+  the login kept for the car's name and picture, and it already answers two
+  of the items above: the availability domain reports whether the car is in
+  use, and parking climatisation is a row in the menu. Next: register Polaris
+  as a third party so owners can share access from the portal instead of
+  pasting a secret.
 
 These depend on what the API actually exposes, which is not something that
 can be promised before someone has tried it.

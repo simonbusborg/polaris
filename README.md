@@ -21,9 +21,15 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 - Charger connection, live charging power and whether it's AC or DC, read from
   the gRPC battery service the GraphQL API doesn't cover
 - Optional: read the car through Polestar's official [Data Portal](https://data-portal.polestar.com)
-  API. Create a credential there with the battery, odometer and health scopes
-  and paste it under Settings → Data Portal. The login stays, for the car's
-  name and picture, and takes over again if the credential stops working
+  API. Create a credential there and paste it under Settings → Data Portal.
+  The login stays, for the car's name and picture, and takes over again if
+  the credential stops working. With the portal the menu also gets, scope by
+  scope: whether the car is in use (from the car, not inferred), the parking
+  climate with its countdown, the charge limit, locks and anything left open,
+  and the car's position, which opens in Maps
+- Optional, with the portal: a reminder when the car has been parked at home
+  for ten minutes without the charger connected. Home is a point you save
+  from the car's own position; no address is looked up or stored
 - Odometer, service interval and fluid warnings
 - Notifications when charging starts, completes, or the charger reports a fault
 - A desktop widget in three sizes: small for battery, range and state, medium

@@ -86,3 +86,74 @@ final class DataPortalTests: XCTestCase {
         XCTAssertFalse(DataPortalCredentials(clientId: "id", clientSecret: "", accountId: "acct").isComplete)
     }
 }
+
+/// The domains added after battery: each maps into its own small struct on
+/// `CarData`, and each is optional because a scope may not be granted.
+final class DataPortalDomainTests: XCTestCase {
+
+    func testAvailabilityUsageModeIsStripped() {
+        let t = PolestarDataPortal.telemetry(battery: [:], odometer: nil, health: nil,
+                                             availability: ["usageMode": "USAGE_MODE_DRIVING"])
+        XCTAssertEqual(t.usageMode, "DRIVING")
+    }
+
+    func testClimateRunning() {
+        let climate = PolestarDataPortal.climate(from: [
+            "runningStatus": "RUNNING_STATUS_ON",
+            "ventilation": "VENTILATION_HEATING",
+            "currentCompartmentTemperatureCelsius": 12.5,
+            "requestedCompartmentTemperatureCelsius": 21,
+            "runtimeLeftMinutes": 18,
+            "errors": ["ERROR_TYPE_UNSPECIFIED"],
+            "warnings": ["WARNING_TYPE_RUN_TIME_NEARING_LIMIT"],
+            "timestamp": ["seconds": "1789741417"]
+        ])
+        XCTAssertEqual(climate?.isRunning, true)
+        XCTAssertEqual(climate?.ventilation, "HEATING")
+        XCTAssertEqual(climate?.currentCelsius, 12.5)
+        XCTAssertEqual(climate?.requestedCelsius, 21)
+        XCTAssertEqual(climate?.minutesLeft, 18)
+        // UNSPECIFIED is noise, the warning is not.
+        XCTAssertEqual(climate?.problems, ["RUN_TIME_NEARING_LIMIT"])
+    }
+
+    func testClimateWithoutStatusIsAbsent() {
+        XCTAssertNil(PolestarDataPortal.climate(from: ["ventilation": "VENTILATION_NEUTRAL"]))
+    }
+
+    func testExteriorOpeningsInMenuOrder() {
+        let exterior = PolestarDataPortal.exterior(from: [
+            "centralLock": "LOCK_STATUS_UNLOCKED",
+            "tailgate": "OPEN_STATUS_OPEN",
+            "frontLeftDoor": "OPEN_STATUS_AJAR",
+            "rearLeftWindow": "OPEN_STATUS_CLOSED",
+            "sunroof": "OPEN_STATUS_UNSPECIFIED",
+            "alarm": "ALARM_STATUS_IDLE"
+        ])
+        XCTAssertEqual(exterior?.locked, false)
+        XCTAssertEqual(exterior?.openings, ["frontLeftDoor", "tailgate"])
+        XCTAssertEqual(exterior?.alarmTriggered, false)
+    }
+
+    func testExteriorFromAModelThatDoesNotReportItIsAbsent() {
+        XCTAssertNil(PolestarDataPortal.exterior(from: ["vin": "X"]))
+    }
+
+    func testLocationNeedsARealCoordinate() {
+        let here = PolestarDataPortal.location(from: [
+            "coordinate": ["latitude": 55.6761, "longitude": 12.5683],
+            "heading": 270,
+            "timestamp": ["seconds": "1789741417"]
+        ])
+        XCTAssertEqual(here?.latitude, 55.6761)
+        XCTAssertEqual(here?.heading, 270)
+        XCTAssertNil(PolestarDataPortal.location(from: ["coordinate": ["latitude": 0, "longitude": 0]]))
+        XCTAssertNil(PolestarDataPortal.location(from: [:]))
+    }
+
+    func testTargetSocIsNested() {
+        let t = PolestarDataPortal.telemetry(battery: [:], odometer: nil, health: nil,
+                                             targetSoc: ["targetSoc": ["batteryChargeTargetLevel": 80]])
+        XCTAssertEqual(t.targetSoc, 80)
+    }
+}

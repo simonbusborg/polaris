@@ -51,6 +51,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
     private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
+    private let notifyHomeCheckbox = NSButton(checkboxWithTitle: L("Parked at home without charging"), target: nil, action: nil)
+    private let setHomeButton = NSButton(title: L("Set Home to the Car's Position"), target: nil, action: nil)
+    private let homeLabel = NSTextField(wrappingLabelWithString: "")
+    /// The last reading, for the home button: it saves where the car is now.
+    private var latestData: CarData?
     private let lowThresholdPopup = NSPopUpButton()
 
     // MARK: Claude pane
@@ -131,6 +136,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// Called by the app whenever it learns something new, so the pane isn't
     /// showing a connection state from whenever it was last opened.
     func updateStatus(data: CarData?, error: String?, authenticated: Bool) {
+        latestData = data
+        refreshHomeRow()
         let colour: NSColor
         let text: String
         if let error {
@@ -349,7 +356,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// there only once, which is why the field never reads it back.
     private func dataPortalPane() -> NSView {
         let blurb = NSTextField(wrappingLabelWithString:
-            L("Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture."))
+            L("Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture."))
         blurb.textColor = .secondaryLabelColor
 
         // Same labels, same order as the portal's Credential page, so the
@@ -562,10 +569,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
         lowThresholdPopup.target = self
         lowThresholdPopup.action = #selector(notificationsChanged)
-        for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, notifyLowCheckbox] {
+        for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox,
+                    notifyLowCheckbox, notifyHomeCheckbox] {
             box.target = self
             box.action = #selector(notificationsChanged)
         }
+        setHomeButton.target = self
+        setHomeButton.action = #selector(setHomeAction)
+        homeLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        homeLabel.textColor = .secondaryLabelColor
+        homeLabel.translatesAutoresizingMaskIntoConstraints = false
+        homeLabel.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
 
         /// The threshold belongs to the checkbox, so the two share a row
         /// rather than the popup floating a line below with a label of its own.
@@ -574,13 +588,47 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowRow.spacing = 8
         lowRow.alignment = .firstBaseline
 
+        // Home lives with the reminder that needs it. The button reads the
+        // car's current position from the last Data Portal reading; without
+        // one it stays disabled and the label says why.
+        let homeRow = NSStackView(views: [setHomeButton])
+        homeRow.orientation = .horizontal
         let stack = NSStackView(views: [
-            notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow
+            notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow,
+            notifyHomeCheckbox, homeRow, homeLabel
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
+        stack.setCustomSpacing(16, after: lowRow)
+        stack.setCustomSpacing(6, after: homeRow)
+        refreshHomeRow()
         return stack
+    }
+
+    private func refreshHomeRow() {
+        setHomeButton.isEnabled = latestData?.location != nil
+        if let setAt = Preferences.homeSetAt, Preferences.home != nil {
+            let when = DateFormatter.localizedString(from: setAt, dateStyle: .medium, timeStyle: .none)
+            homeLabel.stringValue = String(format: L("Home set %@ from the car's position."), when)
+        } else if latestData?.location == nil {
+            homeLabel.stringValue = L("Needs the car's location, which comes with a Data Portal credential.")
+        } else {
+            homeLabel.stringValue = L("Not set. Park at home, then press the button.")
+        }
+        notifyHomeCheckbox.isEnabled = Preferences.home != nil
+    }
+
+    @objc private func setHomeAction() {
+        guard let location = latestData?.location else { return }
+        Preferences.home = location
+        Preferences.homeSetAt = Date()
+        // A fresh home is a fresh stay: whatever the reminder remembered
+        // about the old one no longer applies.
+        Preferences.setHomeWatch(HomeWatch.State(unpluggedSince: nil, warned: false),
+                                 vin: latestData?.vin ?? Preferences.vin)
+        refreshHomeRow()
+        onChange()
     }
 
     private func updatesPane() -> NSView {
@@ -677,6 +725,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
         notifyLowCheckbox.state = Preferences.notifyLowBattery ? .on : .off
+        notifyHomeCheckbox.state = Preferences.notifyParkedAtHome ? .on : .off
+        refreshHomeRow()
         lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
             .firstIndex(of: Preferences.lowBatteryThreshold) ?? 0)
         lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
@@ -716,6 +766,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
         Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
         Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
+        Preferences.notifyParkedAtHome = (notifyHomeCheckbox.state == .on)
         if lowThresholdPopup.indexOfSelectedItem >= 0 {
             Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
         }

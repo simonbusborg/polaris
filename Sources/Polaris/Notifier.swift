@@ -33,6 +33,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         // launch, which is exactly when the app is catching up on a car
         // that drained while it wasn't running.
         checkLowBattery(new)
+        checkParkedAtHome(new)
 
         guard let old else { return }
 
@@ -74,6 +75,20 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         guard outcome.notify, Preferences.notifyLowBattery else { return }
         post(title: L("Low battery"),
              body: String(format: L("%.0f%% left — time to plug in"), new.batteryPercentage))
+    }
+
+    /// "Parked at home, not plugged in", once per stay, after the grace
+    /// period in `HomeWatch`. Needs the Data Portal: only it reports where
+    /// the car is and whether the charger is connected.
+    private func checkParkedAtHome(_ new: CarData) {
+        let vin = new.vin ?? Preferences.vin
+        let state = Preferences.homeWatch(vin: vin)
+        let outcome = HomeWatch.evaluate(atHome: new.isAtHome, pluggedIn: new.isPluggedIn,
+                                         inUse: new.isDriving, state: state)
+        if outcome.state != state { Preferences.setHomeWatch(outcome.state, vin: vin) }
+        guard outcome.notify, Preferences.notifyParkedAtHome else { return }
+        post(title: L("Parked at home, not charging"),
+             body: String(format: L("%.0f%% · the charger isn't connected"), new.batteryPercentage))
     }
 
     private func post(title: String, body: String) {

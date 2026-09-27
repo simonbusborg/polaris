@@ -111,6 +111,44 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_low_battery") }
     }
 
+    /// Off until the owner has set a home; a reminder about a place that
+    /// isn't defined would only ever be silent or wrong.
+    static var notifyParkedAtHome: Bool {
+        get { d.bool(forKey: "notify_parked_at_home") }
+        set { d.set(newValue, forKey: "notify_parked_at_home") }
+    }
+
+    /// Where the car lives, as the owner saved it from a reading. nil until
+    /// they do. Stored as two numbers, nothing that could name the place.
+    static var home: CarLocation? {
+        get {
+            guard let pair = d.array(forKey: "home_coordinate") as? [Double], pair.count == 2 else { return nil }
+            return CarLocation(latitude: pair[0], longitude: pair[1], heading: nil, reportedAt: nil)
+        }
+        set {
+            if let newValue { d.set([newValue.latitude, newValue.longitude], forKey: "home_coordinate") }
+            else { d.removeObject(forKey: "home_coordinate") }
+        }
+    }
+
+    static var homeSetAt: Date? {
+        get { d.object(forKey: "home_set_at") as? Date }
+        set { d.set(newValue, forKey: "home_set_at") }
+    }
+
+    /// The parked-at-home reminder's memory for one car, on disk for the
+    /// same reason as the low-battery flag: quitting the app must not
+    /// re-arm a reminder that already fired for this stay.
+    static func homeWatch(vin: String) -> HomeWatch.State {
+        HomeWatch.State(unpluggedSince: d.object(forKey: "home_unplugged_since_" + vin) as? Date,
+                        warned: d.bool(forKey: "home_warned_" + vin))
+    }
+
+    static func setHomeWatch(_ state: HomeWatch.State, vin: String) {
+        d.set(state.unpluggedSince, forKey: "home_unplugged_since_" + vin)
+        d.set(state.warned, forKey: "home_warned_" + vin)
+    }
+
     static var lowBatteryThreshold: Int {
         get {
             guard let stored = d.object(forKey: "low_battery_threshold") as? Int,

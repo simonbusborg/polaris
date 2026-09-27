@@ -46,6 +46,12 @@ struct CarData {
     /// True when this reading came from Polestar's official Data Portal
     /// rather than the MyStar GraphQL API. Informational; shown in Settings.
     var viaDataPortal = false
+    /// Data Portal only. The MyStar path leaves all of these nil.
+    var usageMode: String?
+    var climate: ClimateStatus?
+    var exterior: ExteriorStatus?
+    var location: CarLocation?
+    var targetSoc: Int?
 
     /// Status with the CHARGING_STATUS_ / CHARGING_STATUS_V2_ prefix stripped,
     /// e.g. "CHARGING", "IDLE", "DONE".
@@ -90,6 +96,9 @@ struct CarData {
     /// wakes up beside a car that has been parked for ten minutes. So the two
     /// reports also have to be close enough together to be talking about now.
     func driving(comparedTo previous: CarData?) -> Bool {
+        // The Data Portal says outright. Only without it does the odometer
+        // inference below have to carry the question.
+        if let inUse = UsageMode.isInUse(usageMode) { return inUse }
         guard !isCharging, isPluggedIn != true, let reportedAt = odometerReportedAt,
               Date().timeIntervalSince(reportedAt) < Self.freshReport else { return false }
 
@@ -132,6 +141,13 @@ struct CarData {
             "plug=" + (isPluggedIn.map { $0 ? "yes" : "no" } ?? "-")
         ]
         NSLog("[Polaris] " + parts.joined(separator: " "))
+    }
+
+    /// Within `HomeWatch.radiusMetres` of the saved home. nil when either
+    /// the car's position or the home is unknown.
+    var isAtHome: Bool? {
+        guard let location, let home = Preferences.home else { return nil }
+        return location.distance(to: home) <= HomeWatch.radiusMetres
     }
 
     var isPluggedIn: Bool? {
@@ -317,7 +333,12 @@ final class PolestarAPI {
                     carReportedAt: t.carReportedAt,
                     odometerReportedAt: t.odometerReportedAt,
                     grpcExtras: t.extras,
-                    viaDataPortal: true
+                    viaDataPortal: true,
+                    usageMode: t.usageMode,
+                    climate: t.climate,
+                    exterior: t.exterior,
+                    location: t.location,
+                    targetSoc: t.targetSoc
                 )
             } catch {
                 dataPortalError = error.localizedDescription

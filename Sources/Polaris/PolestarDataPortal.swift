@@ -51,6 +51,13 @@ struct DataPortalTelemetry {
     let distanceToServiceKm: Int?
     let serviceWarning: Bool
     let fluidWarnings: [String]
+    /// From `availability`: DRIVING, ENGINE_ON, INACTIVE… nil when unknown.
+    let usageMode: String?
+    let climate: ClimateStatus?
+    let exterior: ExteriorStatus?
+    let location: CarLocation?
+    /// Charge limit in percent, from `charging/target-soc`.
+    let targetSoc: Int?
 }
 
 enum DataPortalError: Error, LocalizedError {
@@ -61,6 +68,10 @@ enum DataPortalError: Error, LocalizedError {
     /// 202: Polestar accepted the request but has no reading yet. Treated as
     /// "try the other path this round" rather than as a failure to show.
     case pending
+    /// 403 or 404 on one domain: the credential wasn't granted that scope,
+    /// or this model doesn't report it. Not an error to show, just a row
+    /// that won't appear.
+    case domainUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -70,6 +81,7 @@ enum DataPortalError: Error, LocalizedError {
         case .vehicleNotShared(let vin):
             return String(format: L("Data Portal credential has no access to %@"), vin)
         case .pending: return L("Data Portal has no reading yet")
+        case .domainUnavailable: return L("Data Portal has no reading yet")
         }
     }
 }
@@ -78,19 +90,19 @@ final class PolestarDataPortal {
 
     static let baseURL = URL(string: "https://pc-api.polestar.com/eu-north-1/data-portal/m2m")!
 
-    /// Scopes Polaris asks for. The portal only issues what the credential
-    /// was created with; asking for more than it holds fails the token call,
-    /// so this list has to match what the Settings pane tells people to tick.
-    static let scopes = [
-        "pdp-telemetry/battery",
-        "pdp-telemetry/odometer",
-        "pdp-telemetry/health"
-    ]
+    /// How often each domain is worth asking for. Battery and availability
+    /// go every refresh — that's what the menu bar is for. The rest change
+    /// on the scale of a parking stop, and the budget is 10,000 calls a day:
+    /// eight domains a minute through a long charge would spend it. Climate
+    /// is the exception while it runs, when the countdown is the point.
+    static let slowInterval: TimeInterval = 5 * 60
 
     let credentials: DataPortalCredentials
     private let session: URLSession
     private var accessToken: String?
     private var tokenExpiry: Date?
+    /// Last good answer per path, for the slow domains.
+    private var cache: [String: (at: Date, json: [String: Any]?)] = [:]
 
     init(credentials: DataPortalCredentials) {
         self.credentials = credentials
@@ -112,23 +124,60 @@ final class PolestarDataPortal {
     }
 
     func fetchTelemetry(vin: String) async throws -> DataPortalTelemetry {
-        // Battery is the one that matters; the other two degrade to nil.
+        // Battery is the one that matters; everything else degrades to nil.
         let battery = try await get("v1/vehicles/\(vin)/telemetry/battery")
         guard let batteryData = battery["data"] as? [String: Any] else {
             throw DataPortalError.parse("battery: missing data")
         }
-        let odometer = try? await get("v1/vehicles/\(vin)/telemetry/odometer")
-        let health = try? await get("v1/vehicles/\(vin)/telemetry/health")
-        return Self.telemetry(battery: batteryData,
-                              odometer: odometer?["data"] as? [String: Any],
-                              health: health?["data"] as? [String: Any])
+        let base = "v1/vehicles/\(vin)/"
+        let odometer = await data(base + "telemetry/odometer")
+        let availability = await data(base + "telemetry/availability")
+        let health = await data(base + "telemetry/health", every: Self.slowInterval)
+        let exterior = await data(base + "telemetry/exterior", every: Self.slowInterval)
+        let location = await data(base + "telemetry/location", every: Self.slowInterval)
+        let targetSoc = await data(base + "charging/target-soc", every: Self.slowInterval)
+        // Live while the climate runs, so the minutes-left row counts down.
+        let climateLive = (cache[base + "telemetry/parking-climatization"]?.json)
+            .flatMap { Self.climate(from: $0) }?.isRunning == true
+        let climate = await data(base + "telemetry/parking-climatization",
+                                 every: climateLive ? 0 : Self.slowInterval)
+        return Self.telemetry(battery: batteryData, odometer: odometer, health: health,
+                              availability: availability, climate: climate,
+                              exterior: exterior, location: location, targetSoc: targetSoc)
+    }
+
+    /// The `data` object of a domain, or nil when it can't be had. A slow
+    /// domain returns its cached answer until `every` has passed; a domain
+    /// this credential or model lacks is remembered as nil for the same
+    /// span, so a missing scope costs one request an interval, not one a
+    /// refresh.
+    private func data(_ path: String, every interval: TimeInterval = 0) async -> [String: Any]? {
+        if let hit = cache[path], Date().timeIntervalSince(hit.at) < interval {
+            return hit.json
+        }
+        do {
+            let json = try await get(path)["data"] as? [String: Any]
+            cache[path] = (Date(), json)
+            return json
+        } catch DataPortalError.domainUnavailable {
+            cache[path] = (Date(), nil)
+            return nil
+        } catch {
+            // Transient: keep the last good answer, if any, for this round.
+            return cache[path]?.json
+        }
     }
 
     // MARK: - Parsing (pure, so the tests can feed it captured responses)
 
     static func telemetry(battery: [String: Any],
                           odometer: [String: Any]?,
-                          health: [String: Any]?) -> DataPortalTelemetry {
+                          health: [String: Any]?,
+                          availability: [String: Any]? = nil,
+                          climate: [String: Any]? = nil,
+                          exterior: [String: Any]? = nil,
+                          location: [String: Any]? = nil,
+                          targetSoc: [String: Any]? = nil) -> DataPortalTelemetry {
         let summary = PolestarAPI.healthSummary(health)
         return DataPortalTelemetry(
             batteryPercentage: number(battery["batteryChargeLevelPercentage"]) ?? 0,
@@ -144,8 +193,63 @@ final class PolestarDataPortal {
             daysToService: number(health?["daysToService"]).map { Int($0) },
             distanceToServiceKm: number(health?["distanceToServiceKm"]).map { Int($0) },
             serviceWarning: summary.warning,
-            fluidWarnings: summary.fluids
+            fluidWarnings: summary.fluids,
+            usageMode: enumCase(availability?["usageMode"], prefix: "USAGE_MODE_"),
+            climate: climate.flatMap(Self.climate(from:)),
+            exterior: exterior.flatMap(Self.exterior(from:)),
+            location: location.flatMap(Self.location(from:)),
+            targetSoc: number((targetSoc?["targetSoc"] as? [String: Any])?["batteryChargeTargetLevel"])
+                .map { Int($0) }
         )
+    }
+
+    static func climate(from json: [String: Any]) -> ClimateStatus? {
+        guard let status = enumCase(json["runningStatus"], prefix: "RUNNING_STATUS_") else { return nil }
+        let problems = ((json["errors"] as? [String]) ?? []).compactMap { enumCase($0, prefix: "ERROR_TYPE_") }
+            + ((json["warnings"] as? [String]) ?? []).compactMap { enumCase($0, prefix: "WARNING_TYPE_") }
+        return ClimateStatus(
+            runningStatus: status,
+            ventilation: enumCase(json["ventilation"], prefix: "VENTILATION_"),
+            currentCelsius: number(json["currentCompartmentTemperatureCelsius"]),
+            requestedCelsius: number(json["requestedCompartmentTemperatureCelsius"]),
+            minutesLeft: number(json["runtimeLeftMinutes"]).map { Int($0) },
+            problems: problems,
+            reportedAt: PolestarAPI.reportedAt(json))
+    }
+
+    /// Every part of the shell the API reports, in the order the menu lists
+    /// them when open. Field names double as localisation keys via
+    /// `CarFormat.openingName`.
+    static let exteriorParts = [
+        "frontLeftDoor", "frontRightDoor", "rearLeftDoor", "rearRightDoor",
+        "hood", "tailgate", "tankLid", "sunroof",
+        "frontLeftWindow", "frontRightWindow", "rearLeftWindow", "rearRightWindow"
+    ]
+
+    static func exterior(from json: [String: Any]) -> ExteriorStatus? {
+        let lock = enumCase(json["centralLock"], prefix: "LOCK_STATUS_")
+        let openings = exteriorParts.filter {
+            let state = enumCase(json[$0], prefix: "OPEN_STATUS_")
+            return state == "OPEN" || state == "AJAR"
+        }
+        // A car that reported neither a lock state nor any part is one that
+        // doesn't speak this domain; nothing to show.
+        guard lock != nil || exteriorParts.contains(where: { json[$0] != nil }) else { return nil }
+        return ExteriorStatus(
+            locked: lock.map { $0 == "LOCKED" },
+            openings: openings,
+            alarmTriggered: enumCase(json["alarm"], prefix: "ALARM_STATUS_") == "TRIGGERED",
+            reportedAt: PolestarAPI.reportedAt(json))
+    }
+
+    static func location(from json: [String: Any]) -> CarLocation? {
+        guard let c = json["coordinate"] as? [String: Any],
+              let lat = number(c["latitude"]), let lon = number(c["longitude"]),
+              lat != 0 || lon != 0
+        else { return nil }
+        return CarLocation(latitude: lat, longitude: lon,
+                           heading: number(json["heading"]),
+                           reportedAt: PolestarAPI.reportedAt(json))
     }
 
     /// The battery message carries the same fields the gRPC service did,
@@ -206,11 +310,17 @@ final class PolestarDataPortal {
             break
         case 202, 204:
             throw DataPortalError.pending
-        case 401, 403:
+        case 401:
             // Tokens live an hour; a rejected one is dropped so the next
             // round mints a fresh one instead of repeating the failure.
             accessToken = nil
             throw DataPortalError.unauthorized
+        case 403, 404:
+            // The token is fine; this scope wasn't granted, or the model
+            // doesn't report the domain. `vehicles` is the exception: a
+            // credential that can't list its cars is one that doesn't work.
+            if path == "v1/vehicles" { throw DataPortalError.unauthorized }
+            throw DataPortalError.domainUnavailable
         default:
             throw DataPortalError.http(status, Self.message(in: data))
         }
@@ -228,10 +338,13 @@ final class PolestarDataPortal {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // No `scope`: the spec marks it optional, and naming one the
+        // credential wasn't created with fails the whole token call rather
+        // than that one domain. Left out, the token carries whatever the
+        // owner ticked, and the domains they didn't simply answer 403.
         request.httpBody = try JSONSerialization.data(withJSONObject: [
             "clientId": credentials.clientId,
-            "clientSecret": credentials.clientSecret,
-            "scope": Self.scopes.joined(separator: " ")
+            "clientSecret": credentials.clientSecret
         ])
 
         let (data, response) = try await session.data(for: request)
