@@ -41,7 +41,11 @@ struct CarData {
     /// get: a driving car pushes odometer updates, a parked one goes quiet.
     let odometerReportedAt: Date?
     /// Extra fields from the gRPC battery service; nil when it's unreachable.
+    /// The Data Portal fills the same struct, so consumers need not care.
     let grpcExtras: GrpcBatteryExtras?
+    /// True when this reading came from Polestar's official Data Portal
+    /// rather than the MyStar GraphQL API. Informational; shown in Settings.
+    var viaDataPortal = false
 
     /// Status with the CHARGING_STATUS_ / CHARGING_STATUS_V2_ prefix stripped,
     /// e.g. "CHARGING", "IDLE", "DONE".
@@ -208,6 +212,10 @@ final class PolestarAPI {
 
     private var session: URLSession
     private let grpc = PolestarGRPC()
+    private var dataPortal: PolestarDataPortal?
+    /// Why the last Data Portal attempt fell back to MyStar, for Settings.
+    /// nil when the portal isn't configured or the last fetch used it.
+    private(set) var dataPortalError: String?
 
     private(set) var modelName: String?
     private(set) var modelYear: String?
@@ -280,6 +288,43 @@ final class PolestarAPI {
         try await refreshTokenIfNeeded()
         guard let token = accessToken else { throw PolestarError.notConfigured }
 
+        // The official Data Portal, when the owner has pasted a credential.
+        // Any failure falls through to the MyStar path below: a credential
+        // that has expired must degrade to yesterday's behaviour, not to an
+        // error row.
+        if let portal = dataPortalClient() {
+            do {
+                let t = try await portal.fetchTelemetry(vin: vin)
+                dataPortalError = nil
+                return CarData(
+                    batteryPercentage: t.batteryPercentage,
+                    rangeKm: t.rangeKm,
+                    chargingStatus: t.chargingStatus,
+                    estimatedChargingTimeToFullMinutes: t.estimatedChargingTimeToFullMinutes,
+                    modelName: modelName,
+                    modelYear: modelYear,
+                    registrationNo: registrationNo,
+                    vin: vin,
+                    spec: PNO34.decode(pno34),
+                    ownerFirstName: ownerFirstName,
+                    odometerMeters: t.odometerMeters,
+                    daysToService: t.daysToService,
+                    distanceToServiceKm: t.distanceToServiceKm,
+                    serviceWarning: t.serviceWarning,
+                    fluidWarnings: t.fluidWarnings,
+                    imageData: carImageData,
+                    lastUpdated: Date(),
+                    carReportedAt: t.carReportedAt,
+                    odometerReportedAt: t.odometerReportedAt,
+                    grpcExtras: t.extras,
+                    viaDataPortal: true
+                )
+            } catch {
+                dataPortalError = error.localizedDescription
+                debugLog("data portal unavailable, using MyStar: \(error.localizedDescription)")
+            }
+        }
+
         // Field names per Polestar's current schema (as used by pypolestar):
         // chargingStatus -> chargingStatusV2; the Miles field no longer exists.
         let query = """
@@ -322,40 +367,10 @@ final class PolestarAPI {
         let odometer = (telematics["odometer"] as? [[String: Any]])?.first
         let health = (telematics["health"] as? [[String: Any]])?.first
 
-        // AppSync serializes the protobuf timestamp's int64 seconds as either
-        // a number or a string depending on magnitude — accept both.
-        func reportedAt(_ container: [String: Any]?) -> Date? {
-            guard let ts = container?["timestamp"] as? [String: Any] else { return nil }
-            let seconds: TimeInterval?
-            if let n = ts["seconds"] as? Int { seconds = TimeInterval(n) }
-            else if let s = ts["seconds"] as? String { seconds = TimeInterval(s) }
-            else { seconds = nil }
-            guard let seconds, seconds > 0 else { return nil }
-            return Date(timeIntervalSince1970: seconds)
-        }
-        let carReportedAt = reportedAt(battery)
-
-        let warning: Bool
-        if let sw = health?["serviceWarning"] as? String {
-            warning = !sw.contains("NO_WARNING") && !sw.contains("UNSPECIFIED")
-        } else {
-            warning = false
-        }
-
-        // Fluid warnings — only surfaced when the car actually complains.
-        var fluids: [String] = []
-        let fluidFields = [
-            ("brakeFluidLevelWarning", "BRAKE_FLUID_LEVEL_WARNING_", "Brake fluid"),
-            ("engineCoolantLevelWarning", "ENGINE_COOLANT_LEVEL_WARNING_", "Coolant"),
-            ("oilLevelWarning", "OIL_LEVEL_WARNING_", "Oil")
-        ]
-        for (field, prefix, label) in fluidFields {
-            guard let raw = health?[field] as? String,
-                  !raw.contains("NO_WARNING"), !raw.contains("UNSPECIFIED") else { continue }
-            let detail = raw.replacingOccurrences(of: prefix, with: "")
-                .replacingOccurrences(of: "_", with: " ").lowercased()
-            fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
-        }
+        let carReportedAt = Self.reportedAt(battery)
+        let summary = Self.healthSummary(health)
+        let warning = summary.warning
+        let fluids = summary.fluids
 
         // Best-effort: the gRPC service supplies charger connection and live
         // charging power. Any failure just means those rows don't appear.
@@ -385,9 +400,69 @@ final class PolestarAPI {
             imageData: carImageData,
             lastUpdated: Date(),
             carReportedAt: carReportedAt,
-            odometerReportedAt: reportedAt(odometer),
+            odometerReportedAt: Self.reportedAt(odometer),
             grpcExtras: extras
         )
+    }
+
+    // MARK: - Shared parsing (GraphQL and Data Portal speak the same protobuf-derived JSON)
+
+    /// AppSync serializes the protobuf timestamp's int64 seconds as either
+    /// a number or a string depending on magnitude — accept both.
+    static func reportedAt(_ container: [String: Any]?) -> Date? {
+        guard let ts = container?["timestamp"] as? [String: Any] else { return nil }
+        let seconds: TimeInterval?
+        if let n = ts["seconds"] as? Int { seconds = TimeInterval(n) }
+        else if let s = ts["seconds"] as? String { seconds = TimeInterval(s) }
+        else { seconds = nil }
+        guard let seconds, seconds > 0 else { return nil }
+        return Date(timeIntervalSince1970: seconds)
+    }
+
+    /// Service and fluid warnings — only surfaced when the car actually
+    /// complains. `health` may be nil when the car reported none.
+    static func healthSummary(_ health: [String: Any]?) -> (warning: Bool, fluids: [String]) {
+        let warning: Bool
+        if let sw = health?["serviceWarning"] as? String {
+            warning = !sw.contains("NO_WARNING") && !sw.contains("UNSPECIFIED")
+        } else {
+            warning = false
+        }
+
+        var fluids: [String] = []
+        let fluidFields = [
+            ("brakeFluidLevelWarning", "BRAKE_FLUID_LEVEL_WARNING_", "Brake fluid"),
+            ("engineCoolantLevelWarning", "ENGINE_COOLANT_LEVEL_WARNING_", "Coolant"),
+            ("oilLevelWarning", "OIL_LEVEL_WARNING_", "Oil")
+        ]
+        for (field, prefix, label) in fluidFields {
+            guard let raw = health?[field] as? String,
+                  !raw.contains("NO_WARNING"), !raw.contains("UNSPECIFIED") else { continue }
+            let detail = raw.replacingOccurrences(of: prefix, with: "")
+                .replacingOccurrences(of: "_", with: " ").lowercased()
+            fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
+        }
+        return (warning, fluids)
+    }
+
+    // MARK: - Data Portal
+
+    /// The portal client for the active account, or nil when no credential
+    /// is stored. Re-read every fetch so a credential pasted into Settings
+    /// takes effect on the next tick; the client is only rebuilt (dropping
+    /// its token) when the credential actually changed.
+    private func dataPortalClient() -> PolestarDataPortal? {
+        guard let credentials = (try? Keychain.readDataPortalCredentials()) ?? nil,
+              credentials.isComplete
+        else {
+            dataPortal = nil
+            dataPortalError = nil
+            return nil
+        }
+        if let dataPortal, dataPortal.credentials == credentials { return dataPortal }
+        let client = PolestarDataPortal(credentials: credentials)
+        dataPortal = client
+        return client
     }
 
     // MARK: - OIDC / OAuth2 with PKCE

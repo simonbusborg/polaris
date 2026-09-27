@@ -146,3 +146,28 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Claude Desktopin asetustiedostoa ei voitu lukea, joten Polaris jätti sen ennalleen.";
 "Claude Desktop's settings couldn't be changed." = "Claude Desktopin asetuksia ei voitu muuttaa.";
 "Only available in the packaged Polaris app." = "Vain paketoidussa Polaris-sovelluksessa.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Vahvista ja tallenna";
+"Remove Credential" = "Poista tunnistetiedot";
+"Open Data Portal…" = "Avaa Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Lue autosi Polestarin virallisen Data Portal -rajapinnan kautta sovelluksen kirjautumisen sijaan. Luo API-tunnistetiedot osoitteessa data-portal.polestar.com akun, matkamittarin ja kunnon käyttöoikeuksilla ja liitä ne tähän. Kirjautumisesi säilyy; se antaa yhä auton nimen ja kuvan.";
+"App client ID" = "App client ID";
+"Client secret (shown once in the portal)" = "Client secret (näytetään portaalissa vain kerran)";
+"Account ID / x-client-id" = "Account ID / x-client-id";
+"Client ID" = "Client ID";
+"Client secret" = "Client secret";
+"Account ID" = "Account ID";
+"Not set up. Polaris reads your car through your login." = "Ei määritetty. Polaris lukee autosi kirjautumisesi kautta.";
+"Falling back to your login: %@" = "Palataan kirjautumiseesi: %@";
+"Reading your car through the Data Portal." = "Autoasi luetaan Data Portalin kautta.";
+"Credential saved. It takes effect on the next refresh." = "Tunnistetiedot tallennettu. Ne tulevat käyttöön seuraavassa päivityksessä.";
+"All three fields are needed." = "Kaikki kolme kenttää tarvitaan.";
+"Verifying with the Data Portal…" = "Vahvistetaan Data Portalin kanssa…";
+"Credential saved. Fetching through the Data Portal…" = "Tunnistetiedot tallennettu. Haetaan Data Portalin kautta…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data Portal -jäsennysvirhe: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal hylkäsi tunnistetiedot — tarkista ne Asetuksista";
+"Data Portal credential has no access to %@" = "Data Portal -tunnistetiedoilla ei ole pääsyä autoon %@";
+"Data Portal has no reading yet" = "Data Portalilla ei ole vielä lukemaa";

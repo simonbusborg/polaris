@@ -288,6 +288,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     } else {
                         self.signedOut()
                     }
+                },
+                onDataPortalChange: { [weak self] in
+                    self?.refreshNow()
+                },
+                dataPortalError: { [weak self] in
+                    self?.api.dataPortalError
                 }
             )
         }

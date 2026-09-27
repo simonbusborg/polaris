@@ -26,6 +26,7 @@ enum Keychain {
     private static let service = "com.weareheavy.polaris"
     private static let passwordAccount = "polestar-password"
     private static let sessionAccount = "polestar-refresh-token"
+    private static let dataPortalAccount = "polestar-data-portal"
 
     /// Items are scoped by the Polestar address they belong to, so two
     /// accounts can be signed in at once. The unscoped names are what a
@@ -61,6 +62,23 @@ enum Keychain {
 
     static func deleteSessionToken(account email: String = Accounts.active) {
         delete(account: scoped(sessionAccount, email))
+    }
+
+    // MARK: - Data Portal credential (opt-in, one per account)
+
+    static func saveDataPortalCredentials(_ credentials: DataPortalCredentials,
+                                          account email: String = Accounts.active) throws {
+        let data = try JSONEncoder().encode(credentials)
+        try save(String(decoding: data, as: UTF8.self), account: scoped(dataPortalAccount, email))
+    }
+
+    static func readDataPortalCredentials(account email: String = Accounts.active) throws -> DataPortalCredentials? {
+        guard let raw = try read(account: scoped(dataPortalAccount, email)) else { return nil }
+        return try? JSONDecoder().decode(DataPortalCredentials.self, from: Data(raw.utf8))
+    }
+
+    static func deleteDataPortalCredentials(account email: String = Accounts.active) {
+        delete(account: scoped(dataPortalAccount, email))
     }
 
     // MARK: - Pre-multi-account items (read once, then removed)

@@ -42,6 +42,13 @@ comment describing where it now stands.
 
 ## Being looked at
 
+- **Polestar Data Portal** — Polestar's official API arrived in September
+  2026. Reading through it is now an opt-in under Settings → Data Portal, with
+  the login kept for the car's name and picture. Next: register Polaris as a
+  third party so owners can share access from the portal instead of pasting a
+  secret, and move more of the menu over as the response shapes are confirmed
+  on real cars.
+
 These depend on what the API actually exposes, which is not something that
 can be promised before someone has tried it.
 
@@ -134,12 +141,11 @@ can be promised before someone has tried it.
 - **Remote commands** (unlock, start charging, climate on) — Polaris is
   read-only by design. A menu bar app that can unlock a car is a different
   and much more careful piece of software.
-- **iOS, iPadOS and watchOS** — waiting for an official Polestar API. An app
-  in the App Store built on an undocumented one is a risk to the project and to
-  the people using it, and iOS won't let an app poll the car in the background,
-  so charging notifications would need a server of ours in the middle. An
-  official API would likely settle both; until then this stays a macOS menu bar
-  app.
+- **iOS, iPadOS and watchOS** — the official Polestar API this was waiting
+  for now exists, so the App Store objection is gone. What remains is that iOS
+  won't let an app poll the car in the background, so charging notifications
+  would need a server of ours in the middle. Reopened, not planned yet; this
+  stays a macOS menu bar app until that has an answer.
 - **ChatGPT and other web-based AI clients** — they can only reach a server on
   the internet, and Polaris keeps your car's data on your Mac. Serving it from a
   public address would trade that away, and add an authentication problem to a

@@ -148,3 +148,28 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Claude Desktop's settings file couldn't be read, so Polaris left it alone.";
 "Claude Desktop's settings couldn't be changed." = "Claude Desktop's settings couldn't be changed.";
 "Only available in the packaged Polaris app." = "Only available in the packaged Polaris app.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Verify and Save";
+"Remove Credential" = "Remove Credential";
+"Open Data Portal…" = "Open Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture.";
+"App client ID" = "App client ID";
+"Client secret (shown once in the portal)" = "Client secret (shown once in the portal)";
+"Account ID / x-client-id" = "Account ID / x-client-id";
+"Client ID" = "Client ID";
+"Client secret" = "Client secret";
+"Account ID" = "Account ID";
+"Not set up. Polaris reads your car through your login." = "Not set up. Polaris reads your car through your login.";
+"Falling back to your login: %@" = "Falling back to your login: %@";
+"Reading your car through the Data Portal." = "Reading your car through the Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Credential saved. It takes effect on the next refresh.";
+"All three fields are needed." = "All three fields are needed.";
+"Verifying with the Data Portal…" = "Verifying with the Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Credential saved. Fetching through the Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data Portal parse error: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal rejected the credentials — check them in Settings";
+"Data Portal credential has no access to %@" = "Data Portal credential has no access to %@";
+"Data Portal has no reading yet" = "Data Portal has no reading yet";

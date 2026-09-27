@@ -146,3 +146,28 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Die Einstellungsdatei von Claude Desktop konnte nicht gelesen werden, daher hat Polaris sie unverändert gelassen.";
 "Claude Desktop's settings couldn't be changed." = "Die Einstellungen von Claude Desktop konnten nicht geändert werden.";
 "Only available in the packaged Polaris app." = "Nur in der paketierten Polaris-App verfügbar.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Prüfen und sichern";
+"Remove Credential" = "Zugangsdaten entfernen";
+"Open Data Portal…" = "Data Portal öffnen…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Lies dein Auto über Polestars offizielle Data-Portal-API statt über die Anmeldung der App. Erstelle auf data-portal.polestar.com einen API-Zugang mit den Bereichen Batterie, Kilometerstand und Zustand und füge ihn hier ein. Deine Anmeldung bleibt; sie liefert weiterhin Name und Bild des Autos.";
+"App client ID" = "App client ID";
+"Client secret (shown once in the portal)" = "Client secret (wird im Portal nur einmal angezeigt)";
+"Account ID / x-client-id" = "Account ID / x-client-id";
+"Client ID" = "Client ID";
+"Client secret" = "Client secret";
+"Account ID" = "Account ID";
+"Not set up. Polaris reads your car through your login." = "Nicht eingerichtet. Polaris liest dein Auto über deine Anmeldung.";
+"Falling back to your login: %@" = "Rückfall auf deine Anmeldung: %@";
+"Reading your car through the Data Portal." = "Liest dein Auto über das Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Zugangsdaten gesichert. Sie gelten ab der nächsten Aktualisierung.";
+"All three fields are needed." = "Alle drei Felder werden benötigt.";
+"Verifying with the Data Portal…" = "Prüfung mit dem Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Zugangsdaten gesichert. Lade über das Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data-Portal-Parsefehler: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Das Data Portal hat die Zugangsdaten abgelehnt — in den Einstellungen prüfen";
+"Data Portal credential has no access to %@" = "Der Data-Portal-Zugang hat keinen Zugriff auf %@";
+"Data Portal has no reading yet" = "Das Data Portal hat noch keinen Messwert";

@@ -146,3 +146,28 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Nie udało się odczytać pliku ustawień Claude Desktop, więc Polaris zostawił go bez zmian.";
 "Claude Desktop's settings couldn't be changed." = "Nie udało się zmienić ustawień Claude Desktop.";
 "Only available in the packaged Polaris app." = "Dostępne tylko w spakowanej aplikacji Polaris.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Sprawdź i zapisz";
+"Remove Credential" = "Usuń poświadczenie";
+"Open Data Portal…" = "Otwórz Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Odczytuj swój samochód przez oficjalne API Data Portal Polestara zamiast przez logowanie aplikacji. Utwórz poświadczenie API na data-portal.polestar.com z zakresami bateria, licznik i stan, a potem wklej je tutaj. Twoje logowanie pozostaje; nadal dostarcza nazwę i zdjęcie samochodu.";
+"App client ID" = "App client ID";
+"Client secret (shown once in the portal)" = "Client secret (pokazywany w portalu tylko raz)";
+"Account ID / x-client-id" = "Account ID / x-client-id";
+"Client ID" = "Client ID";
+"Client secret" = "Client secret";
+"Account ID" = "Account ID";
+"Not set up. Polaris reads your car through your login." = "Nie skonfigurowano. Polaris odczytuje samochód przez Twoje logowanie.";
+"Falling back to your login: %@" = "Powrót do Twojego logowania: %@";
+"Reading your car through the Data Portal." = "Odczyt samochodu przez Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Poświadczenie zapisane. Zadziała przy następnym odświeżeniu.";
+"All three fields are needed." = "Potrzebne są wszystkie trzy pola.";
+"Verifying with the Data Portal…" = "Sprawdzanie w Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Poświadczenie zapisane. Pobieranie przez Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Błąd analizy Data Portal: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal odrzucił poświadczenie — sprawdź je w Ustawieniach";
+"Data Portal credential has no access to %@" = "Poświadczenie Data Portal nie ma dostępu do %@";
+"Data Portal has no reading yet" = "Data Portal nie ma jeszcze odczytu";

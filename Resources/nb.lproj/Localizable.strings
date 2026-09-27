@@ -146,3 +146,28 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Claude Desktops innstillingsfil kunne ikke leses, så Polaris lot den være.";
 "Claude Desktop's settings couldn't be changed." = "Claude Desktops innstillinger kunne ikke endres.";
 "Only available in the packaged Polaris app." = "Bare tilgjengelig i den pakkede Polaris-appen.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Bekreft og lagre";
+"Remove Credential" = "Fjern legitimasjon";
+"Open Data Portal…" = "Åpne Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com with the battery, odometer and health scopes, then paste it here. Your login stays; it still supplies the car's name and picture." = "Les bilen din via Polestars offisielle Data Portal-API i stedet for appens innlogging. Opprett en API-legitimasjon på data-portal.polestar.com med tilgang til batteri, kilometerteller og helse, og lim den inn her. Innloggingen din beholdes; den leverer fortsatt bilens navn og bilde.";
+"App client ID" = "App client ID";
+"Client secret (shown once in the portal)" = "Client secret (vises bare én gang i portalen)";
+"Account ID / x-client-id" = "Account ID / x-client-id";
+"Client ID" = "Client ID";
+"Client secret" = "Client secret";
+"Account ID" = "Account ID";
+"Not set up. Polaris reads your car through your login." = "Ikke satt opp. Polaris leser bilen din via innloggingen din.";
+"Falling back to your login: %@" = "Faller tilbake til innloggingen din: %@";
+"Reading your car through the Data Portal." = "Leser bilen din via Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Legitimasjon lagret. Den brukes ved neste oppdatering.";
+"All three fields are needed." = "Alle tre feltene må fylles ut.";
+"Verifying with the Data Portal…" = "Bekrefter med Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Legitimasjon lagret. Henter via Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data Portal-tolkningsfeil: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal avviste legitimasjonen — sjekk den i Innstillinger";
+"Data Portal credential has no access to %@" = "Data Portal-legitimasjonen har ikke tilgang til %@";
+"Data Portal has no reading yet" = "Data Portal har ingen avlesning ennå";
