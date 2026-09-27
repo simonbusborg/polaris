@@ -156,10 +156,6 @@ release is published and neither can fail it.
 
 ## Debug flags
 
-- `defaults write com.weareheavy.polaris debug_climate -string HEATING` — show
-  the Climate row on an idle car with made-up values (`COOLING` and `PENDING`
-  too). `defaults delete com.weareheavy.polaris debug_climate` to stop.
-
 Off by default, and none of them alter what the API returns:
 
 ```bash
@@ -173,6 +169,7 @@ defaults delete com.weareheavy.polaris debug_grpc_fields   # turn it off again
 | `debug_drive` | Logs the numbers behind each "in use" verdict — odometer in metres, the distance since the last reading, and how old both odometer reports are (`log show --info --last 10m \| grep "drive:"`). The one way to see what a parked car's odometer stream actually does |
 | `debug_pno34` | Shows the car's raw `pno34` product code as a copyable menu row. This is how a code gets read off a real car to fill in `PNO34.variantsByPrefix` |
 | `debug_charging_type` | A string (`AC`, `DC`, `WIRELESS`) that renders the charging rows on a parked car. It invents its numbers in the menu layer, so it demonstrates the layout and nothing about the wire format — and it hides the real Power row while set |
+| `debug_climate` | A string (`HEATING`, `COOLING`, `PENDING`) that renders the Climate row on an idle car with made-up temperatures and minutes. Layout only, same as above |
 | `debug_demo_car` | Adds a pretend second car mirroring the real one, so the multi-car switcher can be exercised on a single-car account |
 
 Not every field the battery service documents is actually sent. A 2026
