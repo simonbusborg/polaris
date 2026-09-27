@@ -51,9 +51,22 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
     private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
+    private let notifyHomeCheckbox = NSButton(checkboxWithTitle: L("Parked at home without charging"), target: nil, action: nil)
+    private let setHomeButton = NSButton(title: L("Set Home to the Car's Position"), target: nil, action: nil)
+    private let homeLabel = NSTextField(wrappingLabelWithString: "")
+    /// The last reading, for the home button: it saves where the car is now.
+    private var latestData: CarData?
     private let lowThresholdPopup = NSPopUpButton()
 
     // MARK: Claude pane
+
+    private let portalClientIdField = NSTextField()
+    private let portalSecretField = NSSecureTextField()
+    private let portalAccountIdField = NSTextField()
+    private let portalStatus = NSTextField(wrappingLabelWithString: "")
+    private let portalSaveButton = NSButton(title: L("Verify and Save"), target: nil, action: nil)
+    private let portalRemoveButton = NSButton(title: L("Remove Credential"), target: nil, action: nil)
+    private let portalOpenButton = NSButton(title: L("Open Data Portal…"), target: nil, action: nil)
 
     private let claudeStatus = NSTextField(wrappingLabelWithString: "")
     private let claudeError = NSTextField(wrappingLabelWithString: "")
@@ -78,15 +91,25 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let onChange: () -> Void
     /// The account changed — the session has to be started over.
     private let onAccountChange: () -> Void
+    /// Refetch now: a Data Portal credential was saved or removed, and the
+    /// next reading should come from (or stop coming from) the portal.
+    private let onDataPortalChange: () -> Void
+    /// Why the last fetch fell back from the portal, or nil. Read from the
+    /// API when the pane redraws; the pane holds no session of its own.
+    private let dataPortalError: () -> String?
 
     private let tabs = NSTabViewController()
 
     init(updater: Updater? = nil,
          onChange: @escaping () -> Void,
-         onAccountChange: @escaping () -> Void) {
+         onAccountChange: @escaping () -> Void,
+         onDataPortalChange: @escaping () -> Void = {},
+         dataPortalError: @escaping () -> String? = { nil }) {
         self.updater = (updater?.isAvailable == true) ? updater : nil
         self.onChange = onChange
         self.onAccountChange = onAccountChange
+        self.onDataPortalChange = onDataPortalChange
+        self.dataPortalError = dataPortalError
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 260),
@@ -113,6 +136,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     /// Called by the app whenever it learns something new, so the pane isn't
     /// showing a connection state from whenever it was last opened.
     func updateStatus(data: CarData?, error: String?, authenticated: Bool) {
+        latestData = data
+        refreshHomeRow()
         let colour: NSColor
         let text: String
         if let error {
@@ -122,9 +147,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             colour = .systemGreen
             let car = [data.modelName, data.modelYear].compactMap { $0 }.joined(separator: " · ")
             let when = Self.relative(data.lastUpdated)
-            text = car.isEmpty
+            var line = car.isEmpty
                 ? String(format: L("Signed in · updated %@"), when)
                 : String(format: L("Signed in · %@ · updated %@"), car, when)
+            if data.viaDataPortal { line += " · " + L("Data Portal") }
+            text = line
         } else if authenticated {
             colour = .systemGreen
             text = L("Signed in")
@@ -134,6 +161,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         }
         statusLabel.stringValue = text
         statusDot.layer?.backgroundColor = colour.cgColor
+        refreshPortalStatus(data: data)
     }
 
     private static func relative(_ date: Date) -> String {
@@ -151,6 +179,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             pane(L("Account"), symbol: "person.crop.circle", view: accountPane()),
             pane(L("Menu Bar"), symbol: "menubar.rectangle", view: menuBarPane()),
             pane(L("Notifications"), symbol: "bell", view: notificationsPane()),
+            pane(L("Data Portal"), symbol: "key.horizontal", view: dataPortalPane()),
             pane(L("Claude"), symbol: "sparkles", view: claudePane())
         ]
         if updater != nil {
@@ -203,10 +232,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return item
     }
 
-    /// As wide as the toolbar needs and no wider: the six pane icons set
+    /// As wide as the toolbar needs and no wider: the seven pane icons set
     /// the width, not the widest field on any one pane. At 360 the sixth tab
-    /// spilled into the » overflow menu and Updates and About went with it.
-    private static let paneWidth: CGFloat = 520
+    /// spilled into the » overflow menu and Updates and About went with it;
+    /// 520 held six, the Data Portal pane made it seven.
+    private static let paneWidth: CGFloat = 600
     private static let paneInset = NSSize(width: 24, height: 22)
     private static var contentWidth: CGFloat { paneWidth - paneInset.width * 2 }
 
@@ -318,6 +348,139 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         return stack
     }
 
+    /// Opt-in to Polestar's official Data Portal API. The login on the
+    /// Account pane stays required — the portal has no model name or car
+    /// image — but with a credential here, battery, charging, odometer and
+    /// health come from the supported API instead of the reverse-engineered
+    /// one. Three values, all copied from the portal; the secret is shown
+    /// there only once, which is why the field never reads it back.
+    private func dataPortalPane() -> NSView {
+        let blurb = NSTextField(wrappingLabelWithString:
+            L("Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture."))
+        blurb.textColor = .secondaryLabelColor
+
+        // Same labels, same order as the portal's Credential page, so the
+        // three values can be copied top to bottom without re-reading.
+        portalSecretField.placeholderString = L("Client secret (shown once in the portal)")
+        for field in [portalClientIdField, portalSecretField, portalAccountIdField] {
+            field.translatesAutoresizingMaskIntoConstraints = false
+            field.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
+        }
+
+        let form = NSStackView(views: [
+            field("App client ID", portalClientIdField),
+            field("Expected x-client-id", portalAccountIdField),
+            field("Client secret", portalSecretField)
+        ])
+        form.orientation = .vertical
+        form.alignment = .leading
+        form.spacing = 12
+
+        portalStatus.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        portalStatus.textColor = .secondaryLabelColor
+        portalStatus.translatesAutoresizingMaskIntoConstraints = false
+        portalStatus.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
+
+        portalOpenButton.target = self;   portalOpenButton.action = #selector(portalOpenAction)
+        portalRemoveButton.target = self; portalRemoveButton.action = #selector(portalRemoveAction)
+        portalSaveButton.target = self;   portalSaveButton.action = #selector(portalSaveAction)
+
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        let buttons = NSStackView(views: [portalOpenButton, portalRemoveButton, spacer, portalSaveButton])
+        buttons.orientation = .horizontal
+        buttons.spacing = 8
+        buttons.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = NSStackView(views: [blurb, form, portalStatus, buttons])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 18
+        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return stack
+    }
+
+    /// One line under the fields: not set up, verifying, reading through
+    /// the portal, or why the last fetch fell back to the login.
+    private func refreshPortalStatus(data: CarData?) {
+        let stored = ((try? Keychain.readDataPortalCredentials()) ?? nil)?.isComplete == true
+        portalRemoveButton.isHidden = !stored
+        portalStatus.textColor = .secondaryLabelColor
+        if !stored {
+            portalStatus.stringValue = L("Not set up. Polaris reads your car through your login.")
+        } else if let error = dataPortalError() {
+            portalStatus.textColor = .systemOrange
+            portalStatus.stringValue = String(format: L("Falling back to your login: %@"), error)
+        } else if data?.viaDataPortal == true {
+            portalStatus.stringValue = L("Reading your car through the Data Portal.")
+        } else {
+            portalStatus.stringValue = L("Credential saved. It takes effect on the next refresh.")
+        }
+    }
+
+    @objc private func portalOpenAction() {
+        NSWorkspace.shared.open(URL(string: "https://data-portal.polestar.com")!)
+    }
+
+    /// Verify before saving: mint a token and confirm the selected car is
+    /// among the VINs the credential may read. A credential that passes
+    /// both is one that will work on the next refresh; one that fails is
+    /// reported here rather than discovered as a fallback message later.
+    @objc private func portalSaveAction() {
+        let clientId = portalClientIdField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        var secret = portalSecretField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        // The secret field is never filled back in, so editing the other two
+        // values would otherwise demand a secret the portal no longer shows.
+        // Same client ID, empty secret: keep the one already stored.
+        if secret.isEmpty,
+           let stored = (try? Keychain.readDataPortalCredentials()) ?? nil,
+           stored.clientId == clientId {
+            secret = stored.clientSecret
+        }
+        let credentials = DataPortalCredentials(
+            clientId: clientId,
+            clientSecret: secret,
+            accountId: portalAccountIdField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+        guard credentials.isComplete else {
+            portalStatus.textColor = .systemRed
+            portalStatus.stringValue = L("All three fields are needed.")
+            return
+        }
+        let vin = PolestarAPI.apiVin(Preferences.vin)
+        portalSaveButton.isEnabled = false
+        portalStatus.textColor = .secondaryLabelColor
+        portalStatus.stringValue = L("Verifying with the Data Portal…")
+        Task {
+            do {
+                let vins = try await PolestarDataPortal(credentials: credentials).vehicles()
+                guard vins.contains(vin) else { throw DataPortalError.vehicleNotShared(vin) }
+                try Keychain.saveDataPortalCredentials(credentials)
+                await MainActor.run {
+                    self.portalSaveButton.isEnabled = true
+                    self.portalSecretField.stringValue = ""
+                    self.portalStatus.stringValue = L("Credential saved. Fetching through the Data Portal…")
+                    self.portalRemoveButton.isHidden = false
+                    self.onDataPortalChange()
+                }
+            } catch {
+                await MainActor.run {
+                    self.portalSaveButton.isEnabled = true
+                    self.portalStatus.textColor = .systemRed
+                    self.portalStatus.stringValue = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    @objc private func portalRemoveAction() {
+        Keychain.deleteDataPortalCredentials()
+        portalClientIdField.stringValue = ""
+        portalSecretField.stringValue = ""
+        portalAccountIdField.stringValue = ""
+        refreshPortalStatus(data: nil)
+        onDataPortalChange()
+    }
+
     private func claudePane() -> NSView {
         let blurb = NSTextField(wrappingLabelWithString:
             L("Let Claude read your car's battery, range and odometer. Polaris shares only what it has already fetched, read-only. Claude never sees your password, VIN or location."))
@@ -406,10 +569,17 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowThresholdPopup.addItems(withTitles: LowBatteryWatch.thresholds.map { "\($0)%" })
         lowThresholdPopup.target = self
         lowThresholdPopup.action = #selector(notificationsChanged)
-        for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, notifyLowCheckbox] {
+        for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox,
+                    notifyLowCheckbox, notifyHomeCheckbox] {
             box.target = self
             box.action = #selector(notificationsChanged)
         }
+        setHomeButton.target = self
+        setHomeButton.action = #selector(setHomeAction)
+        homeLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        homeLabel.textColor = .secondaryLabelColor
+        homeLabel.translatesAutoresizingMaskIntoConstraints = false
+        homeLabel.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
 
         /// The threshold belongs to the checkbox, so the two share a row
         /// rather than the popup floating a line below with a label of its own.
@@ -418,13 +588,47 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowRow.spacing = 8
         lowRow.alignment = .firstBaseline
 
+        // Home lives with the reminder that needs it. The button reads the
+        // car's current position from the last Data Portal reading; without
+        // one it stays disabled and the label says why.
+        let homeRow = NSStackView(views: [setHomeButton])
+        homeRow.orientation = .horizontal
         let stack = NSStackView(views: [
-            notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow
+            notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow,
+            notifyHomeCheckbox, homeRow, homeLabel
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
+        stack.setCustomSpacing(16, after: lowRow)
+        stack.setCustomSpacing(6, after: homeRow)
+        refreshHomeRow()
         return stack
+    }
+
+    private func refreshHomeRow() {
+        setHomeButton.isEnabled = latestData?.location != nil
+        if let setAt = Preferences.homeSetAt, Preferences.home != nil {
+            let when = DateFormatter.localizedString(from: setAt, dateStyle: .medium, timeStyle: .none)
+            homeLabel.stringValue = String(format: L("Home set %@ from the car's position."), when)
+        } else if latestData?.location == nil {
+            homeLabel.stringValue = L("Needs the car's location, which comes with a Data Portal credential.")
+        } else {
+            homeLabel.stringValue = L("Not set. Park at home, then press the button.")
+        }
+        notifyHomeCheckbox.isEnabled = Preferences.home != nil
+    }
+
+    @objc private func setHomeAction() {
+        guard let location = latestData?.location else { return }
+        Preferences.home = location
+        Preferences.homeSetAt = Date()
+        // A fresh home is a fresh stay: whatever the reminder remembered
+        // about the old one no longer applies.
+        Preferences.setHomeWatch(HomeWatch.State(unpluggedSince: nil, warned: false),
+                                 vin: latestData?.vin ?? Preferences.vin)
+        refreshHomeRow()
+        onChange()
     }
 
     private func updatesPane() -> NSView {
@@ -507,6 +711,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         emailField.stringValue = Preferences.email
         passwordField.stringValue = ((try? Keychain.readPassword()) ?? nil) ?? ""
         vinField.stringValue = Preferences.vin
+        let portal = (try? Keychain.readDataPortalCredentials()) ?? nil
+        portalClientIdField.stringValue = portal?.clientId ?? ""
+        portalAccountIdField.stringValue = portal?.accountId ?? ""
+        portalSecretField.stringValue = ""
+        refreshPortalStatus(data: nil)
         displayPopup.selectItem(at: DisplayOption.allCases.firstIndex(of: Preferences.displayOption) ?? 0)
         unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
         refreshPopup.selectItem(at: RefreshInterval.allCases.firstIndex(of: Preferences.refreshInterval) ?? 0)
@@ -516,6 +725,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
         notifyLowCheckbox.state = Preferences.notifyLowBattery ? .on : .off
+        notifyHomeCheckbox.state = Preferences.notifyParkedAtHome ? .on : .off
+        refreshHomeRow()
         lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
             .firstIndex(of: Preferences.lowBatteryThreshold) ?? 0)
         lowThresholdPopup.isEnabled = (notifyLowCheckbox.state == .on)
@@ -555,6 +766,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
         Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
         Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
+        Preferences.notifyParkedAtHome = (notifyHomeCheckbox.state == .on)
         if lowThresholdPopup.indexOfSelectedItem >= 0 {
             Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
         }

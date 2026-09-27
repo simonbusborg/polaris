@@ -42,6 +42,7 @@ enum Accounts {
         d.removeObject(forKey: carsKey(email))
         Keychain.deletePassword(account: email)
         Keychain.deleteSessionToken(account: email)
+        Keychain.deleteDataPortalCredentials(account: email)
         if Preferences.email == email {
             Preferences.email = all.first ?? ""
             Preferences.vin = cars(for: Preferences.email).first?.vin ?? ""

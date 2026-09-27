@@ -5,7 +5,9 @@ Your Polestar, in the menu bar.
 Polaris is a tiny native macOS app that shows your Polestar's battery, range,
 and charging status in the menu bar, and on the desktop as a widget. Pure
 AppKit — no Electron, no background services; the widget is SwiftUI because
-WidgetKit leaves no choice. It talks only to Polestar's official API.
+WidgetKit leaves no choice. It talks to Polestar's API and, if you turn on
+the Data Portal's location scope, to Apple's geocoder and MapKit for the
+street name and the map thumbnail — nothing else.
 
 Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
 (the same app for Tesla).
@@ -20,6 +22,17 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   5 minutes, or every minute while charging
 - Charger connection, live charging power and whether it's AC or DC, read from
   the gRPC battery service the GraphQL API doesn't cover
+- Optional: read the car through Polestar's official [Data Portal](https://data-portal.polestar.com)
+  API. Create a credential there and paste it under Settings → Data Portal.
+  The login stays, for the car's name and picture, and takes over again if
+  the credential stops working. With the portal the menu also gets, scope by
+  scope: whether the car is in use (from the car, not inferred), the parking
+  climate with its countdown, the charge limit, locks and anything left open,
+  and where the car is: a small map and the street, both from Apple, which
+  open in Maps on click
+- Optional, with the portal: a reminder when the car has been parked at home
+  for ten minutes without the charger connected. Home is a point you save
+  from the car's own position; no address is looked up or stored
 - Odometer, service interval and fluid warnings
 - Notifications when charging starts, completes, or the charger reports a fault
 - A desktop widget in three sizes: small for battery, range and state, medium
@@ -156,6 +169,7 @@ defaults delete com.weareheavy.polaris debug_grpc_fields   # turn it off again
 | `debug_drive` | Logs the numbers behind each "in use" verdict — odometer in metres, the distance since the last reading, and how old both odometer reports are (`log show --info --last 10m \| grep "drive:"`). The one way to see what a parked car's odometer stream actually does |
 | `debug_pno34` | Shows the car's raw `pno34` product code as a copyable menu row. This is how a code gets read off a real car to fill in `PNO34.variantsByPrefix` |
 | `debug_charging_type` | A string (`AC`, `DC`, `WIRELESS`) that renders the charging rows on a parked car. It invents its numbers in the menu layer, so it demonstrates the layout and nothing about the wire format — and it hides the real Power row while set |
+| `debug_climate` | A string (`HEATING`, `COOLING`, `PENDING`) that renders the Climate row on an idle car with made-up temperatures and minutes. Layout only, same as above |
 | `debug_demo_car` | Adds a pretend second car mirroring the real one, so the multi-car switcher can be exercised on a single-car account |
 
 Not every field the battery service documents is actually sent. A 2026

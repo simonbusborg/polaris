@@ -146,3 +146,76 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Claude Desktops inställningsfil kunde inte läsas, så Polaris lät den vara.";
 "Claude Desktop's settings couldn't be changed." = "Claude Desktops inställningar kunde inte ändras.";
 "Only available in the packaged Polaris app." = "Bara tillgängligt i den paketerade Polaris-appen.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Verifiera och spara";
+"Remove Credential" = "Ta bort uppgifter";
+"Open Data Portal…" = "Öppna Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture." = "Läs din bil via Polestars officiella Data Portal-API i stället för appens inloggning. Skapa en API-uppgift på data-portal.polestar.com och bocka för de behörigheter Polaris ska visa: batteri krävs, och vägmätare, hälsa, tillgänglighet, klimat, yttre, plats och laddgräns ger var sin rad. Din inloggning finns kvar; den ger fortfarande bilens namn och bild.";
+"Client secret (shown once in the portal)" = "Client secret (visas bara en gång i portalen)";
+"Not set up. Polaris reads your car through your login." = "Inte inställt. Polaris läser din bil via din inloggning.";
+"Falling back to your login: %@" = "Faller tillbaka till din inloggning: %@";
+"Reading your car through the Data Portal." = "Läser din bil via Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Uppgifterna sparade. De används vid nästa uppdatering.";
+"All three fields are needed." = "Alla tre fälten behövs.";
+"Verifying with the Data Portal…" = "Verifierar med Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Uppgifterna sparade. Hämtar via Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data Portal-tolkningsfel: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal avvisade uppgifterna — kontrollera dem i Inställningar";
+"Data Portal credential has no access to %@" = "Data Portal-uppgifterna har inte åtkomst till %@";
+"Data Portal has no reading yet" = "Data Portal har ingen avläsning ännu";
+
+/* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
+"%.0f%% · the charger isn't connected" = "%.0f%% · laddaren är inte ansluten";
+"%@ open" = "%@ öppen";
+"Alarm triggered" = "Larm utlöst";
+"Charge limit" = "Laddgräns";
+"Charge port lid" = "Laddlucka";
+"Click to open in Maps" = "Klicka för att öppna i Kartor";
+"Climate" = "Klimat";
+"Climate: %@" = "Klimat: %@";
+"Cooling" = "Kyler";
+"E" = "Ö";
+"Front left door" = "Vänster framdörr";
+"Front left window" = "Vänster framruta";
+"Front right door" = "Höger framdörr";
+"Front right window" = "Höger framruta";
+"Heating" = "Värmer";
+"Home" = "Hemma";
+"Home set %@ from the car's position." = "Hem satt %@ utifrån bilens position.";
+"Hood" = "Motorhuv";
+"Location" = "Plats";
+"Locked" = "Låst";
+"Doors" = "Dörrar";
+"N" = "N";
+"Needs the car's location, which comes with a Data Portal credential." = "Kräver bilens plats, som följer med en Data Portal-uppgift.";
+"Not set. Park at home, then press the button." = "Inte satt. Parkera hemma och tryck sedan på knappen.";
+"Parked at home without charging" = "Parkerad hemma utan laddning";
+"Parked at home, not charging" = "Parkerad hemma, laddar inte";
+"Rear left door" = "Vänster bakdörr";
+"Rear left window" = "Vänster bakruta";
+"Rear right door" = "Höger bakdörr";
+"Rear right window" = "Höger bakruta";
+"S" = "S";
+"Set Home to the Car's Position" = "Sätt hem till bilens position";
+"Starting" = "Startar";
+"Sunroof" = "Soltak";
+"Tailgate" = "Baklucka";
+"Unlocked" = "Olåst";
+"W" = "V";
+"battery too low" = "batteriet är för lågt";
+"interrupted" = "avbruten";
+"nearing its time limit" = "närmar sig tidsgränsen";
+"needs service" = "behöver service";
+"not connected to power" = "inte ansluten till ström";
+"reached its time limit" = "nådde sin tidsgräns";
+"temporarily unavailable" = "tillfälligt otillgänglig";
+
+/* Climate row wording */
+"Heating to %@" = "Värmer till %@";
+"Cooling to %@" = "Kyler till %@";
+"%d min" = "%d min";
+"On" = "På";
+"%d open" = "%d öppen";

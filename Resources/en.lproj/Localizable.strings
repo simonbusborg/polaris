@@ -148,3 +148,76 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Claude Desktop's settings file couldn't be read, so Polaris left it alone.";
 "Claude Desktop's settings couldn't be changed." = "Claude Desktop's settings couldn't be changed.";
 "Only available in the packaged Polaris app." = "Only available in the packaged Polaris app.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Verify and Save";
+"Remove Credential" = "Remove Credential";
+"Open Data Portal…" = "Open Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture." = "Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture.";
+"Client secret (shown once in the portal)" = "Client secret (shown once in the portal)";
+"Not set up. Polaris reads your car through your login." = "Not set up. Polaris reads your car through your login.";
+"Falling back to your login: %@" = "Falling back to your login: %@";
+"Reading your car through the Data Portal." = "Reading your car through the Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Credential saved. It takes effect on the next refresh.";
+"All three fields are needed." = "All three fields are needed.";
+"Verifying with the Data Portal…" = "Verifying with the Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Credential saved. Fetching through the Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Data Portal parse error: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal rejected the credentials — check them in Settings";
+"Data Portal credential has no access to %@" = "Data Portal credential has no access to %@";
+"Data Portal has no reading yet" = "Data Portal has no reading yet";
+
+/* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
+"%.0f%% · the charger isn't connected" = "%.0f%% · the charger isn't connected";
+"%@ open" = "%@ open";
+"Alarm triggered" = "Alarm triggered";
+"Charge limit" = "Charge limit";
+"Charge port lid" = "Charge port lid";
+"Click to open in Maps" = "Click to open in Maps";
+"Climate" = "Climate";
+"Climate: %@" = "Climate: %@";
+"Cooling" = "Cooling";
+"E" = "E";
+"Front left door" = "Front left door";
+"Front left window" = "Front left window";
+"Front right door" = "Front right door";
+"Front right window" = "Front right window";
+"Heating" = "Heating";
+"Home" = "Home";
+"Home set %@ from the car's position." = "Home set %@ from the car's position.";
+"Hood" = "Hood";
+"Location" = "Location";
+"Locked" = "Locked";
+"Doors" = "Doors";
+"N" = "N";
+"Needs the car's location, which comes with a Data Portal credential." = "Needs the car's location, which comes with a Data Portal credential.";
+"Not set. Park at home, then press the button." = "Not set. Park at home, then press the button.";
+"Parked at home without charging" = "Parked at home without charging";
+"Parked at home, not charging" = "Parked at home, not charging";
+"Rear left door" = "Rear left door";
+"Rear left window" = "Rear left window";
+"Rear right door" = "Rear right door";
+"Rear right window" = "Rear right window";
+"S" = "S";
+"Set Home to the Car's Position" = "Set Home to the Car's Position";
+"Starting" = "Starting";
+"Sunroof" = "Sunroof";
+"Tailgate" = "Tailgate";
+"Unlocked" = "Unlocked";
+"W" = "W";
+"battery too low" = "battery too low";
+"interrupted" = "interrupted";
+"nearing its time limit" = "nearing its time limit";
+"needs service" = "needs service";
+"not connected to power" = "not connected to power";
+"reached its time limit" = "reached its time limit";
+"temporarily unavailable" = "temporarily unavailable";
+
+/* Climate row wording */
+"Heating to %@" = "Heating to %@";
+"Cooling to %@" = "Cooling to %@";
+"%d min" = "%d min";
+"On" = "On";
+"%d open" = "%d open";

@@ -146,3 +146,76 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "Nie udało się odczytać pliku ustawień Claude Desktop, więc Polaris zostawił go bez zmian.";
 "Claude Desktop's settings couldn't be changed." = "Nie udało się zmienić ustawień Claude Desktop.";
 "Only available in the packaged Polaris app." = "Dostępne tylko w spakowanej aplikacji Polaris.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Sprawdź i zapisz";
+"Remove Credential" = "Usuń poświadczenie";
+"Open Data Portal…" = "Otwórz Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture." = "Odczytuj swój samochód przez oficjalne API Data Portal Polestara zamiast przez logowanie aplikacji. Utwórz poświadczenie API na data-portal.polestar.com i zaznacz zakresy, które Polaris ma pokazywać: bateria jest wymagana, a licznik, stan, dostępność, klimatyzacja, nadwozie, lokalizacja i limit ładowania dodają po jednym wierszu. Twoje logowanie pozostaje; nadal dostarcza nazwę i zdjęcie samochodu.";
+"Client secret (shown once in the portal)" = "Client secret (pokazywany w portalu tylko raz)";
+"Not set up. Polaris reads your car through your login." = "Nie skonfigurowano. Polaris odczytuje samochód przez Twoje logowanie.";
+"Falling back to your login: %@" = "Powrót do Twojego logowania: %@";
+"Reading your car through the Data Portal." = "Odczyt samochodu przez Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Poświadczenie zapisane. Zadziała przy następnym odświeżeniu.";
+"All three fields are needed." = "Potrzebne są wszystkie trzy pola.";
+"Verifying with the Data Portal…" = "Sprawdzanie w Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Poświadczenie zapisane. Pobieranie przez Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Błąd analizy Data Portal: %@";
+"Data Portal rejected the credentials — check them in Settings" = "Data Portal odrzucił poświadczenie — sprawdź je w Ustawieniach";
+"Data Portal credential has no access to %@" = "Poświadczenie Data Portal nie ma dostępu do %@";
+"Data Portal has no reading yet" = "Data Portal nie ma jeszcze odczytu";
+
+/* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
+"%.0f%% · the charger isn't connected" = "%.0f%% · ładowarka nie jest podłączona";
+"%@ open" = "%@ otwarte";
+"Alarm triggered" = "Alarm uruchomiony";
+"Charge limit" = "Limit ładowania";
+"Charge port lid" = "Klapka ładowania";
+"Click to open in Maps" = "Kliknij, aby otworzyć w Mapach";
+"Climate" = "Klimatyzacja";
+"Climate: %@" = "Klimatyzacja: %@";
+"Cooling" = "Chłodzi";
+"E" = "E";
+"Front left door" = "Lewe przednie drzwi";
+"Front left window" = "Lewa przednia szyba";
+"Front right door" = "Prawe przednie drzwi";
+"Front right window" = "Prawa przednia szyba";
+"Heating" = "Grzeje";
+"Home" = "Dom";
+"Home set %@ from the car's position." = "Dom ustawiony %@ na podstawie pozycji samochodu.";
+"Hood" = "Maska";
+"Location" = "Lokalizacja";
+"Locked" = "Zamknięty";
+"Doors" = "Drzwi";
+"N" = "N";
+"Needs the car's location, which comes with a Data Portal credential." = "Wymaga lokalizacji samochodu, dostępnej z poświadczeniem Data Portal.";
+"Not set. Park at home, then press the button." = "Nie ustawiono. Zaparkuj w domu i naciśnij przycisk.";
+"Parked at home without charging" = "Zaparkowany w domu bez ładowania";
+"Parked at home, not charging" = "Zaparkowany w domu, nie ładuje";
+"Rear left door" = "Lewe tylne drzwi";
+"Rear left window" = "Lewa tylna szyba";
+"Rear right door" = "Prawe tylne drzwi";
+"Rear right window" = "Prawa tylna szyba";
+"S" = "S";
+"Set Home to the Car's Position" = "Ustaw dom na pozycję samochodu";
+"Starting" = "Uruchamianie";
+"Sunroof" = "Szyberdach";
+"Tailgate" = "Klapa bagażnika";
+"Unlocked" = "Otwarty";
+"W" = "W";
+"battery too low" = "bateria zbyt słaba";
+"interrupted" = "przerwane";
+"nearing its time limit" = "zbliża się do limitu czasu";
+"needs service" = "wymaga serwisu";
+"not connected to power" = "brak podłączenia do prądu";
+"reached its time limit" = "osiągnięto limit czasu";
+"temporarily unavailable" = "tymczasowo niedostępne";
+
+/* Climate row wording */
+"Heating to %@" = "Grzeje do %@";
+"Cooling to %@" = "Chłodzi do %@";
+"%d min" = "%d min";
+"On" = "Włączona";
+"%d open" = "%d otwarte";

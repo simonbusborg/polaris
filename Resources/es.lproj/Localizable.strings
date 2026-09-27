@@ -146,3 +146,76 @@
 "Claude Desktop's settings file couldn't be read, so Polaris left it alone." = "No se pudo leer el archivo de ajustes de Claude Desktop, así que Polaris lo dejó como estaba.";
 "Claude Desktop's settings couldn't be changed." = "No se pudieron cambiar los ajustes de Claude Desktop.";
 "Only available in the packaged Polaris app." = "Solo disponible en la app empaquetada de Polaris.";
+
+/* Data Portal pane: opt-in to Polestar's official API */
+"Data Portal" = "Data Portal";
+"Verify and Save" = "Verificar y guardar";
+"Remove Credential" = "Quitar credencial";
+"Open Data Portal…" = "Abrir Data Portal…";
+"Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture." = "Lee tu coche a través de la API oficial Data Portal de Polestar en lugar del inicio de sesión de la app. Crea una credencial de API en data-portal.polestar.com y marca los permisos que Polaris debe mostrar: batería es imprescindible, y cuentakilómetros, estado, disponibilidad, clima, exterior, ubicación y límite de carga añaden una fila cada uno. Tu inicio de sesión se mantiene; sigue aportando el nombre y la imagen del coche.";
+"Client secret (shown once in the portal)" = "Client secret (se muestra una sola vez en el portal)";
+"Not set up. Polaris reads your car through your login." = "Sin configurar. Polaris lee tu coche a través de tu inicio de sesión.";
+"Falling back to your login: %@" = "Volviendo a tu inicio de sesión: %@";
+"Reading your car through the Data Portal." = "Leyendo tu coche a través del Data Portal.";
+"Credential saved. It takes effect on the next refresh." = "Credencial guardada. Se aplicará en la próxima actualización.";
+"All three fields are needed." = "Se necesitan los tres campos.";
+"Verifying with the Data Portal…" = "Verificando con el Data Portal…";
+"Credential saved. Fetching through the Data Portal…" = "Credencial guardada. Obteniendo datos a través del Data Portal…";
+"Data Portal HTTP %d: %@" = "Data Portal HTTP %d: %@";
+"Data Portal parse error: %@" = "Error de análisis del Data Portal: %@";
+"Data Portal rejected the credentials — check them in Settings" = "El Data Portal rechazó la credencial — revísala en Ajustes";
+"Data Portal credential has no access to %@" = "La credencial del Data Portal no tiene acceso a %@";
+"Data Portal has no reading yet" = "El Data Portal aún no tiene lecturas";
+
+/* Data Portal rows: climate, locks, location, charge limit, and the parked-at-home reminder */
+"%.0f%% · the charger isn't connected" = "%.0f%% · el cargador no está conectado";
+"%@ open" = "%@ abierta";
+"Alarm triggered" = "Alarma activada";
+"Charge limit" = "Límite de carga";
+"Charge port lid" = "Tapa de carga";
+"Click to open in Maps" = "Clic para abrir en Mapas";
+"Climate" = "Clima";
+"Climate: %@" = "Clima: %@";
+"Cooling" = "Enfriando";
+"E" = "E";
+"Front left door" = "Puerta delantera izquierda";
+"Front left window" = "Ventanilla delantera izquierda";
+"Front right door" = "Puerta delantera derecha";
+"Front right window" = "Ventanilla delantera derecha";
+"Heating" = "Calentando";
+"Home" = "Casa";
+"Home set %@ from the car's position." = "Casa fijada el %@ desde la posición del coche.";
+"Hood" = "Capó";
+"Location" = "Ubicación";
+"Locked" = "Bloqueado";
+"Doors" = "Puertas";
+"N" = "N";
+"Needs the car's location, which comes with a Data Portal credential." = "Necesita la ubicación del coche, que llega con una credencial del Data Portal.";
+"Not set. Park at home, then press the button." = "Sin fijar. Aparca en casa y pulsa el botón.";
+"Parked at home without charging" = "Aparcado en casa sin cargar";
+"Parked at home, not charging" = "Aparcado en casa, sin cargar";
+"Rear left door" = "Puerta trasera izquierda";
+"Rear left window" = "Ventanilla trasera izquierda";
+"Rear right door" = "Puerta trasera derecha";
+"Rear right window" = "Ventanilla trasera derecha";
+"S" = "S";
+"Set Home to the Car's Position" = "Fijar casa en la posición del coche";
+"Starting" = "Iniciando";
+"Sunroof" = "Techo solar";
+"Tailgate" = "Portón";
+"Unlocked" = "Desbloqueado";
+"W" = "O";
+"battery too low" = "batería demasiado baja";
+"interrupted" = "interrumpido";
+"nearing its time limit" = "cerca del límite de tiempo";
+"needs service" = "necesita servicio";
+"not connected to power" = "sin conexión a la corriente";
+"reached its time limit" = "alcanzó su límite de tiempo";
+"temporarily unavailable" = "no disponible temporalmente";
+
+/* Climate row wording */
+"Heating to %@" = "Calentando a %@";
+"Cooling to %@" = "Enfriando a %@";
+"%d min" = "%d min";
+"On" = "Activo";
+"%d open" = "%d abierta";
