@@ -217,7 +217,7 @@
     transition:transform .34s cubic-bezier(.2,.6,.2,1),opacity .24s ease,visibility .34s;
   }
   header.open .menu-panel{opacity:1;visibility:visible;transform:none}
-  /* The same Bayer field that runs under the notifications and the film,
+  /* The same Bayer field that runs under the notifications and the stats,
      here as the panel's ground rather than as a section's. */
   .menu-field{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.5;pointer-events:none}
   .menu-list{position:relative}
@@ -439,27 +439,6 @@
   .stat b{font-weight:600;font-size:1.7rem;letter-spacing:-.02em;line-height:1.2;color:var(--accent)}
   .stat p{margin-top:.55rem;color:var(--dim);font-size:.82rem;line-height:1.45;max-width:26ch}
 
-  /* film band — the dusk clip in a frame on the page rather than bleeding
-     to the edges. The dither field runs full-bleed like the stats band's,
-     but here it also lies OVER the film: at .16 the raster reads as grain
-     on the footage, and the same texture around it ties frame to backdrop. */
-  .film-band{
-    position:relative;isolation:isolate;
-    margin-inline:calc(50% - 50vw);width:100vw;
-    padding:clamp(3rem,8vh,5rem) 0;
-  }
-  .film-field{
-    position:absolute;inset:0;z-index:1;
-    width:100%;height:100%;pointer-events:none;
-    opacity:.16;
-    /* Fades into the paper at both ends so the field has no cut edge —
-       same treatment as .notify-field and .stats-field. */
-    -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
-    mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
-  }
-  .film-inner{max-width:1200px;margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
-  .film-inner video{display:block;width:100%;height:auto;border-radius:var(--r)}
-
   /* real menu section — a pinned stage, like the notifications one. The
      stage height is the scroll budget the four menu states are dealt out
      over, so you scroll through them instead of clicking a tab. */
@@ -555,10 +534,13 @@
     font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',sans-serif;
   }
   .panel .greet{font-weight:600;font-size:.95rem;padding:.4rem .6rem .1rem}
-  .panel img.car{display:block;width:100%;height:auto;padding:.2rem .5rem;box-sizing:border-box}
-  /* The Polestar 2 renders face right, the Polestar 4 faces left —
-     mirror the 2 so every car points the same way. */
-  img[src*="polestar-2-"]{transform:scaleX(-1)}
+  /* Where the app shows Polestar's studio render of the owner's car. The
+     image is Polestar's, so the site keeps the slot and says so instead. */
+  .car-slot{display:flex;align-items:center;justify-content:center;text-align:center;
+    aspect-ratio:1400/787;margin:.35rem .6rem;padding:.6rem;box-sizing:border-box;
+    border:1px dashed rgba(255,255,255,.18);border-radius:8px;
+    color:rgba(255,255,255,.45);font-size:.72rem;line-height:1.35}
+  .panel .car-slot{width:calc(100% - 1.2rem)}
   .panel .model{font-weight:600;font-size:.95rem;padding:.3rem .6rem .15rem}
   .panel .row{
     display:flex;justify-content:space-between;gap:1rem;
@@ -754,11 +736,11 @@
   .wg-ico{width:11px;height:11px;flex:none}
   .wg-ago{color:rgba(255,255,255,.4);white-space:nowrap}
   .wg-car{display:block;width:100%;height:auto}
-  .wc-m .wg-car{width:132px;flex:none}
+  .wc-m .wg-car{width:132px;flex:none;margin:0;font-size:.62rem;padding:.4rem}
   /* Like the real large widget: the render takes whatever the rows below
      leave, so a third grid row (the Data Portal fields) costs the car
      height rather than pushing the timestamp off the card. */
-  .wc-l .wg-car{margin:4px 0 2px;flex:1 1 0;min-height:0;width:auto;max-width:100%;object-fit:contain;align-self:center}
+  .wc-l .wg-car{margin:4px 0 2px;flex:1 1 0;min-height:0;width:auto;max-width:100%;align-self:center;font-size:.68rem}
   .wg-col{display:flex;flex-direction:column;flex:1;min-width:0;height:100%}
   .wg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .wg-head .wg-state{font-size:10px}
@@ -1272,8 +1254,10 @@
           <div class="kicker">The real thing</div>
           <h2>No concept shots. This is the menu.</h2>
           <p>Every row is rendered by the app from the live Polestar API —
-          battery, range, charging state, odometer and service data, topped by a
-          studio image of <b>your exact car</b>. Click the plate or VIN to copy them.</p>
+          battery, range, charging state, odometer and service data, topped by
+          Polestar's studio image of <b>your exact car</b>, fetched from your
+          account. That image is Polestar's, so the mockup here leaves the
+          slot empty. Click the plate or VIN to copy them.</p>
           <p>Connect Polestar's official <b>Data Portal</b> and the menu grows:
           whether the car is in use, the parking climate and its countdown,
           the charge limit, the locks, anything left open, and where it's
@@ -1328,7 +1312,7 @@
           </div>
           <div class="panel" id="panel">
               <div class="greet">Hi, Simon</div>
-              <img class="car" id="panelCar" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="car car-slot" id="panelCar">Polestar’s studio image of your car sits here in the app. It’s their image, so it isn’t reproduced on this site.</div>
               <div class="model">Polestar 4 · 2025</div>
               <div class="row"><span class="k">Plate</span><span>CX 41 927</span></div>
               <div class="row"><span class="k">VIN</span><span>LPSVSESEKML123456</span></div>
@@ -1398,8 +1382,8 @@
           <div class="kicker">On the desktop</div>
           <h2>The same car, without the click.</h2>
           <p class="wlead">One widget in three sizes, reading what the app
-          already fetched — including the studio render of <b>your exact
-          car</b>. Keep scrolling to size it.</p>
+          already fetched — including Polestar's studio render of <b>your
+          exact car</b>, which the site can't show. Keep scrolling to size it.</p>
           <div class="states" role="tablist" id="wStates"></div>
         </div>
 
@@ -1418,7 +1402,7 @@
             </div>
 
             <div class="wc wc-m">
-              <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="wg-car car-slot">Your car, from Polestar</div>
               <div class="wg-col">
                 <div class="wg-title">Polestar 4 · 2025</div>
                 <div class="wg-figs">
@@ -1441,7 +1425,7 @@
                 </div>
                 <span class="wg-state"><svg class="wg-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.3" y="1.3" width="13.4" height="13.4" rx="3.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 11.6V4.6h2.4a2.1 2.1 0 0 1 0 4.2H6.2" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Idle</span>
               </div>
-              <img class="wg-car" src="assets/polestar-4-snow.png" alt="Studio side profile of a Polestar" width="1400" height="787" loading="lazy">
+              <div class="wg-car car-slot">Your car, from Polestar</div>
               <div class="wg-figs">
                 <span class="wg-pct">77%</span>
                 <span class="wg-range">381 km</span>
@@ -1528,21 +1512,6 @@
         and Polaris talks to the same account your car does, wherever that is.</p>
       </div>
     </div>
-  </section>
-
-  <section class="film-band rv">
-    <!-- video-pingpong.mp4 is the source clip played forward then in
-         reverse, baked into one file — browsers can't run H.264 backwards
-         themselves — so the native loop turns at each end instead of
-         jumping: the raw clip's first and last frames never matched.
-         video.mp4 stays as the untouched source master. -->
-    <div class="film-inner">
-      <video id="filmClip" src="assets/video-pingpong.mp4"
-             poster="assets/film-poster.jpg" muted loop playsinline
-             preload="metadata" disablepictureinpicture width="1280" height="720"
-             aria-label="A white Polestar 3 parked at dusk among glowing flowers, its light bar sweeping on"></video>
-    </div>
-    <canvas class="film-field" id="filmField" aria-hidden="true"></canvas>
   </section>
 
   <section class="get" id="get">
@@ -1681,34 +1650,19 @@
 </div>
 
 <script>
-  // A different Polestar each visit. Polestar 3 joins when a valid
-  // configuration for the image API turns up.
+  // A different car each visit. The render itself is Polestar's and is
+  // only shown inside the app, so the site rotates the name alone.
   const cars = [
-    {name: 'Polestar 2', model: 'Polestar 2 · 2024', light: 'assets/polestar-2-thunder.png', dark: 'assets/polestar-2-snow.png'},
-    {name: 'Polestar 4', model: 'Polestar 4 · 2025', light: 'assets/polestar-4-magnesium.png', dark: 'assets/polestar-4-snow.png'},
+    {name: 'Polestar 2', model: 'Polestar 2 · 2024'},
+    {name: 'Polestar 4', model: 'Polestar 4 · 2025'},
   ];
   const car = cars[Math.floor(Math.random() * cars.length)];
-  // The mock menu is always dark, so it always gets the light-paint render.
-  document.getElementById('panelCar').src = car.dark;
-  // The widget cards are dark too, so they take the same light-painted car.
-  document.querySelectorAll('img.wg-car').forEach(img => img.src = car.dark);
   document.querySelector('.panel .model').textContent = car.model;
   // Without the year: behind the render it reads as a wordmark, not a spec.
   // The strip is filled with as many copies as the viewport needs plus one,
   // and scroll slides it by whole copies — so the seam never arrives.
   const mq = document.getElementById('carWord');
   const mqStill = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-  // The film runs only while it is on screen, and never for visitors who
-  // asked for calm — they keep the poster frame. The loop seam is baked
-  // into the file (one forward pass, one reversed), so play/pause is all
-  // the script has to manage.
-  const film = document.getElementById('filmClip');
-  new IntersectionObserver(([e]) => {
-    if (e.isIntersecting && !mqStill.matches) film.play().catch(() => {});
-    else film.pause();
-  }, {rootMargin: '80px'}).observe(film);
-  mqStill.addEventListener('change', () => { if (mqStill.matches) film.pause(); });
 
   function fillMarquee() {
     mq.innerHTML = '<span>' + car.name + '</span>';
@@ -2357,7 +2311,6 @@ void main(){
 
   makeDitherField('notifyField', {gradient: true});
   makeDitherField('statsField', {gradient: true});
-  makeDitherField('filmField', {gradient: true});
 
   // Sticky nav: inverted and transparent while it sits on the hero photo,
   // solid white with a hairline from the moment the photo is behind it.
