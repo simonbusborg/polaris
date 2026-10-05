@@ -215,6 +215,18 @@
 "reached its time limit" = "saavutti aikarajansa";
 "temporarily unavailable" = "tilapäisesti pois käytöstä";
 
+/* Health warnings: tyre pressure and the 12V battery (Data Portal health scope) */
+"Front left" = "Vasen etu";
+"Front right" = "Oikea etu";
+"Rear left" = "Vasen taka";
+"Rear right" = "Oikea taka";
+"%@ tyre pressure low" = "%@ matala rengaspaine";
+"12V battery warning" = "12V-akkuvaroitus";
+"Tyre pressure low" = "Matala rengaspaine";
+"The one fault that can leave the car unable to start" = "Ainoa vika, joka voi jättää auton käynnistymättä";
+"Tyre pressure" = "Rengaspaine";
+"12V battery" = "12V-akku";
+
 /* Climate row wording */
 "Heating to %@" = "Lämmittää %@:seen";
 "Cooling to %@" = "Jäähdyttää %@:seen";

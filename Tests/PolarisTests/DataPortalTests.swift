@@ -56,6 +56,32 @@ final class DataPortalTests: XCTestCase {
         XCTAssertEqual(t.distanceToServiceKm, 8000)
         XCTAssertTrue(t.serviceWarning)
         XCTAssertEqual(t.fluidWarnings, ["Oil too low"])
+        XCTAssertEqual(t.tyreWarnings, [])
+        XCTAssertFalse(t.batteryWarning)
+    }
+
+    func testTyreAndBatteryWarnings() {
+        let health: [String: Any] = [
+            "tyrePressureWarningFrontLeft": "TYRE_PRESSURE_WARNING_FRONT_LEFT_LOW",
+            "tyrePressureWarningFrontRight": "TYRE_PRESSURE_WARNING_FRONT_RIGHT_NO_WARNING",
+            "tyrePressureWarningRearLeft": "TYRE_PRESSURE_WARNING_REAR_LEFT_NO_WARNING",
+            "tyrePressureWarningRearRight": "TYRE_PRESSURE_WARNING_REAR_RIGHT_LOW",
+            "twelveVoltBatteryWarning": "TWELVE_VOLT_BATTERY_WARNING_LOW_VOLTAGE"
+        ]
+        let t = PolestarDataPortal.telemetry(battery: battery, odometer: nil, health: health)
+        XCTAssertEqual(t.tyreWarnings, ["Front left", "Rear right"])
+        XCTAssertTrue(t.batteryWarning)
+    }
+
+    func testNoWarningAndUnspecifiedTyresDontAppear() {
+        let health: [String: Any] = [
+            "tyrePressureWarningFrontLeft": "TYRE_PRESSURE_WARNING_FRONT_LEFT_NO_WARNING",
+            "tyrePressureWarningFrontRight": "TYRE_PRESSURE_WARNING_FRONT_RIGHT_UNSPECIFIED",
+            "twelveVoltBatteryWarning": "TWELVE_VOLT_BATTERY_WARNING_NO_WARNING"
+        ]
+        let t = PolestarDataPortal.telemetry(battery: battery, odometer: nil, health: health)
+        XCTAssertEqual(t.tyreWarnings, [])
+        XCTAssertFalse(t.batteryWarning)
     }
 
     /// A parked car says NONE for the charging type and UNSPECIFIED for the

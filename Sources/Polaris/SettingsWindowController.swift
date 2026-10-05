@@ -51,6 +51,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyDoneCheckbox = NSButton(checkboxWithTitle: L("Charging complete"), target: nil, action: nil)
     private let notifyProblemCheckbox = NSButton(checkboxWithTitle: L("Charging problems"), target: nil, action: nil)
     private let notifyLowCheckbox = NSButton(checkboxWithTitle: L("Low battery"), target: nil, action: nil)
+    private let notifyTyreCheckbox = NSButton(checkboxWithTitle: L("Tyre pressure"), target: nil, action: nil)
+    private let notifyBatteryWarningCheckbox = NSButton(checkboxWithTitle: L("12V battery"), target: nil, action: nil)
     private let notifyHomeCheckbox = NSButton(checkboxWithTitle: L("Parked at home without charging"), target: nil, action: nil)
     private let setHomeButton = NSButton(title: L("Set Home to the Car's Position"), target: nil, action: nil)
     private let homeLabel = NSTextField(wrappingLabelWithString: "")
@@ -587,7 +589,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowThresholdPopup.target = self
         lowThresholdPopup.action = #selector(notificationsChanged)
         for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox,
-                    notifyLowCheckbox, notifyHomeCheckbox] {
+                    notifyLowCheckbox, notifyTyreCheckbox, notifyBatteryWarningCheckbox, notifyHomeCheckbox] {
             box.target = self
             box.action = #selector(notificationsChanged)
         }
@@ -612,6 +614,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         homeRow.orientation = .horizontal
         let stack = NSStackView(views: [
             notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow,
+            notifyTyreCheckbox, notifyBatteryWarningCheckbox,
             notifyHomeCheckbox, homeRow, homeLabel
         ])
         stack.orientation = .vertical
@@ -743,6 +746,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyDoneCheckbox.state = Preferences.notifyChargingComplete ? .on : .off
         notifyProblemCheckbox.state = Preferences.notifyChargingProblem ? .on : .off
         notifyLowCheckbox.state = Preferences.notifyLowBattery ? .on : .off
+        notifyTyreCheckbox.state = Preferences.notifyTyrePressure ? .on : .off
+        notifyBatteryWarningCheckbox.state = Preferences.notifyBatteryWarning ? .on : .off
         notifyHomeCheckbox.state = Preferences.notifyParkedAtHome ? .on : .off
         refreshHomeRow()
         lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
@@ -784,6 +789,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyChargingComplete = (notifyDoneCheckbox.state == .on)
         Preferences.notifyChargingProblem = (notifyProblemCheckbox.state == .on)
         Preferences.notifyLowBattery = (notifyLowCheckbox.state == .on)
+        Preferences.notifyTyrePressure = (notifyTyreCheckbox.state == .on)
+        Preferences.notifyBatteryWarning = (notifyBatteryWarningCheckbox.state == .on)
         Preferences.notifyParkedAtHome = (notifyHomeCheckbox.state == .on)
         if lowThresholdPopup.indexOfSelectedItem >= 0 {
             Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]

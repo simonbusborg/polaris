@@ -215,6 +215,18 @@
 "reached its time limit" = "heeft de tijdslimiet bereikt";
 "temporarily unavailable" = "tijdelijk niet beschikbaar";
 
+/* Health warnings: tyre pressure and the 12V battery (Data Portal health scope) */
+"Front left" = "Linksvoor";
+"Front right" = "Rechtsvoor";
+"Rear left" = "Linksachter";
+"Rear right" = "Rechtsachter";
+"%@ tyre pressure low" = "%@ lage bandendruk";
+"12V battery warning" = "12V-accuwaarschuwing";
+"Tyre pressure low" = "Lage bandendruk";
+"The one fault that can leave the car unable to start" = "De ene storing die kan voorkomen dat de auto start";
+"Tyre pressure" = "Bandendruk";
+"12V battery" = "12V-accu";
+
 /* Climate row wording */
 "Heating to %@" = "Verwarmt naar %@";
 "Cooling to %@" = "Koelt naar %@";

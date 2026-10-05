@@ -100,7 +100,7 @@ final class FormattingTests: XCTestCase {
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
                     odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
-                    serviceWarning: false, fluidWarnings: [], imageData: nil,
+                    serviceWarning: false, fluidWarnings: [], tyreWarnings: [], batteryWarning: false, imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
@@ -122,7 +122,7 @@ final class FormattingTests: XCTestCase {
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
                     odometerMeters: odometerMeters, daysToService: nil, distanceToServiceKm: nil,
-                    serviceWarning: false, fluidWarnings: [], imageData: nil,
+                    serviceWarning: false, fluidWarnings: [], tyreWarnings: [], batteryWarning: false, imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil,
                     odometerReportedAt: odometerAge.map { Date(timeIntervalSinceNow: -$0) },
                     grpcExtras: connection.map {
@@ -194,7 +194,7 @@ final class FormattingTests: XCTestCase {
                     modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                     ownerFirstName: nil,
                     odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
-                    serviceWarning: false, fluidWarnings: [], imageData: nil,
+                    serviceWarning: false, fluidWarnings: [], tyreWarnings: [], batteryWarning: false, imageData: nil,
                     lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                     grpcExtras: connection.map {
                         GrpcBatteryExtras(chargerConnectionStatus: $0, chargingPowerWatts: nil,
@@ -252,7 +252,7 @@ final class FormattingTests: XCTestCase {
                 modelName: nil, modelYear: nil, registrationNo: nil, vin: nil, spec: nil,
                 ownerFirstName: nil,
                 odometerMeters: nil, daysToService: nil, distanceToServiceKm: nil,
-                serviceWarning: false, fluidWarnings: [], imageData: nil,
+                serviceWarning: false, fluidWarnings: [], tyreWarnings: [], batteryWarning: false, imageData: nil,
                 lastUpdated: Date(), carReportedAt: nil, odometerReportedAt: nil,
                 grpcExtras: nil)
     }

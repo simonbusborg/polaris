@@ -32,6 +32,11 @@ struct CarData {
     let distanceToServiceKm: Int?
     let serviceWarning: Bool
     let fluidWarnings: [String]
+    /// Wheel names ("Front left"…) with a low-pressure warning. Empty when
+    /// the model or credential doesn't report tyre pressure.
+    let tyreWarnings: [String]
+    /// The one fault that strands an EV rather than merely annoying it.
+    let batteryWarning: Bool
     let imageData: Data?
     let lastUpdated: Date
     /// When the car itself last reported battery data (API event timestamp).
@@ -328,6 +333,8 @@ final class PolestarAPI {
                     distanceToServiceKm: t.distanceToServiceKm,
                     serviceWarning: t.serviceWarning,
                     fluidWarnings: t.fluidWarnings,
+                    tyreWarnings: t.tyreWarnings,
+                    batteryWarning: t.batteryWarning,
                     imageData: carImageData,
                     lastUpdated: Date(),
                     carReportedAt: t.carReportedAt,
@@ -418,6 +425,8 @@ final class PolestarAPI {
             distanceToServiceKm: health?["distanceToServiceKm"] as? Int,
             serviceWarning: warning,
             fluidWarnings: fluids,
+            tyreWarnings: summary.tyres,
+            batteryWarning: summary.batteryWarning,
             imageData: carImageData,
             lastUpdated: Date(),
             carReportedAt: carReportedAt,
@@ -440,9 +449,13 @@ final class PolestarAPI {
         return Date(timeIntervalSince1970: seconds)
     }
 
-    /// Service and fluid warnings — only surfaced when the car actually
-    /// complains. `health` may be nil when the car reported none.
-    static func healthSummary(_ health: [String: Any]?) -> (warning: Bool, fluids: [String]) {
+    /// Service, fluid, tyre and 12V battery warnings — only surfaced when
+    /// the car actually complains. `health` may be nil when the car
+    /// reported none. Tyre and battery fields are Data Portal only: the
+    /// MyStar GraphQL query above never asks for them, so this just finds
+    /// nothing there and returns empty, same as any other missing scope.
+    static func healthSummary(_ health: [String: Any]?)
+        -> (warning: Bool, fluids: [String], tyres: [String], batteryWarning: Bool) {
         let warning: Bool
         if let sw = health?["serviceWarning"] as? String {
             warning = !sw.contains("NO_WARNING") && !sw.contains("UNSPECIFIED")
@@ -463,7 +476,26 @@ final class PolestarAPI {
                 .replacingOccurrences(of: "_", with: " ").lowercased()
             fluids.append("\(label) \(detail)")   // e.g. "Oil too low"
         }
-        return (warning, fluids)
+
+        var tyres: [String] = []
+        let tyreFields = [
+            ("tyrePressureWarningFrontLeft", L("Front left")),
+            ("tyrePressureWarningFrontRight", L("Front right")),
+            ("tyrePressureWarningRearLeft", L("Rear left")),
+            ("tyrePressureWarningRearRight", L("Rear right"))
+        ]
+        for (field, wheel) in tyreFields {
+            guard let raw = health?[field] as? String,
+                  !raw.contains("NO_WARNING"), !raw.contains("UNSPECIFIED") else { continue }
+            tyres.append(wheel)
+        }
+
+        var batteryWarning = false
+        if let bw = health?["twelveVoltBatteryWarning"] as? String {
+            batteryWarning = !bw.contains("NO_WARNING") && !bw.contains("UNSPECIFIED")
+        }
+
+        return (warning, fluids, tyres, batteryWarning)
     }
 
     // MARK: - Data Portal

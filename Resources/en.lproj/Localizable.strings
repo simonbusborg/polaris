@@ -217,6 +217,18 @@
 "reached its time limit" = "reached its time limit";
 "temporarily unavailable" = "temporarily unavailable";
 
+/* Health warnings: tyre pressure and the 12V battery (Data Portal health scope) */
+"Front left" = "Front left";
+"Front right" = "Front right";
+"Rear left" = "Rear left";
+"Rear right" = "Rear right";
+"%@ tyre pressure low" = "%@ tyre pressure low";
+"12V battery warning" = "12V battery warning";
+"Tyre pressure low" = "Tyre pressure low";
+"The one fault that can leave the car unable to start" = "The one fault that can leave the car unable to start";
+"Tyre pressure" = "Tyre pressure";
+"12V battery" = "12V battery";
+
 /* Climate row wording */
 "Heating to %@" = "Heating to %@";
 "Cooling to %@" = "Cooling to %@";

@@ -215,6 +215,18 @@
 "reached its time limit" = "atingiu o limite de tempo";
 "temporarily unavailable" = "temporariamente indisponível";
 
+/* Health warnings: tyre pressure and the 12V battery (Data Portal health scope) */
+"Front left" = "Dianteira esquerda";
+"Front right" = "Dianteira direita";
+"Rear left" = "Traseira esquerda";
+"Rear right" = "Traseira direita";
+"%@ tyre pressure low" = "%@ pressão dos pneus baixa";
+"12V battery warning" = "Aviso da bateria de 12V";
+"Tyre pressure low" = "Pressão dos pneus baixa";
+"The one fault that can leave the car unable to start" = "A única falha que pode deixar o carro sem arrancar";
+"Tyre pressure" = "Pressão dos pneus";
+"12V battery" = "Bateria de 12V";
+
 /* Climate row wording */
 "Heating to %@" = "A aquecer para %@";
 "Cooling to %@" = "A arrefecer para %@";

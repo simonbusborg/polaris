@@ -51,6 +51,8 @@ struct DataPortalTelemetry {
     let distanceToServiceKm: Int?
     let serviceWarning: Bool
     let fluidWarnings: [String]
+    let tyreWarnings: [String]
+    let batteryWarning: Bool
     /// From `availability`: DRIVING, ENGINE_ON, INACTIVE… nil when unknown.
     let usageMode: String?
     let climate: ClimateStatus?
@@ -194,6 +196,8 @@ final class PolestarDataPortal {
             distanceToServiceKm: number(health?["distanceToServiceKm"]).map { Int($0) },
             serviceWarning: summary.warning,
             fluidWarnings: summary.fluids,
+            tyreWarnings: summary.tyres,
+            batteryWarning: summary.batteryWarning,
             usageMode: enumCase(availability?["usageMode"], prefix: "USAGE_MODE_"),
             climate: climate.flatMap(Self.climate(from:)),
             exterior: exterior.flatMap(Self.exterior(from:)),

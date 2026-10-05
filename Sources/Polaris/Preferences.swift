@@ -111,6 +111,18 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_low_battery") }
     }
 
+    static var notifyTyrePressure: Bool {
+        get { boolDefaultTrue("notify_tyre_pressure") }
+        set { d.set(newValue, forKey: "notify_tyre_pressure") }
+    }
+
+    /// On by default: a dead 12V is the one fault that strands an EV,
+    /// same severity class as a charging problem.
+    static var notifyBatteryWarning: Bool {
+        get { boolDefaultTrue("notify_battery_warning") }
+        set { d.set(newValue, forKey: "notify_battery_warning") }
+    }
+
     /// Off until the owner has set a home; a reminder about a place that
     /// isn't defined would only ever be silent or wrong.
     static var notifyParkedAtHome: Bool {

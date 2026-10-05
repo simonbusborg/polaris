@@ -270,7 +270,8 @@ final class StatusItemController {
                 serviceSoon = days < 30
                 stats.append((L("Service"), service))
             }
-            if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty {
+            if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty
+                || !data.tyreWarnings.isEmpty || data.batteryWarning {
                 menu.addItem(.separator())
                 stats.forEach {
                     menu.addItem(kvItem($0.0, $0.1, valueWarning: $0.0 == L("Service") && serviceSoon))
@@ -279,6 +280,12 @@ final class StatusItemController {
                     menu.addItem(rowItem("⚠︎ " + L("Service warning"), warning: true))
                 }
                 data.fluidWarnings.forEach { menu.addItem(rowItem("⚠︎ \($0)", warning: true)) }
+                data.tyreWarnings.forEach {
+                    menu.addItem(rowItem("⚠︎ " + String(format: L("%@ tyre pressure low"), $0), warning: true))
+                }
+                if data.batteryWarning {
+                    menu.addItem(rowItem("⚠︎ " + L("12V battery warning"), warning: true))
+                }
             }
 
             menu.addItem(.separator())

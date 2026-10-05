@@ -37,6 +37,17 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
 
         guard let old else { return }
 
+        // Rising edge only: the warning stays true for as long as the car
+        // does, and nobody wants it repeated every refresh of a long drive.
+        if old.tyreWarnings.isEmpty, !new.tyreWarnings.isEmpty, Preferences.notifyTyrePressure {
+            post(title: L("Tyre pressure low"),
+                 body: new.tyreWarnings.joined(separator: ", "))
+        }
+        if !old.batteryWarning, new.batteryWarning, Preferences.notifyBatteryWarning {
+            post(title: L("12V battery warning"),
+                 body: L("The one fault that can leave the car unable to start"))
+        }
+
         let done = new.statusKey == "DONE" || new.batteryPercentage >= 99.5
         let trouble = new.statusKey == "ERROR" || new.statusKey == "FAULT"
 

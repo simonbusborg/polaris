@@ -215,6 +215,18 @@
 "reached its time limit" = "nådde tidsgrensen";
 "temporarily unavailable" = "midlertidig utilgjengelig";
 
+/* Health warnings: tyre pressure and the 12V battery (Data Portal health scope) */
+"Front left" = "Venstre fram";
+"Front right" = "Høyre fram";
+"Rear left" = "Venstre bak";
+"Rear right" = "Høyre bak";
+"%@ tyre pressure low" = "%@ lavt dekktrykk";
+"12V battery warning" = "12V-batterivarsel";
+"Tyre pressure low" = "Lavt dekktrykk";
+"The one fault that can leave the car unable to start" = "Den ene feilen som kan gjøre at bilen ikke starter";
+"Tyre pressure" = "Dekktrykk";
+"12V battery" = "12V-batteri";
+
 /* Climate row wording */
 "Heating to %@" = "Varmer til %@";
 "Cooling to %@" = "Kjøler til %@";
