@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Polaris 3.2.0</title>
+<style>
+  /* Sparkle renders this in a small WebView that follows the system
+     appearance, so the page has to work in both and stay legible at
+     roughly 500 points wide. */
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    padding: 18px 20px 22px;
+    font: 13px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    color: #1d1d1f;
+    background: #fff;
+  }
+  h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
+  .date { margin: 2px 0 16px; font-size: 12px; color: #6e6e73; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 7px; }
+  a { color: #0a6cff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer { margin-top: 18px; font-size: 12px; color: #6e6e73; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #f2f2f7; background: #1e1e1e; }
+    .date, footer { color: #9a9aa0; }
+    a { color: #6cb1ff; }
+  }
+</style>
+</head>
+<body>
+  <h1>Polaris 3.2.0</h1>
+  <p class="date">October 5, 2026</p>
+  <ul>
+      <li>Remind when the car is left open or unlocked (#14)</li>
+      <li>Add debug overrides to preview the tyre and 12V battery rows</li>
+      <li>Fall back to the single-arch build path in make app</li>
+      <li>Surface tyre pressure and 12V battery warnings from the health domain (#15)</li>
+      <li>Let Claude say where the car is parked, if the owner allows it</li>
+  </ul>
+  <footer><a href="https://github.com/simonbusborg/polaris/compare/v3.0.0...v3.2.0">All changes on GitHub</a></footer>
+</body>
+</html>
