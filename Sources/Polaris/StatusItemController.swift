@@ -270,8 +270,18 @@ final class StatusItemController {
                 serviceSoon = days < 30
                 stats.append((L("Service"), service))
             }
+            // `defaults write com.weareheavy.polaris debug_tyre_warning -bool true`
+            // and `debug_battery_warning` fake a warning on a healthy car, same
+            // reason as debug_climate: to see the row without waiting for a
+            // real flat tyre or a dying 12V.
+            var tyreWarnings = data.tyreWarnings
+            if UserDefaults.standard.bool(forKey: "debug_tyre_warning"), tyreWarnings.isEmpty {
+                tyreWarnings = [L("Front left")]
+            }
+            var batteryWarning = data.batteryWarning
+            if UserDefaults.standard.bool(forKey: "debug_battery_warning") { batteryWarning = true }
             if !stats.isEmpty || data.serviceWarning || !data.fluidWarnings.isEmpty
-                || !data.tyreWarnings.isEmpty || data.batteryWarning {
+                || !tyreWarnings.isEmpty || batteryWarning {
                 menu.addItem(.separator())
                 stats.forEach {
                     menu.addItem(kvItem($0.0, $0.1, valueWarning: $0.0 == L("Service") && serviceSoon))
@@ -280,10 +290,10 @@ final class StatusItemController {
                     menu.addItem(rowItem("⚠︎ " + L("Service warning"), warning: true))
                 }
                 data.fluidWarnings.forEach { menu.addItem(rowItem("⚠︎ \($0)", warning: true)) }
-                data.tyreWarnings.forEach {
+                tyreWarnings.forEach {
                     menu.addItem(rowItem("⚠︎ " + String(format: L("%@ tyre pressure low"), $0), warning: true))
                 }
-                if data.batteryWarning {
+                if batteryWarning {
                     menu.addItem(rowItem("⚠︎ " + L("12V battery warning"), warning: true))
                 }
             }
