@@ -1,6 +1,9 @@
 APP     = Polaris.app
-# Universal builds land under .build/apple, not .build/release.
-BINARY  = .build/apple/Products/Release/Polaris
+# A universal build lands under .build/apple; a toolchain that won't fatten
+# x86_64 into the deployment target any more (deprecated there) silently
+# drops back to a plain single-arch build under .build/release instead.
+# Prefer the universal one when both exist.
+BINARY  = $(firstword $(wildcard .build/apple/Products/Release/Polaris .build/release/Polaris))
 DMG     = Polaris.dmg
 
 # Code-signing identity. Default "-" is ad-hoc (local builds); CI passes a
@@ -27,9 +30,9 @@ BUILD   = $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Resources/
 
 # The widget extension, hand-assembled like the app bundle around it.
 WIDGET  = $(APP)/Contents/PlugIns/PolarisWidget.appex
-WIDGET_BINARY = .build/apple/Products/Release/PolarisWidget
+WIDGET_BINARY = $(firstword $(wildcard .build/apple/Products/Release/PolarisWidget .build/release/PolarisWidget))
 # The helper Claude launches. It only reads Polaris's snapshot.
-MCP_BINARY = .build/apple/Products/Release/PolarisMCP
+MCP_BINARY = $(firstword $(wildcard .build/apple/Products/Release/PolarisMCP .build/release/PolarisMCP))
 ENT     = build
 
 # Where SwiftPM unpacked Sparkle's xcframework. The version is in the path,
