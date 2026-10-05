@@ -227,6 +227,9 @@
 "Tyre pressure" = "Rengaspaine";
 "12V battery" = "12V-akku";
 
+/* Left open or unlocked reminder (#14) */
+"Left open or unlocked" = "Auki tai lukitsematon";
+
 /* Climate row wording */
 "Heating to %@" = "Lämmittää %@:seen";
 "Cooling to %@" = "Jäähdyttää %@:seen";

@@ -122,3 +122,41 @@ enum HomeWatch {
                        state: State(unpluggedSince: since, warned: state.warned || notify))
     }
 }
+
+/// Decides when "left open or unlocked" fires: parked, not in use, and
+/// something open or unlocked for longer than the grace period. Pure, like
+/// `HomeWatch` — no home needed, this one fires anywhere the car is parked.
+enum OpenWatch {
+
+    /// How long something may sit open or unlocked before the reminder
+    /// fires — long enough to carry groceries in, short enough that a
+    /// forgotten door doesn't sit that way all night.
+    static let grace: TimeInterval = 5 * 60
+
+    struct State: Equatable {
+        /// When the car was first seen parked and exposed, nil otherwise.
+        var exposedSince: Date?
+        /// Fired for this stay already; re-arms once it's shut and locked,
+        /// or the car is driven again.
+        var warned: Bool
+    }
+
+    struct Outcome: Equatable {
+        let notify: Bool
+        let state: State
+    }
+
+    static func evaluate(exposed: Bool, inUse: Bool,
+                         state: State, now: Date = Date()) -> Outcome {
+        // Shut and locked, or moving: not a situation to nag about. Reset
+        // so the next time it's left open starts a fresh clock.
+        guard exposed, !inUse else {
+            return Outcome(notify: false, state: State(exposedSince: nil, warned: false))
+        }
+        let since = state.exposedSince ?? now
+        let overdue = now.timeIntervalSince(since) >= grace
+        let notify = overdue && !state.warned
+        return Outcome(notify: notify,
+                       state: State(exposedSince: since, warned: state.warned || notify))
+    }
+}

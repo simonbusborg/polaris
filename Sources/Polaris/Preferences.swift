@@ -130,6 +130,13 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_parked_at_home") }
     }
 
+    /// Off by default: unlike the health warnings this isn't reporting a
+    /// fault, just a habit the owner may not want watched.
+    static var notifyLeftOpen: Bool {
+        get { d.bool(forKey: "notify_left_open") }
+        set { d.set(newValue, forKey: "notify_left_open") }
+    }
+
     /// Off until the owner turns it on: the Claude pane promised for two
     /// versions that the position stays private, so sharing it is a choice.
     static var shareLocationWithClaude: Bool {
@@ -166,6 +173,18 @@ enum Preferences {
     static func setHomeWatch(_ state: HomeWatch.State, vin: String) {
         d.set(state.unpluggedSince, forKey: "home_unplugged_since_" + vin)
         d.set(state.warned, forKey: "home_warned_" + vin)
+    }
+
+    /// The left-open reminder's memory for one car, same reason as
+    /// `homeWatch`: quitting Polaris must not re-arm a reminder mid-stay.
+    static func openWatch(vin: String) -> OpenWatch.State {
+        OpenWatch.State(exposedSince: d.object(forKey: "open_exposed_since_" + vin) as? Date,
+                        warned: d.bool(forKey: "open_warned_" + vin))
+    }
+
+    static func setOpenWatch(_ state: OpenWatch.State, vin: String) {
+        d.set(state.exposedSince, forKey: "open_exposed_since_" + vin)
+        d.set(state.warned, forKey: "open_warned_" + vin)
     }
 
     static var lowBatteryThreshold: Int {

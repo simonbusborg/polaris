@@ -162,6 +162,13 @@ struct CarData {
         default: return nil
         }
     }
+
+    /// A door, the tailgate or a window ajar, or the car unlocked. nil when
+    /// the car hasn't reported its exterior at all (no Data Portal scope).
+    var isExposed: Bool? {
+        guard let exterior else { return nil }
+        return !exterior.allShut || exterior.locked == false
+    }
 }
 
 enum PolestarError: Error, LocalizedError {

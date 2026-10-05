@@ -34,6 +34,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         // that drained while it wasn't running.
         checkLowBattery(new)
         checkParkedAtHome(new)
+        checkLeftOpen(new)
 
         guard let old else { return }
 
@@ -100,6 +101,28 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         guard outcome.notify, Preferences.notifyParkedAtHome else { return }
         post(title: L("Parked at home, not charging"),
              body: String(format: L("%.0f%% · the charger isn't connected"), new.batteryPercentage))
+    }
+
+    /// A door, the tailgate, a window or the lock, once per stay, after the
+    /// grace period in `OpenWatch`. Needs the Data Portal: only it reports
+    /// which parts are open and whether the car is locked.
+    ///
+    /// `defaults write com.weareheavy.polaris debug_left_open -bool true`
+    /// holds the car exposed regardless of what it actually reports, same
+    /// reason as debug_tyre_warning: to see the reminder fire (after the
+    /// real grace period — this only fakes the input, not the wait) without
+    /// leaving a door open for five minutes on purpose.
+    private func checkLeftOpen(_ new: CarData) {
+        let vin = new.vin ?? Preferences.vin
+        let state = Preferences.openWatch(vin: vin)
+        let debugExposed = UserDefaults.standard.bool(forKey: "debug_left_open")
+        let outcome = OpenWatch.evaluate(exposed: new.isExposed == true || debugExposed,
+                                         inUse: new.isDriving, state: state)
+        if outcome.state != state { Preferences.setOpenWatch(outcome.state, vin: vin) }
+        guard outcome.notify, Preferences.notifyLeftOpen else { return }
+        var parts = new.exterior?.openings.map { StatusItemController.openingName($0) } ?? []
+        if new.exterior?.locked == false { parts.append(L("Unlocked")) }
+        post(title: L("Left open or unlocked"), body: parts.isEmpty ? L("Unlocked") : parts.joined(separator: ", "))
     }
 
     private func post(title: String, body: String) {

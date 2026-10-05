@@ -227,6 +227,9 @@
 "Tyre pressure" = "Däcktryck";
 "12V battery" = "12V-batteri";
 
+/* Left open or unlocked reminder (#14) */
+"Left open or unlocked" = "Öppen eller olåst";
+
 /* Climate row wording */
 "Heating to %@" = "Värmer till %@";
 "Cooling to %@" = "Kyler till %@";

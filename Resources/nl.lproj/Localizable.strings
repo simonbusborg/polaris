@@ -227,6 +227,9 @@
 "Tyre pressure" = "Bandendruk";
 "12V battery" = "12V-accu";
 
+/* Left open or unlocked reminder (#14) */
+"Left open or unlocked" = "Open of niet vergrendeld";
+
 /* Climate row wording */
 "Heating to %@" = "Verwarmt naar %@";
 "Cooling to %@" = "Koelt naar %@";

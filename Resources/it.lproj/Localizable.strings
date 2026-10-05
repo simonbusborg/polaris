@@ -227,6 +227,9 @@
 "Tyre pressure" = "Pressione pneumatici";
 "12V battery" = "Batteria 12V";
 
+/* Left open or unlocked reminder (#14) */
+"Left open or unlocked" = "Aperta o sbloccata";
+
 /* Climate row wording */
 "Heating to %@" = "Riscalda a %@";
 "Cooling to %@" = "Raffredda a %@";

@@ -65,6 +65,38 @@ final class CarStatusTests: XCTestCase {
         XCTAssertFalse(HomeWatch.evaluate(atHome: true, pluggedIn: nil, inUse: false, state: idle, now: t0).notify)
     }
 
+    // MARK: OpenWatch
+
+    private let shut = OpenWatch.State(exposedSince: nil, warned: false)
+
+    func testLeavingItOpenStartsTheClockWithoutFiring() {
+        let out = OpenWatch.evaluate(exposed: true, inUse: false, state: shut, now: t0)
+        XCTAssertFalse(out.notify)
+        XCTAssertEqual(out.state.exposedSince, t0)
+        XCTAssertFalse(out.state.warned)
+    }
+
+    func testOpenWatchFiresOnceAfterTheGracePeriod() {
+        let waiting = OpenWatch.State(exposedSince: t0, warned: false)
+        let soon = OpenWatch.evaluate(exposed: true, inUse: false,
+                                      state: waiting, now: t0.addingTimeInterval(OpenWatch.grace - 1))
+        XCTAssertFalse(soon.notify)
+        let due = OpenWatch.evaluate(exposed: true, inUse: false,
+                                     state: waiting, now: t0.addingTimeInterval(OpenWatch.grace))
+        XCTAssertTrue(due.notify)
+        XCTAssertTrue(due.state.warned)
+        let again = OpenWatch.evaluate(exposed: true, inUse: false,
+                                       state: due.state, now: t0.addingTimeInterval(OpenWatch.grace * 3))
+        XCTAssertFalse(again.notify)
+    }
+
+    func testShuttingItOrDrivingResets() {
+        let warned = OpenWatch.State(exposedSince: t0, warned: true)
+        XCTAssertEqual(OpenWatch.evaluate(exposed: false, inUse: false, state: warned, now: t0).state, shut)
+        // Driving off with a window down is not a reminder to stop for.
+        XCTAssertEqual(OpenWatch.evaluate(exposed: true, inUse: true, state: warned, now: t0).state, shut)
+    }
+
     // MARK: Row wording
 
     func testAgeSuffixOnlyWhenStale() {
