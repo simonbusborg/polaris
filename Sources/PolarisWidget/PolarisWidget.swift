@@ -187,6 +187,11 @@ private struct StatusLabel: View {
             .labelStyle(.titleAndIcon)
             .font(.caption)
             .foregroundStyle(snapshot.isCharging ? Color.green : Color.secondary)
+            .lineLimit(1)
+            // The timestamp next to this is the less important of the two —
+            // a long status wrapping onto a second line looked cramped, so
+            // the status text holds its width and the timestamp gives way.
+            .layoutPriority(1)
     }
 }
 
@@ -488,6 +493,7 @@ struct LargeCarView: View {
 
 struct PolarisWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
     let entry: CarEntry
 
     var body: some View {
@@ -505,6 +511,11 @@ struct PolarisWidgetEntryView: View {
                 NoData(problem: entry.problem ?? .nothingPolledYet)
             }
         }
+        // widgetAccentable cascades as an environment value, so setting it
+        // once here covers every Text/Shape below. macOS's Tinted/Clear
+        // widget appearance doesn't just desaturate content that isn't
+        // marked — it hides it outright, which made whole widgets go blank.
+        .widgetAccentable(renderingMode != .fullColor)
         .widgetURL(URL(string: "polaris://open"))
         .widgetBackground()
     }
