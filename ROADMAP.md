@@ -47,7 +47,12 @@ can be promised before someone has tried it.
 
 - **[Charging history](https://github.com/simonbusborg/polaris/issues/5)** — a log of recent sessions rather than only what's
   happening right now. The Data Portal keeps no history either, so this is
-  ours to record.
+  ours to record, from the readings Polaris already polls. A throwaway
+  prototype (October 2026) found the limits: energy added has to be
+  estimated from the charge level and an assumed battery size, since the
+  portal reports no usable capacity; a charge Polaris sleeps through shows
+  only its before and after; and a charge away from home while the Mac is
+  asleep can't be seen at all.
 
 ## Shipped
 
@@ -58,6 +63,9 @@ can be promised before someone has tried it.
   "rejected". Credentials saved before this version get a date counted
   from when they were last saved; check it, since the real one may be
   earlier.
+- **Who the Data Portal is for** (v3.3.0) — Settings → Data Portal now
+  says the portal is open only to owners in the EU/EEA, and that elsewhere
+  Polaris keeps reading the car through the login.
 - **Something left open** (v3.2.0) — a notification when the car has been
   parked a few minutes with a door, the tailgate or a window open, or
   unlocked, and nobody is in it. Opt-in under Settings → Notifications, once
