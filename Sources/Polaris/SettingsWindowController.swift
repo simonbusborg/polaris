@@ -364,6 +364,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let blurb = NSTextField(wrappingLabelWithString:
             L("Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture."))
         blurb.textColor = .secondaryLabelColor
+        // Polestar's portal turns non-EU/EEA owners away at sign-up, and
+        // without this they'd go looking for a setup step they can't take.
+        let region = NSTextField(wrappingLabelWithString: L("The Data Portal is open only to owners in the EU/EEA. Elsewhere, Polaris keeps reading your car through your login, without the portal's extra rows."))
+        region.textColor = .secondaryLabelColor
 
         // Same labels, same order as the portal's Credential page, so the
         // three values can be copied top to bottom without re-reading.
@@ -398,7 +402,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         buttons.spacing = 8
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let stack = NSStackView(views: [blurb, form, portalStatus, buttons])
+        let stack = NSStackView(views: [blurb, region, form, portalStatus, buttons])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 18

@@ -30,6 +30,8 @@ Sibling project of [Teslaris](https://github.com/simonbusborg/teslaris)
   climate with its countdown, the charge limit, locks and anything left open,
   and where the car is: a small map and the street, both from Apple, which
   open in Maps on click
+- The portal is open only to owners in the EU/EEA. Elsewhere Polaris reads
+  the car through the login alone, without the portal's extra rows
 - Optional, with the portal: a reminder when the car has been parked at home
   for ten minutes without the charger connected. Home is a point you save
   from the car's own position; no address is looked up or stored
