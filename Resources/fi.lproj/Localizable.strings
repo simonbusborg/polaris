@@ -237,3 +237,15 @@
 "%d min" = "%d min";
 "On" = "Päällä";
 "%d open" = "%d auki";
+
+/* Data Portal credential expiry (#16) */
+"Data Portal credential expired — create a new one at data-portal.polestar.com" = "Data Portal -tunnistetiedot ovat vanhentuneet — luo uudet osoitteessa data-portal.polestar.com";
+"Data Portal credential expires in a week" = "Data Portal -tunnistetiedot vanhenevat viikon kuluttua";
+"On %@. Create a new one at data-portal.polestar.com and paste it in Settings." = "%@. Luo uudet osoitteessa data-portal.polestar.com ja liitä ne Asetuksiin.";
+"Data Portal credential expires today" = "Data Portal -tunnistetiedot vanhenevat tänään";
+"Create a new one at data-portal.polestar.com and paste it in Settings, or Polaris falls back to your login." = "Luo uudet osoitteessa data-portal.polestar.com ja liitä ne Asetuksiin, tai Polaris palaa käyttämään kirjautumistasi.";
+"Data Portal credential about to expire" = "Data Portal -tunnistetiedot vanhenemassa";
+"Expires" = "Vanhenee";
+"expired" = "vanhentunut";
+"today" = "tänään";
+"tomorrow" = "huomenna";

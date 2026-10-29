@@ -37,20 +37,6 @@ comment describing where it now stands.
   access with registered apps instead, which would make setup a consent
   click and keep the secret out of everyone's hands. Registration has been
   requested; this waits on Polestar's answer.
-- **[Something left open](https://github.com/simonbusborg/polaris/issues/14)** — the Doors row already says which door, the
-  tailgate or a window is ajar. This makes it a reminder: the car has been
-  parked a few minutes with something open, or unlocked, and nobody is in
-  it. Opt-in under Notifications like the parked-at-home reminder, once per
-  stay, and quiet while the car is in use.
-- **[Tyres and the 12V battery](https://github.com/simonbusborg/polaris/issues/15)** — the Data Portal's health domain reports
-  tyre pressure per wheel, the 12V battery and the lights, and Polaris reads
-  only the service interval and fluids from it. A tyre warning becomes a row
-  and a notification; a failing 12V battery is the one fault that strands an
-  EV, so it gets the same.
-- **[Credential expiry](https://github.com/simonbusborg/polaris/issues/16)** — a Data Portal
-  credential lives 90 days and Polaris doesn't know when it dies. An expiry
-  date in Settings, a reminder a week before and on the day with a button to
-  the portal, and a failure row that says "expired" instead of "rejected".
 - **A map widget** — the menu has the map; a widget size built around it is
   a different piece of work and waits until the rows above have settled.
 
@@ -65,6 +51,21 @@ can be promised before someone has tried it.
 
 ## Shipped
 
+- **Credential expiry** (v3.3.0) — a Data Portal credential lives 90 days,
+  and Polaris now keeps the date: shown under Settings → Data Portal and
+  correctable there, a reminder a week before and on the day with a button
+  to the portal, and a failure row that says "expired" instead of
+  "rejected". Credentials saved before this version get a date counted
+  from when they were last saved; check it, since the real one may be
+  earlier.
+- **Something left open** (v3.2.0) — a notification when the car has been
+  parked a few minutes with a door, the tailgate or a window open, or
+  unlocked, and nobody is in it. Opt-in under Settings → Notifications, once
+  per stay, quiet while the car is in use.
+- **Tyres and the 12V battery** (v3.2.0) — tyre pressure and 12V battery
+  warnings from the Data Portal's health domain become a row in the menu and
+  a notification, each switchable under Notifications. Not every model
+  reports remote diagnostics, so some cars may never show them.
 - **Claude can say where the car is** (v3.1.0) — a switch under Settings →
   Claude, off by default, lets the helper answer "where is my car?" with the
   same words the widget shows: Home, or a street and town. Never a

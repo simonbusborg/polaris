@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installMainMenu()
         Preferences.migrateLegacyPassword()
         Accounts.migrateSingleAccount()
+        CredentialExpiry.backfill()
 
         statusController = StatusItemController(
             onRefresh: { [weak self] in self?.refreshNow() },
@@ -280,6 +281,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 onAccountChange: { [weak self] in
                     guard let self else { return }
                     self.applyLaunchAtLogin()
+                    // A removed account takes its credential, and so its
+                    // reminders, with it.
+                    Notifier.scheduleCredentialExpiryReminders()
                     // Signing out of the last account leaves nothing to
                     // start a session with. Send them back to the front
                     // door rather than to an error row in the menu.
@@ -290,6 +294,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     }
                 },
                 onDataPortalChange: { [weak self] in
+                    Notifier.scheduleCredentialExpiryReminders()
                     self?.refreshNow()
                 },
                 dataPortalError: { [weak self] in

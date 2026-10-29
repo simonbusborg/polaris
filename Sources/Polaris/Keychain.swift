@@ -81,6 +81,17 @@ enum Keychain {
         delete(account: scoped(dataPortalAccount, email))
     }
 
+    /// When the credential item was last written; see `CredentialExpiry.backfill()`.
+    static func dataPortalCredentialsSavedAt(account email: String = Accounts.active) -> Date? {
+        var query = baseQuery(account: scoped(dataPortalAccount, email))
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let attributes = item as? [String: Any] else { return nil }
+        return attributes[kSecAttrCreationDate as String] as? Date
+    }
+
     // MARK: - Pre-multi-account items (read once, then removed)
 
     static func readLegacyPassword() throws -> String? { try read(account: passwordAccount) }

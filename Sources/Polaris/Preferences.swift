@@ -123,6 +123,13 @@ enum Preferences {
         set { d.set(newValue, forKey: "notify_battery_warning") }
     }
 
+    /// On by default: without it the first sign of an expired credential is
+    /// Polaris quietly losing half its rows.
+    static var notifyCredentialExpiry: Bool {
+        get { boolDefaultTrue("notify_credential_expiry") }
+        set { d.set(newValue, forKey: "notify_credential_expiry") }
+    }
+
     /// Off until the owner has set a home; a reminder about a place that
     /// isn't defined would only ever be silent or wrong.
     static var notifyParkedAtHome: Bool {

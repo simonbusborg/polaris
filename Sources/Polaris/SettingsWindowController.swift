@@ -55,6 +55,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let notifyBatteryWarningCheckbox = NSButton(checkboxWithTitle: L("12V battery"), target: nil, action: nil)
     private let notifyOpenCheckbox = NSButton(checkboxWithTitle: L("Left open or unlocked"), target: nil, action: nil)
     private let notifyHomeCheckbox = NSButton(checkboxWithTitle: L("Parked at home without charging"), target: nil, action: nil)
+    private let notifyExpiryCheckbox = NSButton(checkboxWithTitle: L("Data Portal credential about to expire"), target: nil, action: nil)
     private let setHomeButton = NSButton(title: L("Set Home to the Car's Position"), target: nil, action: nil)
     private let homeLabel = NSTextField(wrappingLabelWithString: "")
     /// The last reading, for the home button: it saves where the car is now.
@@ -70,6 +71,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let portalSaveButton = NSButton(title: L("Verify and Save"), target: nil, action: nil)
     private let portalRemoveButton = NSButton(title: L("Remove Credential"), target: nil, action: nil)
     private let portalOpenButton = NSButton(title: L("Open Data Portal…"), target: nil, action: nil)
+    private let portalExpiryPicker = NSDatePicker()
+    private let portalExpiryLabel = NSTextField(labelWithString: "")
+    /// Set once the date has been picked by hand, so saving a new client ID
+    /// keeps the owner's date instead of resetting it to 90 days from today.
+    private var portalExpiryEdited = false
 
     private let claudeStatus = NSTextField(wrappingLabelWithString: "")
     private let claudeError = NSTextField(wrappingLabelWithString: "")
@@ -377,10 +383,23 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             field.widthAnchor.constraint(equalToConstant: Self.contentWidth).isActive = true
         }
 
+        // The portal shows no expiry and has no API for one, so the date is
+        // ours: 90 days from saving unless the owner knows better.
+        portalExpiryPicker.datePickerStyle = .textFieldAndStepper
+        portalExpiryPicker.datePickerElements = .yearMonthDay
+        portalExpiryPicker.target = self
+        portalExpiryPicker.action = #selector(portalExpiryChanged)
+        portalExpiryLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        portalExpiryLabel.textColor = .secondaryLabelColor
+        let expiryRow = NSStackView(views: [portalExpiryPicker, portalExpiryLabel])
+        expiryRow.orientation = .horizontal
+        expiryRow.spacing = 8
+
         let form = NSStackView(views: [
             field("App client ID", portalClientIdField),
             field("Expected x-client-id", portalAccountIdField),
-            field("Client secret", portalSecretField)
+            field("Client secret", portalSecretField),
+            field(L("Expires"), expiryRow)
         ])
         form.orientation = .vertical
         form.alignment = .leading
@@ -416,6 +435,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let stored = ((try? Keychain.readDataPortalCredentials()) ?? nil)?.isComplete == true
         portalRemoveButton.isHidden = !stored
         portalStatus.textColor = .secondaryLabelColor
+        refreshPortalExpiryLabel()
         if !stored {
             portalStatus.stringValue = L("Not set up. Polaris reads your car through your login.")
         } else if let error = dataPortalError() {
@@ -426,6 +446,29 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         } else {
             portalStatus.stringValue = L("Credential saved. It takes effect on the next refresh.")
         }
+    }
+
+    private func refreshPortalExpiryLabel() {
+        let days = CredentialExpiry.daysLeft(until: portalExpiryPicker.dateValue)
+        portalExpiryLabel.textColor = days <= 7 ? .systemOrange : .secondaryLabelColor
+        switch days {
+        case ..<0: portalExpiryLabel.stringValue = L("expired")
+        case 0: portalExpiryLabel.stringValue = L("today")
+        case 1: portalExpiryLabel.stringValue = L("tomorrow")
+        default: portalExpiryLabel.stringValue = String(format: L("in %d days"), days)
+        }
+    }
+
+    /// A stored credential takes a new date straight away, no re-verifying:
+    /// the date is Polaris's own note, the portal never sees it. For one
+    /// not yet saved it waits for Verify and Save like the other fields.
+    @objc private func portalExpiryChanged() {
+        portalExpiryEdited = true
+        refreshPortalExpiryLabel()
+        guard var stored = (try? Keychain.readDataPortalCredentials()) ?? nil else { return }
+        stored.expiresAt = portalExpiryPicker.dateValue
+        try? Keychain.saveDataPortalCredentials(stored)
+        onDataPortalChange()
     }
 
     @objc private func portalOpenAction() {
@@ -442,15 +485,19 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         // The secret field is never filled back in, so editing the other two
         // values would otherwise demand a secret the portal no longer shows.
         // Same client ID, empty secret: keep the one already stored.
-        if secret.isEmpty,
-           let stored = (try? Keychain.readDataPortalCredentials()) ?? nil,
-           stored.clientId == clientId {
+        let stored = (try? Keychain.readDataPortalCredentials()) ?? nil
+        if secret.isEmpty, let stored, stored.clientId == clientId {
             secret = stored.clientSecret
         }
+        // A new client ID is a new credential with a fresh 90 days, unless
+        // the owner has already picked its date.
+        let isNew = stored?.clientId != clientId
+        let expiry = isNew && !portalExpiryEdited ? CredentialExpiry.defaultExpiry() : portalExpiryPicker.dateValue
         let credentials = DataPortalCredentials(
             clientId: clientId,
             clientSecret: secret,
-            accountId: portalAccountIdField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+            accountId: portalAccountIdField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            expiresAt: expiry)
         guard credentials.isComplete else {
             portalStatus.textColor = .systemRed
             portalStatus.stringValue = L("All three fields are needed.")
@@ -468,6 +515,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
                 await MainActor.run {
                     self.portalSaveButton.isEnabled = true
                     self.portalSecretField.stringValue = ""
+                    self.portalExpiryPicker.dateValue = expiry
+                    self.portalExpiryEdited = false
+                    self.refreshPortalExpiryLabel()
                     self.portalStatus.stringValue = L("Credential saved. Fetching through the Data Portal…")
                     self.portalRemoveButton.isHidden = false
                     self.onDataPortalChange()
@@ -487,6 +537,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         portalClientIdField.stringValue = ""
         portalSecretField.stringValue = ""
         portalAccountIdField.stringValue = ""
+        portalExpiryPicker.dateValue = CredentialExpiry.defaultExpiry()
+        portalExpiryEdited = false
         refreshPortalStatus(data: nil)
         onDataPortalChange()
     }
@@ -595,7 +647,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         lowThresholdPopup.action = #selector(notificationsChanged)
         for box in [notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox,
                     notifyLowCheckbox, notifyTyreCheckbox, notifyBatteryWarningCheckbox,
-                    notifyOpenCheckbox, notifyHomeCheckbox] {
+                    notifyOpenCheckbox, notifyHomeCheckbox, notifyExpiryCheckbox] {
             box.target = self
             box.action = #selector(notificationsChanged)
         }
@@ -621,13 +673,14 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         let stack = NSStackView(views: [
             notifyStartCheckbox, notifyDoneCheckbox, notifyProblemCheckbox, lowRow,
             notifyTyreCheckbox, notifyBatteryWarningCheckbox, notifyOpenCheckbox,
-            notifyHomeCheckbox, homeRow, homeLabel
+            notifyHomeCheckbox, homeRow, homeLabel, notifyExpiryCheckbox
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
         stack.setCustomSpacing(16, after: lowRow)
         stack.setCustomSpacing(6, after: homeRow)
+        stack.setCustomSpacing(16, after: homeLabel)
         refreshHomeRow()
         return stack
     }
@@ -741,6 +794,8 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         portalClientIdField.stringValue = portal?.clientId ?? ""
         portalAccountIdField.stringValue = portal?.accountId ?? ""
         portalSecretField.stringValue = ""
+        portalExpiryPicker.dateValue = portal?.expiresAt ?? CredentialExpiry.defaultExpiry()
+        portalExpiryEdited = false
         refreshPortalStatus(data: nil)
         displayPopup.selectItem(at: DisplayOption.allCases.firstIndex(of: Preferences.displayOption) ?? 0)
         unitPopup.selectItem(at: DistanceUnit.allCases.firstIndex(of: Preferences.distanceUnit) ?? 0)
@@ -756,6 +811,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         notifyBatteryWarningCheckbox.state = Preferences.notifyBatteryWarning ? .on : .off
         notifyOpenCheckbox.state = Preferences.notifyLeftOpen ? .on : .off
         notifyHomeCheckbox.state = Preferences.notifyParkedAtHome ? .on : .off
+        notifyExpiryCheckbox.state = Preferences.notifyCredentialExpiry ? .on : .off
         refreshHomeRow()
         lowThresholdPopup.selectItem(at: LowBatteryWatch.thresholds
             .firstIndex(of: Preferences.lowBatteryThreshold) ?? 0)
@@ -800,6 +856,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         Preferences.notifyBatteryWarning = (notifyBatteryWarningCheckbox.state == .on)
         Preferences.notifyLeftOpen = (notifyOpenCheckbox.state == .on)
         Preferences.notifyParkedAtHome = (notifyHomeCheckbox.state == .on)
+        if Preferences.notifyCredentialExpiry != (notifyExpiryCheckbox.state == .on) {
+            Preferences.notifyCredentialExpiry = (notifyExpiryCheckbox.state == .on)
+            Notifier.scheduleCredentialExpiryReminders()
+        }
         if lowThresholdPopup.indexOfSelectedItem >= 0 {
             Preferences.lowBatteryThreshold = LowBatteryWatch.thresholds[lowThresholdPopup.indexOfSelectedItem]
         }

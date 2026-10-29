@@ -30,9 +30,73 @@ struct DataPortalCredentials: Codable, Equatable {
     let clientSecret: String
     /// Labelled "Account ID / x-client-id" on the portal's API page.
     let accountId: String
+    /// When the portal stops honouring the credential. Optional because
+    /// credentials saved before 3.3 carried no date; those get one from
+    /// `CredentialExpiry.backfill()` on launch.
+    var expiresAt: Date? = nil
 
     var isComplete: Bool {
         !clientId.isEmpty && !clientSecret.isEmpty && !accountId.isEmpty
+    }
+
+    func isExpired(now: Date = Date()) -> Bool {
+        expiresAt.map { $0 <= now } ?? false
+    }
+}
+
+/// The portal hands out credentials that live 90 days and has no API to
+/// ask when one ends, or to renew it. So the date is ours to keep: guessed
+/// at save time, correctable in Settings, and used for the reminders and
+/// for telling an expired credential apart from a mistyped one.
+enum CredentialExpiry {
+
+    static let lifetimeDays = 90
+    static let reminderHour = 9
+
+    static func defaultExpiry(savedAt: Date = Date(), calendar: Calendar = .current) -> Date {
+        calendar.date(byAdding: .day, value: lifetimeDays, to: calendar.startOfDay(for: savedAt))!
+    }
+
+    /// Whole calendar days from today to the expiry day; 0 on the day,
+    /// negative once it's past.
+    static func daysLeft(until expiry: Date, now: Date = Date(), calendar: Calendar = .current) -> Int {
+        calendar.dateComponents([.day], from: calendar.startOfDay(for: now),
+                                to: calendar.startOfDay(for: expiry)).day ?? 0
+    }
+
+    enum Reminder: String, CaseIterable {
+        case weekBefore = "week"
+        case onTheDay = "day"
+    }
+
+    /// When each reminder should fire: a week ahead and on the day, both in
+    /// the morning. Times already gone are left out, so a credential saved
+    /// with five days to go gets only the second.
+    static func reminders(for expiry: Date, now: Date = Date(),
+                          calendar: Calendar = .current) -> [(Reminder, Date)] {
+        let day = calendar.startOfDay(for: expiry)
+        return Reminder.allCases.compactMap { reminder in
+            let offset = reminder == .weekBefore ? -7 : 0
+            guard let date = calendar.date(byAdding: .day, value: offset, to: day),
+                  let at = calendar.date(bySettingHour: reminderHour, minute: 0, second: 0, of: date),
+                  at > now else { return nil }
+            return (reminder, at)
+        }
+    }
+
+    /// Gives every stored credential without a date the one it most likely
+    /// has: 90 days from when it was put in the Keychain. Items are
+    /// recreated on every save, so that's the last save rather than the
+    /// day the credential was made, and the real expiry can only be the
+    /// same or earlier. Settings shows the date so it can be corrected.
+    static func backfill() {
+        for email in Accounts.all {
+            guard var credentials = (try? Keychain.readDataPortalCredentials(account: email)) ?? nil,
+                  credentials.expiresAt == nil,
+                  let savedAt = Keychain.dataPortalCredentialsSavedAt(account: email) else { continue }
+            credentials.expiresAt = defaultExpiry(savedAt: savedAt)
+            try? Keychain.saveDataPortalCredentials(credentials, account: email)
+        }
     }
 }
 
@@ -66,6 +130,9 @@ enum DataPortalError: Error, LocalizedError {
     case http(Int, String)
     case parse(String)
     case unauthorized
+    /// A 401 after the expiry date: not a typo, just a credential that has
+    /// run its 90 days.
+    case expired
     case vehicleNotShared(String)
     /// 202: Polestar accepted the request but has no reading yet. Treated as
     /// "try the other path this round" rather than as a failure to show.
@@ -80,6 +147,7 @@ enum DataPortalError: Error, LocalizedError {
         case .http(let code, let m): return String(format: L("Data Portal HTTP %d: %@"), code, m)
         case .parse(let m): return String(format: L("Data Portal parse error: %@"), m)
         case .unauthorized: return L("Data Portal rejected the credentials — check them in Settings")
+        case .expired: return L("Data Portal credential expired — create a new one at data-portal.polestar.com")
         case .vehicleNotShared(let vin):
             return String(format: L("Data Portal credential has no access to %@"), vin)
         case .pending: return L("Data Portal has no reading yet")
@@ -105,6 +173,12 @@ final class PolestarDataPortal {
     private var tokenExpiry: Date?
     /// Last good answer per path, for the slow domains.
     private var cache: [String: (at: Date, json: [String: Any]?)] = [:]
+
+    /// What a refused credential means: expired if its date has passed,
+    /// otherwise wrong.
+    private var rejected: DataPortalError {
+        credentials.isExpired() ? .expired : .unauthorized
+    }
 
     init(credentials: DataPortalCredentials) {
         self.credentials = credentials
@@ -318,12 +392,12 @@ final class PolestarDataPortal {
             // Tokens live an hour; a rejected one is dropped so the next
             // round mints a fresh one instead of repeating the failure.
             accessToken = nil
-            throw DataPortalError.unauthorized
+            throw rejected
         case 403, 404:
             // The token is fine; this scope wasn't granted, or the model
             // doesn't report the domain. `vehicles` is the exception: a
             // credential that can't list its cars is one that doesn't work.
-            if path == "v1/vehicles" { throw DataPortalError.unauthorized }
+            if path == "v1/vehicles" { throw rejected }
             throw DataPortalError.domainUnavailable
         default:
             throw DataPortalError.http(status, Self.message(in: data))
@@ -354,7 +428,7 @@ final class PolestarDataPortal {
         let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         if status == 401 || status == 403 {
-            throw DataPortalError.unauthorized
+            throw rejected
         }
         guard status == 200 else {
             throw DataPortalError.http(status, Self.message(in: data))

@@ -20,8 +20,59 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         guard available else { return }
         let center = UNUserNotificationCenter.current()
         center.delegate = self
+        center.setNotificationCategories([UNNotificationCategory(
+            identifier: Self.expiryCategory,
+            actions: [UNNotificationAction(identifier: Self.openPortalAction,
+                                           title: L("Open Data Portal…"), options: [.foreground])],
+            intentIdentifiers: [])])
         center.requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
             self?.authorized = granted
+            if granted { Self.scheduleCredentialExpiryReminders() }
+        }
+    }
+
+    // MARK: - Data Portal credential expiry
+
+    private static let expiryCategory = "portal-credential-expiry"
+    private static let openPortalAction = "open-data-portal"
+    private static let portalURL = URL(string: "https://data-portal.polestar.com")!
+
+    /// Scheduled ahead rather than checked on refresh: the day a credential
+    /// dies is the day refreshes start failing, and a reminder that waits
+    /// for a good reading might never come. Rebuilt from scratch whenever a
+    /// credential, its date or the switch changes, so a renewed credential
+    /// cancels the old reminders. One pair per account.
+    static func scheduleCredentialExpiryReminders() {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
+        let center = UNUserNotificationCenter.current()
+        let accounts = Accounts.all
+        center.getPendingNotificationRequests { pending in
+            let stale = pending.map(\.identifier).filter { $0.hasPrefix(expiryCategory) }
+            center.removePendingNotificationRequests(withIdentifiers: stale)
+            guard Preferences.notifyCredentialExpiry else { return }
+            for email in accounts {
+                guard let credentials = (try? Keychain.readDataPortalCredentials(account: email)) ?? nil,
+                      credentials.isComplete, let expiry = credentials.expiresAt else { continue }
+                let when = DateFormatter.localizedString(from: expiry, dateStyle: .medium, timeStyle: .none)
+                for (reminder, at) in CredentialExpiry.reminders(for: expiry) {
+                    let content = UNMutableNotificationContent()
+                    content.categoryIdentifier = expiryCategory
+                    switch reminder {
+                    case .weekBefore:
+                        content.title = L("Data Portal credential expires in a week")
+                        content.body = String(format: L("On %@. Create a new one at data-portal.polestar.com and paste it in Settings."), when)
+                    case .onTheDay:
+                        content.title = L("Data Portal credential expires today")
+                        content.body = L("Create a new one at data-portal.polestar.com and paste it in Settings, or Polaris falls back to your login.")
+                    }
+                    if accounts.count > 1 { content.subtitle = email }
+                    let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: at)
+                    center.add(UNNotificationRequest(
+                        identifier: "\(expiryCategory).\(reminder.rawValue).\(email)",
+                        content: content,
+                        trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+                }
+            }
         }
     }
 
@@ -132,6 +183,15 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         let request = UNNotificationRequest(identifier: UUID().uuidString,
                                             content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request)
+    }
+
+    /// The expiry reminders lead to the portal, whether the button or the
+    /// banner itself is clicked; renewing is the only thing to do there.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse) async {
+        guard response.notification.request.content.categoryIdentifier == Self.expiryCategory,
+              response.actionIdentifier != UNNotificationDismissActionIdentifier else { return }
+        await MainActor.run { _ = NSWorkspace.shared.open(Self.portalURL) }
     }
 
     // Menu bar apps count as "foreground"; without this the banner is suppressed.

@@ -237,3 +237,15 @@
 "%d min" = "%d min";
 "On" = "Ligada";
 "%d open" = "%d aberta";
+
+/* Data Portal credential expiry (#16) */
+"Data Portal credential expired — create a new one at data-portal.polestar.com" = "A credencial do Data Portal expirou — crie uma nova em data-portal.polestar.com";
+"Data Portal credential expires in a week" = "A credencial do Data Portal expira dentro de uma semana";
+"On %@. Create a new one at data-portal.polestar.com and paste it in Settings." = "A %@. Crie uma nova em data-portal.polestar.com e cole-a nas Definições.";
+"Data Portal credential expires today" = "A credencial do Data Portal expira hoje";
+"Create a new one at data-portal.polestar.com and paste it in Settings, or Polaris falls back to your login." = "Crie uma nova em data-portal.polestar.com e cole-a nas Definições, ou o Polaris volta a usar o seu início de sessão.";
+"Data Portal credential about to expire" = "Credencial do Data Portal prestes a expirar";
+"Expires" = "Expira";
+"expired" = "expirada";
+"today" = "hoje";
+"tomorrow" = "amanhã";

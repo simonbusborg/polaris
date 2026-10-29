@@ -111,6 +111,59 @@ final class DataPortalTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode(DataPortalCredentials.self, from: data), c)
         XCTAssertFalse(DataPortalCredentials(clientId: "id", clientSecret: "", accountId: "acct").isComplete)
     }
+
+    func testCredentialsSavedBeforeExpiryDatesStillDecode() throws {
+        let old = Data(#"{"clientId":"id","clientSecret":"s3cret","accountId":"acct"}"#.utf8)
+        let c = try JSONDecoder().decode(DataPortalCredentials.self, from: old)
+        XCTAssertNil(c.expiresAt)
+        XCTAssertFalse(c.isExpired())
+    }
+}
+
+final class CredentialExpiryTests: XCTestCase {
+
+    private var calendar: Calendar = {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "Europe/Copenhagen")!
+        return c
+    }()
+
+    private func date(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 12) -> Date {
+        calendar.date(from: DateComponents(year: y, month: m, day: d, hour: h))!
+    }
+
+    func testDefaultExpiryIsNinetyDaysFromTheSaveDay() {
+        let expiry = CredentialExpiry.defaultExpiry(savedAt: date(2026, 9, 27, 22), calendar: calendar)
+        XCTAssertEqual(expiry, date(2026, 12, 26, 0))
+    }
+
+    func testDaysLeftCountsCalendarDays() {
+        let expiry = date(2026, 12, 26, 0)
+        XCTAssertEqual(CredentialExpiry.daysLeft(until: expiry, now: date(2026, 12, 25, 23), calendar: calendar), 1)
+        XCTAssertEqual(CredentialExpiry.daysLeft(until: expiry, now: date(2026, 12, 26, 8), calendar: calendar), 0)
+        XCTAssertEqual(CredentialExpiry.daysLeft(until: expiry, now: date(2026, 12, 28), calendar: calendar), -2)
+    }
+
+    func testRemindersFireAWeekAheadAndOnTheDay() {
+        let r = CredentialExpiry.reminders(for: date(2026, 12, 26, 0), now: date(2026, 10, 29), calendar: calendar)
+        XCTAssertEqual(r.map { $0.0 }, [.weekBefore, .onTheDay])
+        XCTAssertEqual(r.map { $0.1 }, [date(2026, 12, 19, 9), date(2026, 12, 26, 9)])
+    }
+
+    func testRemindersAlreadyPastAreDropped() {
+        let expiry = date(2026, 12, 26, 0)
+        XCTAssertEqual(CredentialExpiry.reminders(for: expiry, now: date(2026, 12, 21), calendar: calendar).map { $0.0 },
+                       [.onTheDay])
+        XCTAssertTrue(CredentialExpiry.reminders(for: expiry, now: date(2026, 12, 26, 10), calendar: calendar).isEmpty)
+    }
+
+    func testARefusedCredentialPastItsDateReadsAsExpired() {
+        var c = DataPortalCredentials(clientId: "id", clientSecret: "s", accountId: "a")
+        c.expiresAt = Date().addingTimeInterval(-60)
+        XCTAssertTrue(c.isExpired())
+        c.expiresAt = Date().addingTimeInterval(86_400)
+        XCTAssertFalse(c.isExpired())
+    }
 }
 
 /// The domains added after battery: each maps into its own small struct on
