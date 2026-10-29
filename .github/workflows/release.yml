@@ -94,7 +94,6 @@ jobs:
           APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: |
           scripts/notarize.sh
-          xcrun stapler staple Polaris.app
 
       - name: Package (dmg + zip)
         run: |

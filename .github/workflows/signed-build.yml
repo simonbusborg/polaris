@@ -70,7 +70,6 @@ jobs:
           APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: |
           scripts/notarize.sh
-          xcrun stapler staple Polaris.app
 
       # ditto rather than the upload action's own zipping: Sparkle.framework
       # is a bundle of symlinks, and flattening them voids the signature.

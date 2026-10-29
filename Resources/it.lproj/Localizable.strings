@@ -155,6 +155,7 @@
 "Remove Credential" = "Rimuovi credenziale";
 "Open Data Portal…" = "Apri Data Portal…";
 "Read your car through Polestar's official Data Portal API instead of the app's login. Create an API credential at data-portal.polestar.com and tick the scopes you want Polaris to show: battery is needed, and odometer, health, availability, climate, exterior, location and target SoC each add rows. Your login stays; it still supplies the car's name and picture." = "Leggi la tua auto tramite l'API ufficiale Data Portal di Polestar invece dell'accesso dell'app. Crea una credenziale API su data-portal.polestar.com e spunta gli ambiti che Polaris deve mostrare: batteria è necessaria; contachilometri, stato, disponibilità, clima, esterno, posizione e limite di ricarica aggiungono una riga ciascuno. Il tuo accesso resta; continua a fornire nome e immagine dell'auto.";
+"The Data Portal is open only to owners in the EU/EEA. Elsewhere, Polaris keeps reading your car through your login, without the portal's extra rows." = "Il Data Portal è aperto solo ai proprietari nell'UE/SEE. Altrove, Polaris continua a leggere l'auto tramite il tuo accesso, senza le righe aggiuntive del portale.";
 "Client secret (shown once in the portal)" = "Client secret (mostrato una sola volta nel portale)";
 "Not set up. Polaris reads your car through your login." = "Non configurato. Polaris legge la tua auto tramite il tuo accesso.";
 "Falling back to your login: %@" = "Ritorno al tuo accesso: %@";
