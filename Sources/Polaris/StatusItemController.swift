@@ -545,6 +545,18 @@ final class StatusItemController {
     }
 }
 
+extension NSColor {
+    /// systemOrange is close to the luminance of a light menu's background —
+    /// and on a translucent menu over a dark desktop it nearly vanishes — so
+    /// warning text in light appearance uses a deeper orange that still reads
+    /// as a warning. Dark appearance keeps systemOrange, which is legible there.
+    static let warningText = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            ? .systemOrange
+            : NSColor(srgbRed: 0.64, green: 0.28, blue: 0.0, alpha: 1)
+    }
+}
+
 /// A menu row rendered as a custom view: key on the left, value right-aligned,
 /// consistent colors regardless of enabled state, fixed width matching the
 /// car image. Rows with `copyText` or `onClick` highlight on hover and act
@@ -572,7 +584,7 @@ final class KVRowView: NSView {
 
         let keyLabel = NSTextField(labelWithString: key)
         keyLabel.font = bold ? .boldSystemFont(ofSize: 13) : .systemFont(ofSize: 13)
-        keyLabel.textColor = warning ? .systemOrange : (value == nil ? .labelColor : .secondaryLabelColor)
+        keyLabel.textColor = warning ? .warningText : (value == nil ? .labelColor : .secondaryLabelColor)
         keyLabel.sizeToFit()
         keyLabel.frame.origin = NSPoint(x: Self.sidePad,
                                         y: (height - keyLabel.frame.height) / 2)
@@ -581,7 +593,7 @@ final class KVRowView: NSView {
         if let value {
             let valueLabel = NSTextField(labelWithString: value)
             valueLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
-            valueLabel.textColor = valueWarning ? .systemOrange : .labelColor
+            valueLabel.textColor = valueWarning ? .warningText : .labelColor
             valueLabel.alignment = .right
             valueLabel.sizeToFit()
             // Long values (upholstery names etc.) must not run into the key.
