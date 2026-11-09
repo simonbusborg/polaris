@@ -17,7 +17,7 @@ env:
 
 jobs:
   build-and-release:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       # Full history and tags: the release notes are built from the commits
       # since the previous tag, which a shallow clone doesn't have.
