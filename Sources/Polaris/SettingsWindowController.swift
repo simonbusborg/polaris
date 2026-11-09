@@ -439,7 +439,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         if !stored {
             portalStatus.stringValue = L("Not set up. Polaris reads your car through your login.")
         } else if let error = dataPortalError() {
-            portalStatus.textColor = .systemOrange
+            portalStatus.textColor = .warningText
             portalStatus.stringValue = String(format: L("Falling back to your login: %@"), error)
         } else if data?.viaDataPortal == true {
             portalStatus.stringValue = L("Reading your car through the Data Portal.")
@@ -450,7 +450,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private func refreshPortalExpiryLabel() {
         let days = CredentialExpiry.daysLeft(until: portalExpiryPicker.dateValue)
-        portalExpiryLabel.textColor = days <= 7 ? .systemOrange : .secondaryLabelColor
+        portalExpiryLabel.textColor = days <= 7 ? .warningText : .secondaryLabelColor
         switch days {
         case ..<0: portalExpiryLabel.stringValue = L("expired")
         case 0: portalExpiryLabel.stringValue = L("today")
