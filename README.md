@@ -194,6 +194,15 @@ Polestar's current login flow and GraphQL schema (with reference to
 [pypolestar](https://github.com/pypolestar/pypolestar)). Polaris is a from-scratch
 AppKit implementation.
 
+### Contributors
+
+Thanks to everyone who has sent a pull request:
+
+- **[Mark Beech](https://github.com/JayBizzle)** — made warning text readable in
+  light appearance ([#18](https://github.com/simonbusborg/polaris/pull/18)).
+  > `systemOrange` has almost the same luminance as the menu background, and on
+  > a translucent menu over a dark desktop it nearly disappears.
+
 ## Disclaimer
 
 Not affiliated with Polestar. Use at your own risk.
